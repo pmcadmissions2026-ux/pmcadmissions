@@ -38,11 +38,15 @@ else:
 # Register blueprints
 from auth.routes import auth_bp
 from admin.routes import admin_bp
+# Test routes for quick Supabase checks
+from test.routes import test_bp
 # Student portal disabled - staff-only system
 # from student.routes import student_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(admin_bp)
+# register test blueprint
+app.register_blueprint(test_bp)
 # app.register_blueprint(student_bp)
 
 # ============================================
@@ -133,7 +137,9 @@ if __name__ == '__main__':
     print("="*60)
     for rule in app.url_map.iter_rules():
         if 'admin' in rule.rule or 'get-student' in rule.rule:
-            print(f"{rule.rule} -> {rule.endpoint} [{', '.join(rule.methods - {'HEAD', 'OPTIONS'})}]")
+            methods = [m for m in rule.methods if m not in ('HEAD', 'OPTIONS')]
+            methods_str = ', '.join(sorted(methods))
+            print(f"{rule.rule} -> {rule.endpoint} [{methods_str}]")
     print("="*60 + "\n")
     
     # Configure filesystem session directory if available

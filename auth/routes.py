@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, session, redirect, url_for, flash
+from flask import Blueprint, render_template, request, session, redirect, url_for, flash, current_app
 from database.models import UserModel
 from database.supabase_config import db
 from datetime import datetime
@@ -66,7 +66,7 @@ def login():
 # provided email exists in the `users` table. Use only for debugging.
 @auth_bp.route('/debug/user_exists')
 def debug_user_exists():
-    if os.getenv('ENABLE_DEBUG_ENDPOINT') != '1':
+    if os.getenv('ENABLE_DEBUG_ENDPOINT') != '1' and not current_app.debug:
         return jsonify({'error': 'disabled'}), 403
 
     email = request.args.get('email')
@@ -80,36 +80,67 @@ def debug_user_exists():
 
 @auth_bp.route('/debug/env')
 def debug_env():
-    if os.getenv('ENABLE_DEBUG_ENDPOINT') != '1':
+    if os.getenv('ENABLE_DEBUG_ENDPOINT') != '1' and not current_app.debug:
         return jsonify({'error': 'disabled'}), 403
 
-    # Mask SUPABASE_KEY (only show length)
+    # Determine which Supabase key is present (service vs anon) and show only length
     supabase_url = os.getenv('SUPABASE_URL') or Config.SUPABASE_URL
-    supabase_key = os.getenv('SUPABASE_KEY') or Config.SUPABASE_KEY
+    service_key = os.getenv('SUPABASE_SERVICE_KEY') or Config.SUPABASE_SERVICE_KEY
+    anon_key = os.getenv('SUPABASE_KEY') or Config.SUPABASE_KEY
 
     url_host = None
     if supabase_url:
         try:
-            # extract host for quick validation
             from urllib.parse import urlparse
             url_host = urlparse(supabase_url).netloc
         except Exception:
             url_host = supabase_url
 
-    key_len = len(supabase_key) if supabase_key else 0
+    client_key_type = 'SERVICE' if service_key else ('ANON' if anon_key else 'NONE')
+    key_len = len(service_key) if service_key else (len(anon_key) if anon_key else 0)
 
-    # Quick lightweight DB check: attempt to select 1 user to verify permissions
+    # Use db.count for a lightweight permission check (uses the Supabase client)
     users_count = None
     try:
-        users = db.select('users')
-        users_count = len(users) if users is not None else None
+        users_count = db.count('users')
     except Exception as e:
         users_count = f'error: {str(e)}'
 
+    # Additional direct REST check (bypasses client library) to verify
+    # whether the key can read the `users` table via Supabase REST endpoint.
+    rest_status = None
+    rest_count_sample = None
+    rest_error = None
+    try:
+        import requests
+        key_for_rest = service_key or anon_key
+        if supabase_url and key_for_rest:
+            rest_headers = {
+                'apikey': key_for_rest,
+                'Authorization': f'Bearer {key_for_rest}',
+                'Prefer': 'count=exact'
+            }
+            rest_url = f"{supabase_url.rstrip('/')}/rest/v1/users"
+            r = requests.get(rest_url, headers=rest_headers, params={'select':'*', 'limit':1}, timeout=10)
+            rest_status = r.status_code
+            try:
+                rest_json = r.json()
+                rest_count_sample = len(rest_json) if isinstance(rest_json, list) else None
+            except Exception:
+                rest_count_sample = None
+        else:
+            rest_error = 'missing supabase_url or key'
+    except Exception as e:
+        rest_error = str(e)
+
     return jsonify({
         'supabase_url_host': url_host,
+        'client_key_type': client_key_type,
         'supabase_key_length': key_len,
-        'users_table_count_sample': users_count
+        'users_table_count_sample': users_count,
+        'rest_check_status': rest_status,
+        'rest_check_count_sample': rest_count_sample,
+        'rest_check_error': rest_error
     }), 200
 
 @auth_bp.route('/logout')

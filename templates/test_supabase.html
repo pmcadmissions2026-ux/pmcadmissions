@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Supabase Test</title>
+    <style>body{font-family:Arial,Helvetica,sans-serif;margin:20px}button{margin:6px 0;padding:8px 12px}</style>
+  </head>
+  <body>
+    <h2>Supabase Read Test</h2>
+    <p>Supabase URL: <strong>{{ supabase_url }}</strong></p>
+
+    <h3>Client (ANON) fetch</h3>
+    <p>This runs in the browser using the ANON key provided by the server render.</p>
+    <button id="anonBtn">Fetch users (anon)</button>
+    <pre id="anonResult"></pre>
+
+    <h3>Server (SERVICE) fetch</h3>
+    <p>This calls the server endpoint which uses the SERVICE key from server env.</p>
+    <button id="serverBtn">Fetch users (server)</button>
+    <pre id="serverResult"></pre>
+
+    <script>
+      const SUPABASE_URL = '{{ supabase_url }}';
+      const ANON_KEY = `{{ anon_key }}`;
+
+      document.getElementById('anonBtn').addEventListener('click', async ()=>{
+        const out = document.getElementById('anonResult');
+        out.textContent = 'loading...';
+        try{
+          const headers = {
+            'apikey': ANON_KEY,
+            'Authorization': 'Bearer ' + ANON_KEY,
+            'Prefer': 'count=exact'
+          };
+          const url = SUPABASE_URL.replace(/\/+$/,'') + '/rest/v1/users?select=*&limit=5';
+          const r = await fetch(url, {headers});
+          const text = await r.text();
+          out.textContent = `status: ${r.status}\n${text}`;
+        }catch(e){ out.textContent = 'error: '+e }
+      });
+
+      document.getElementById('serverBtn').addEventListener('click', async ()=>{
+        const out = document.getElementById('serverResult');
+        out.textContent = 'loading...';
+        try{
+          const r = await fetch('/test/server_fetch');
+          const j = await r.json();
+          out.textContent = JSON.stringify(j, null, 2);
+        }catch(e){ out.textContent = 'error: '+e }
+      });
+    </script>
+  </body>
+</html>

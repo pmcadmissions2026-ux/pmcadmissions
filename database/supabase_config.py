@@ -27,13 +27,16 @@ class SupabaseDB:
                 # Choose service key when available (server-side) to bypass
                 # RLS restrictions for administrative reads. Fall back to the
                 # public anon key if service key is not provided.
-                key_to_use = Config.SUPABASE_SERVICE_KEY or Config.SUPABASE_KEY
+                key_to_use = (Config.SUPABASE_SERVICE_KEY or Config.SUPABASE_KEY) or None
+                if key_to_use:
+                    key_to_use = key_to_use.strip()
                 masked = None
                 try:
                     masked = (f"{key_to_use[:4]}...{key_to_use[-4:]}" if key_to_use else None)
                 except Exception:
                     masked = None
-                print(f"Creating Supabase client using {'SERVICE' if Config.SUPABASE_SERVICE_KEY else 'ANON'} key: {masked}")
+                key_type = 'SERVICE' if (Config.SUPABASE_SERVICE_KEY and Config.SUPABASE_SERVICE_KEY.strip()) else ('ANON' if (Config.SUPABASE_KEY and Config.SUPABASE_KEY.strip()) else 'NONE')
+                print(f"Creating Supabase client using {key_type} key: {masked}")
                 self._client = create_client(
                     Config.SUPABASE_URL,
                     key_to_use

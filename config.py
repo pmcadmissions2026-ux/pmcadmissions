@@ -15,9 +15,13 @@ class Config:
     SESSION_PERMANENT = os.getenv('SESSION_PERMANENT', False)
     
     # Supabase Configuration
-    SUPABASE_URL = os.getenv('SUPABASE_URL')
-    SUPABASE_KEY = os.getenv('SUPABASE_KEY')
-    SUPABASE_SERVICE_KEY = os.getenv('SUPABASE_SERVICE_KEY')
+    _supabase_url = os.getenv('SUPABASE_URL')
+    _supabase_key = os.getenv('SUPABASE_KEY')
+    _supabase_service_key = os.getenv('SUPABASE_SERVICE_KEY')
+
+    SUPABASE_URL = _supabase_url.strip() if _supabase_url else None
+    SUPABASE_KEY = _supabase_key.strip() if _supabase_key else None
+    SUPABASE_SERVICE_KEY = _supabase_service_key.strip() if _supabase_service_key else None
     
     # College Configuration
     COLLEGE_NAME = os.getenv('COLLEGE_NAME', 'Er. Perumal Manimekalai College of Engineering')
