@@ -6,4 +6,3 @@ flask-session==0.5.0
 Werkzeug==2.3.7
 requests==2.31.0
 gunicorn==20.1.0
-vercel-wsgi==0.5.3
