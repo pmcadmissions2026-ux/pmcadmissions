@@ -7,8 +7,14 @@ class UserModel:
     @staticmethod
     def get_user_by_email(email: str):
         """Get user by email"""
-        users = db.select('users', filters={'email': email})
-        return users[0] if users else None
+        try:
+            users = db.select('users', filters={'email': email})
+            count = len(users) if users else 0
+            print(f"get_user_by_email: email={email}, returned_count={count}")
+            return users[0] if users else None
+        except Exception as e:
+            print(f"get_user_by_email: error querying email={email}: {e}")
+            return None
     
     @staticmethod
     def get_user_by_id(user_id: int):
