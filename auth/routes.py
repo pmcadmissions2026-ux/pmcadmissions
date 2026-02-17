@@ -2,6 +2,8 @@ from flask import Blueprint, render_template, request, session, redirect, url_fo
 from database.models import UserModel
 from database.supabase_config import db
 from datetime import datetime
+import os
+from flask import jsonify
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -56,6 +58,23 @@ def login():
         return redirect(url_for('auth.login'))
     
     return render_template('auth/login.html')
+
+
+# Temporary debug endpoint (disabled by default). Enable by setting
+# `ENABLE_DEBUG_ENDPOINT=1` in the environment. Returns whether the
+# provided email exists in the `users` table. Use only for debugging.
+@auth_bp.route('/debug/user_exists')
+def debug_user_exists():
+    if os.getenv('ENABLE_DEBUG_ENDPOINT') != '1':
+        return jsonify({'error': 'disabled'}), 403
+
+    email = request.args.get('email')
+    if not email:
+        return jsonify({'error': 'email required'}), 400
+
+    user = UserModel.get_user_by_email(email)
+    exists = bool(user)
+    return jsonify({'email': email, 'exists': exists}), 200
 
 @auth_bp.route('/logout')
 def logout():
