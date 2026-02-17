@@ -155,14 +155,43 @@ class SupabaseDB:
         print(f"Insert Error in table '{table}': no available client")
         return None
 
-    def update(self, table: str, filters: dict, data: dict):
-        """UPDATE rows matching filters. Returns updated rows or None."""
+    def update(self, table: str, data: dict = None, filters: dict = None, **kwargs):
+        """UPDATE rows matching filters. Supports both signatures:
+        - update(table, data, filters)
+        - update(table, filters=..., data=...)
+        Returns updated rows or None.
+        """
+        # Normalize parameters from positional or keyword usage
+        # If caller passed (table, data, filters) as positional args, Python will map correctly.
+        # But some call sites use update(table, filters_dict, data_dict) accidentally;
+        # detect that case and swap when types suggest it.
+        if data is None and 'data' in kwargs:
+            data = kwargs.get('data')
+        if filters is None and 'filters' in kwargs:
+            filters = kwargs.get('filters')
+
+        # Heuristic: if data looks like filters (contains keys typically used as filters like 'user_id' or 'id')
+        # and filters looks like an update payload (contains non-filter keys), swap them.
         try:
-            q = self.client.table(table)
+            if isinstance(data, dict) and isinstance(filters, dict):
+                # If data only contains keys that are typical filter names and filters contains other keys, swap.
+                filter_like_keys = {'user_id', 'id', 'email', 'employee_id', 'app_id', 'student_id'}
+                data_keys = set(data.keys())
+                filter_keys = set(filters.keys())
+                if data_keys & filter_like_keys and not (filter_keys & filter_like_keys):
+                    # swap
+                    data, filters = filters, data
+        except Exception:
+            pass
+
+        try:
+            # Build update request then apply filters (eq) on the request builder
+            req = self.client.table(table).update(data or {})
             if filters:
                 for key, value in filters.items():
-                    q = q.eq(key, value)
-            response = q.update(data).execute()
+                    # The request builder exposes `eq` for filtering after update()
+                    req = req.eq(key, value)
+            response = req.execute()
             return response.data if response and getattr(response, 'data', None) is not None else None
         except Exception as e:
             print(f"Update via SDK failed: {e}")

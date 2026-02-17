@@ -1633,7 +1633,17 @@ def edit_staff(staff_id):
                 'updated_at': datetime.now().isoformat()
             }
             
-            db.update('users', update_data, {'user_id': staff_id})
+            print(f"[DEBUG] update_staff: user_id={staff_id} payload={update_data}")
+            try:
+                res = db.update('users', update_data, {'user_id': staff_id})
+                print(f"[DEBUG] db.update result: {res}")
+            except Exception as e:
+                import traceback
+                print(f"[ERROR] db.update exception: {e}")
+                traceback.print_exc()
+                flash(f'Error updating staff: {str(e)}', 'error')
+                return redirect(url_for('admin.edit_staff', staff_id=staff_id))
+
             flash(f'Staff member {first_name} {last_name} updated successfully', 'success')
             return redirect(url_for('admin.staff_management'))
             
