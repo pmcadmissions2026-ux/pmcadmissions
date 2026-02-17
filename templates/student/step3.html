@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Step 3 - Review & Submit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-4xl mx-auto p-8">
+        <!-- Progress Steps -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center">
+                <div class="flex-1">
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-indigo-600 h-2 rounded-full" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-between mt-2">
+                <span class="text-sm text-indigo-600 font-medium">Step 1: Details</span>
+                <span class="text-sm text-indigo-600 font-medium">Step 2: Branch Selection</span>
+                <span class="text-sm text-indigo-600 font-medium">Step 3: Review</span>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Step 3: Review & Submit</h2>
+            
+            <!-- Personal Details -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-700 mb-4">Personal Details</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm text-gray-500">Full Name</label>
+                        <p class="text-gray-900 font-medium">{{ application.full_name }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm text-gray-500">Registration ID</label>
+                        <p class="text-gray-900 font-medium">{{ application.registration_id }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm text-gray-500">Father's Name</label>
+                        <p class="text-gray-900">{{ application.father_name }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm text-gray-500">Mother's Name</label>
+                        <p class="text-gray-900">{{ application.mother_name }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm text-gray-500">WhatsApp Number</label>
+                        <p class="text-gray-900">{{ application.whatsapp_number }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Academic Details -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-700 mb-4">Academic Details</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm text-gray-500">School Name</label>
+                        <p class="text-gray-900">{{ application.school_name }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm text-gray-500">Board</label>
+                        <p class="text-gray-900">{{ application.board }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm text-gray-500">Exam Year</label>
+                        <p class="text-gray-900">{{ application.exam_year }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm text-gray-500">Percentage</label>
+                        <p class="text-gray-900 font-bold text-lg">{{ "%.2f"|format(application.percentage or 0) }}%</p>
+                    </div>
+                </div>
+                
+                <div class="mt-4 grid grid-cols-3 gap-4">
+                    <div class="bg-blue-50 p-3 rounded">
+                        <label class="text-sm text-gray-600">Maths</label>
+                        <p class="text-blue-900 font-bold text-xl">{{ application.maths_marks }}</p>
+                    </div>
+                    <div class="bg-green-50 p-3 rounded">
+                        <label class="text-sm text-gray-600">Physics</label>
+                        <p class="text-green-900 font-bold text-xl">{{ application.physics_marks }}</p>
+                    </div>
+                    <div class="bg-purple-50 p-3 rounded">
+                        <label class="text-sm text-gray-600">Chemistry</label>
+                        <p class="text-purple-900 font-bold text-xl">{{ application.chemistry_marks }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Department Preferences -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-700 mb-4">Department Preferences</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm text-gray-500">Primary Preference</label>
+                        <p class="text-gray-900 font-medium">{{ application.primary_dept or 'Not Selected' }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm text-gray-500">Secondary Preference</label>
+                        <p class="text-gray-900">{{ application.secondary_dept or 'Not Selected' }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confirmation -->
+            <form method="POST" action="{{ url_for('student.step3') }}">
+                <div class="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                    <p class="text-sm text-yellow-700">
+                        <strong>Important:</strong> Please review all details carefully before submitting. 
+                        Once submitted, you cannot make changes to your application.
+                    </p>
+                </div>
+
+                <div class="mb-6">
+                    <label class="flex items-center">
+                        <input type="checkbox" name="confirm" required class="mr-2">
+                        <span class="text-sm text-gray-700">I confirm that all the information provided is accurate and complete</span>
+                    </label>
+                </div>
+
+                <!-- Navigation Buttons -->
+                <div class="flex justify-between">
+                    <a href="{{ url_for('student.step2') }}" class="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400">
+                        Previous
+                    </a>
+                    <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
+                        Submit Application
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

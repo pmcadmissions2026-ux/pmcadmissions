@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Admin Branch Selection Dashboard - PMC Engineering</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-nav {
+            background-color: #137fec;
+            color: white !important;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] px-6 py-3 sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<div class="text-primary">
+<svg fill="none" height="32" viewbox="0 0 48 48" width="32" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Er. Perumal Manimekalai College of Engineering</h2>
+</div>
+<div class="flex flex-1 justify-end gap-4 items-center">
+<label class="flex flex-col min-w-64 !h-10 max-w-96">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full bg-[#f0f2f4] dark:bg-[#2d3748]">
+<div class="text-[#617589] flex items-center justify-center pl-4">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111418] dark:text-white focus:outline-0 focus:ring-0 border-none bg-transparent h-full placeholder:text-[#617589] px-2 text-sm font-normal" placeholder="Search Unique ID or Student Name..." value=""/>
+</div>
+</label>
+<div class="flex gap-2">
+<button class="flex items-center justify-center rounded-lg h-10 w-10 bg-[#f0f2f4] dark:bg-[#2d3748] text-[#111418] dark:text-white">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="flex items-center justify-center rounded-lg h-10 w-10 bg-[#f0f2f4] dark:bg-[#2d3748] text-[#111418] dark:text-white">
+<span class="material-symbols-outlined">logout</span>
+</button>
+</div>
+</div>
+</header>
+<div class="flex flex-1">
+<!-- SideNavBar -->
+<aside class="w-64 border-r border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] hidden md:flex flex-col p-4 gap-6 sticky top-[65px] h-[calc(100vh-65px)]">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-3 px-3 py-4">
+<div class="bg-primary/10 text-primary p-2 rounded-lg">
+<span class="material-symbols-outlined">shield_person</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-[#111418] dark:text-white text-sm font-bold leading-none">Admin Portal</h1>
+<p class="text-[#617589] text-xs font-normal">Management Dashboard</p>
+</div>
+</div>
+</div>
+<nav class="flex flex-col gap-2">
+<div class="flex items-center gap-3 px-3 py-2.5 rounded-lg active-nav cursor-pointer">
+<span class="material-symbols-outlined">account_tree</span>
+<p class="text-sm font-medium">Branch Assignment</p>
+</div>
+<div class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#111418] dark:text-white hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] cursor-pointer">
+<span class="material-symbols-outlined">analytics</span>
+<p class="text-sm font-medium">Admission Reports</p>
+</div>
+</nav>
+<div class="mt-auto pt-4 border-t border-[#e5e7eb] dark:border-[#2d3748]">
+<p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">System Status</p>
+<div class="flex items-center gap-2 px-3 py-2">
+<div class="size-2 rounded-full bg-green-500"></div>
+<span class="text-xs text-[#617589]">Admission Server Live</span>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto">
+<div class="max-w-[1200px] mx-auto p-6 flex flex-col gap-6">
+<!-- PageHeading -->
+<div class="flex flex-wrap justify-between items-end gap-3">
+<div class="flex min-w-72 flex-col gap-1">
+<p class="text-[#111418] dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">Admin Branch Management</p>
+<p class="text-[#617589] dark:text-[#a0aec0] text-base font-normal leading-normal">Manage and assign departments to enquired students.</p>
+</div>
+</div>
+<!-- Filters/Chips -->
+<div class="flex flex-wrap items-center gap-3 bg-white dark:bg-[#1a202c] p-4 rounded-xl border border-[#e5e7eb] dark:border-[#2d3748]">
+<span class="text-sm font-semibold text-[#111418] dark:text-white mr-2">Filters:</span>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#f0f2f4] dark:bg-[#2d3748] px-4 hover:bg-[#e5e7eb] transition-colors">
+<span class="text-[#111418] dark:text-white text-sm font-medium">Admission Date: Today</span>
+<span class="material-symbols-outlined text-sm">calendar_today</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#f0f2f4] dark:bg-[#2d3748] px-4 hover:bg-[#e5e7eb] transition-colors">
+<span class="text-[#111418] dark:text-white text-sm font-medium">All Communities</span>
+<span class="material-symbols-outlined text-sm">filter_alt</span>
+</button>
+<div class="ml-auto flex items-center gap-2">
+<p class="text-xs text-[#617589] font-medium">Total Pending: 128</p>
+</div>
+</div>
+<!-- SectionHeader + Table -->
+<div class="flex flex-col bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden">
+<div class="flex items-center justify-between px-6 py-5 border-b border-[#e5e7eb] dark:border-[#2d3748]">
+<h2 class="text-[#111418] dark:text-white text-xl font-bold leading-tight">Pending Branch Selection</h2>
+<button class="text-primary text-sm font-bold flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-sm">download</span> Export List
+                        </button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-[#f8fafc] dark:bg-[#2d3748] border-b border-[#e5e7eb] dark:border-[#2d3748]">
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Student Name</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Unique ID</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Cut-off</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Community</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
+<tr class="hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors group">
+<td class="px-6 py-4">
+<div class="text-sm font-semibold text-[#111418] dark:text-white">Arun Kumar S</div>
+<div class="text-xs text-[#617589]">Enquired 2h ago</div>
+</td>
+<td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">PMC2024-0412</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">192.50</span>
+</td>
+<td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">BC</td>
+<td class="px-6 py-4 text-right">
+<button class="bg-primary text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-primary/90 shadow-sm transition-all active:scale-95">
+                                            Assign Branch
+                                        </button>
+</td>
+</tr>
+<tr class="hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors group">
+<td class="px-6 py-4">
+<div class="text-sm font-semibold text-[#111418] dark:text-white">Priyanka R</div>
+<div class="text-xs text-[#617589]">Enquired 4h ago</div>
+</td>
+<td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">PMC2024-0415</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">185.00</span>
+</td>
+<td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">MBC</td>
+<td class="px-6 py-4 text-right">
+<button class="bg-primary text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-primary/90 shadow-sm transition-all active:scale-95">
+                                            Assign Branch
+                                        </button>
+</td>
+</tr>
+<tr class="hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors group">
+<td class="px-6 py-4">
+<div class="text-sm font-semibold text-[#111418] dark:text-white">Mohamed Jaffar</div>
+<div class="text-xs text-[#617589]">Enquired 5h ago</div>
+</td>
+<td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">PMC2024-0418</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">198.75</span>
+</td>
+<td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">BCM</td>
+<td class="px-6 py-4 text-right">
+<button class="bg-primary text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-primary/90 shadow-sm transition-all active:scale-95">
+                                            Assign Branch
+                                        </button>
+</td>
+</tr>
+<tr class="hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors group">
+<td class="px-6 py-4">
+<div class="text-sm font-semibold text-[#111418] dark:text-white">Sandhiya M</div>
+<div class="text-xs text-[#617589]">Enquired 6h ago</div>
+</td>
+<td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">PMC2024-0421</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800">176.25</span>
+</td>
+<td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">SC</td>
+<td class="px-6 py-4 text-right">
+<button class="bg-primary text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-primary/90 shadow-sm transition-all active:scale-95">
+                                            Assign Branch
+                                        </button>
+</td>
+</tr>
+<tr class="hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors group">
+<td class="px-6 py-4">
+<div class="text-sm font-semibold text-[#111418] dark:text-white">Venkatesh Babu</div>
+<div class="text-xs text-[#617589]">Enquired 1d ago</div>
+</td>
+<td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">PMC2024-0398</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">182.00</span>
+</td>
+<td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">OC</td>
+<td class="px-6 py-4 text-right">
+<button class="bg-primary text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-primary/90 shadow-sm transition-all active:scale-95">
+                                            Assign Branch
+                                        </button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-6 py-4 flex items-center justify-between border-t border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c]">
+<p class="text-sm text-[#617589]">Showing 1 to 5 of 128 results</p>
+<div class="flex gap-2">
+<button class="px-3 py-1 text-sm border border-[#e5e7eb] dark:border-[#2d3748] rounded hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors disabled:opacity-50">Previous</button>
+<button class="px-3 py-1 text-sm border border-primary bg-primary text-white rounded">1</button>
+<button class="px-3 py-1 text-sm border border-[#e5e7eb] dark:border-[#2d3748] rounded hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors">2</button>
+<button class="px-3 py-1 text-sm border border-[#e5e7eb] dark:border-[#2d3748] rounded hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors">3</button>
+<button class="px-3 py-1 text-sm border border-[#e5e7eb] dark:border-[#2d3748] rounded hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors">Next</button>
+</div>
+</div>
+</div>
+<!-- Guidance Note -->
+<div class="bg-primary/5 border border-primary/20 rounded-xl p-4 flex gap-4">
+<div class="text-primary">
+<span class="material-symbols-outlined">info</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-[#111418] dark:text-white">Administration Tip</p>
+<p class="text-xs text-[#617589] mt-1">Students with cut-off marks above 190 are highlighted for immediate counseling. Priority allocation is recommended for scholarship eligible candidates.</p>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

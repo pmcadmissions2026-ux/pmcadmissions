@@ -1,0 +1,13 @@
+Hello {{ full_name }},
+
+Thank you for contacting {{ college_name or 'our admissions office' }}. We have received your enquiry and created a reference for it.
+
+Student Unique ID: {{ unique_id }}
+Subject: {{ subject }}
+
+Contact No: +91 6369077291
+
+Our admissions team will review your query and get back to you shortly.
+
+Best regards,
+{{ college_name or 'Admissions Office' }}

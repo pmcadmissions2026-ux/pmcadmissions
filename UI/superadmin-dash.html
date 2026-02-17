@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Super Admin Master Control - Er. Perumal Manimekalai College of Engineering</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1e40af",
+                        "secondary": "#137fec",
+                        "background-light": "#f8fafc",
+                        "background-dark": "#0f172a",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.375rem",
+                        "lg": "0.5rem",
+                        "xl": "1rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased">
+<div class="flex h-screen overflow-hidden">
+<aside class="flex w-72 flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl z-20">
+<div class="flex flex-col gap-4 p-6 grow">
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-3">
+<div class="bg-primary rounded-lg p-2 text-white">
+<span class="material-symbols-outlined">account_balance</span>
+</div>
+<h1 class="text-primary dark:text-blue-400 text-lg font-extrabold leading-tight">Super Admin</h1>
+</div>
+<div class="mt-2">
+<p class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">Institution</p>
+<p class="text-xs font-semibold leading-tight text-slate-700 dark:text-slate-300">Er. Perumal Manimekalai College of Engineering</p>
+</div>
+</div>
+<nav class="flex flex-col gap-1 mt-8">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary text-white shadow-md shadow-primary/20" href="#">
+<span class="material-symbols-outlined text-xl">public</span>
+<p class="text-sm font-semibold">Global Dashboard</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all" href="#">
+<span class="material-symbols-outlined text-xl">badge</span>
+<p class="text-sm font-medium">Faculty &amp; Roles</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all" href="#">
+<span class="material-symbols-outlined text-xl">account_tree</span>
+<p class="text-sm font-medium">Department Master</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all" href="#">
+<span class="material-symbols-outlined text-xl">summarize</span>
+<p class="text-sm font-medium">Admission Reports</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all" href="#">
+<span class="material-symbols-outlined text-xl">history_edu</span>
+<p class="text-sm font-medium">System Logs</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all" href="#">
+<span class="material-symbols-outlined text-xl">settings</span>
+<p class="text-sm font-medium">Settings</p>
+</a>
+</nav>
+</div>
+<div class="p-6 border-t border-slate-100 dark:border-slate-800">
+<div class="flex items-center gap-3 mb-4">
+<div class="size-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
+<span class="material-symbols-outlined text-slate-500">shield_person</span>
+</div>
+<div class="flex flex-col">
+<p class="text-sm font-bold">Root Admin</p>
+<p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Master Access</p>
+</div>
+</div>
+<button class="w-full flex items-center justify-center gap-2 rounded-lg h-10 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-bold hover:bg-slate-50 transition-all">
+<span class="material-symbols-outlined text-sm">logout</span>
+<span>Sign Out</span>
+</button>
+</div>
+</aside>
+<main class="flex-1 overflow-y-auto bg-slate-50/50 dark:bg-slate-950">
+<div class="max-w-[1400px] mx-auto p-8">
+<div class="flex flex-wrap justify-between items-start gap-4 mb-8">
+<div class="flex flex-col gap-1">
+<h2 class="text-slate-900 dark:text-white text-3xl font-black tracking-tight">Master Control Dashboard</h2>
+<p class="text-slate-500 dark:text-slate-400 text-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">location_on</span>
+                        Er. Perumal Manimekalai College of Engineering - Central Command
+                    </p>
+</div>
+<div class="flex gap-3">
+<div class="flex flex-col items-end">
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Server Status</span>
+<div class="flex items-center gap-2 bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full border border-emerald-200">
+<span class="size-2 rounded-full bg-emerald-500 animate-pulse"></span>
+<span class="text-xs font-bold uppercase tracking-wide">Operational</span>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+<div class="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-transform hover:scale-[1.02]">
+<div class="flex justify-between items-center">
+<p class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Total Admissions</p>
+<span class="p-2 bg-blue-50 text-blue-600 rounded-lg material-symbols-outlined">group_add</span>
+</div>
+<div class="flex items-baseline gap-2">
+<p class="text-slate-900 dark:text-white text-3xl font-black">2,842</p>
+<span class="text-emerald-500 text-xs font-bold">+12%</span>
+</div>
+</div>
+<div class="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-transform hover:scale-[1.02]">
+<div class="flex justify-between items-center">
+<p class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Active Staff</p>
+<span class="p-2 bg-indigo-50 text-indigo-600 rounded-lg material-symbols-outlined">engineering</span>
+</div>
+<div class="flex items-baseline gap-2">
+<p class="text-slate-900 dark:text-white text-3xl font-black">156</p>
+<span class="text-slate-400 text-xs font-bold">Across 12 Depts</span>
+</div>
+</div>
+<div class="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-transform hover:scale-[1.02]">
+<div class="flex justify-between items-center">
+<p class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Total Revenue/Fees</p>
+<span class="p-2 bg-emerald-50 text-emerald-600 rounded-lg material-symbols-outlined">payments</span>
+</div>
+<div class="flex items-baseline gap-2">
+<p class="text-slate-900 dark:text-white text-3xl font-black">₹4.2Cr</p>
+<span class="text-emerald-500 text-xs font-bold">+8.4%</span>
+</div>
+</div>
+<div class="flex flex-col gap-4 rounded-xl p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm transition-transform hover:scale-[1.02]">
+<div class="flex justify-between items-center">
+<p class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">System Health</p>
+<span class="p-2 bg-amber-50 text-amber-600 rounded-lg material-symbols-outlined">dns</span>
+</div>
+<div class="flex items-baseline gap-2">
+<p class="text-slate-900 dark:text-white text-3xl font-black">99.9%</p>
+<span class="text-slate-400 text-xs font-bold">Latency 45ms</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+<div class="lg:col-span-2 space-y-8">
+<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
+<div class="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">settings_applications</span>
+<h3 class="text-slate-900 dark:text-white text-sm font-bold uppercase tracking-wider">System-Wide Controls</h3>
+</div>
+<div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/30 rounded-lg border border-slate-100 dark:border-slate-800">
+<div>
+<p class="text-sm font-bold text-slate-800 dark:text-slate-200">Admission Portal</p>
+<p class="text-xs text-slate-500">Allow new student registrations</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/30 rounded-lg border border-slate-100 dark:border-slate-800">
+<div>
+<p class="text-sm font-bold text-slate-800 dark:text-slate-200">Staff Access</p>
+<p class="text-xs text-slate-500">Global staff login capability</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/30 rounded-lg border border-slate-100 dark:border-slate-800">
+<div>
+<p class="text-sm font-bold text-slate-800 dark:text-slate-200">Fee Payment Gateway</p>
+<p class="text-xs text-slate-500">Live payment processing system</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/30 rounded-lg border border-slate-100 dark:border-slate-800">
+<div>
+<p class="text-sm font-bold text-slate-800 dark:text-slate-200">System Maintenance Mode</p>
+<p class="text-xs text-slate-500">Suspend all public operations</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-red-600"></div>
+</label>
+</div>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden">
+<div class="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex justify-between items-center">
+<h3 class="text-slate-900 dark:text-white text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">assessment</span>
+                                Admission Lead Performance
+                            </h3>
+<button class="text-xs text-primary font-bold hover:underline">View All Staff</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-slate-50 dark:bg-slate-800/50">
+<tr>
+<th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase">Lead Name</th>
+<th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase">Department</th>
+<th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase text-center">Conversions</th>
+<th class="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase text-right">Target Achieved</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+<tr>
+<td class="px-6 py-4">
+<p class="text-sm font-bold text-slate-800 dark:text-slate-200">Arun Kumar</p>
+<p class="text-[10px] text-slate-500">Admission Officer</p>
+</td>
+<td class="px-6 py-4 text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">Computer Science</td>
+<td class="px-6 py-4 text-center font-bold text-sm">42</td>
+<td class="px-6 py-4 text-right">
+<div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+<div class="bg-emerald-500 h-full w-[85%]"></div>
+</div>
+<span class="text-[10px] font-bold text-emerald-600">85%</span>
+</td>
+</tr>
+<tr>
+<td class="px-6 py-4">
+<p class="text-sm font-bold text-slate-800 dark:text-slate-200">Priya Sharma</p>
+<p class="text-[10px] text-slate-500">Admission Officer</p>
+</td>
+<td class="px-6 py-4 text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">Mechanical Eng.</td>
+<td class="px-6 py-4 text-center font-bold text-sm">38</td>
+<td class="px-6 py-4 text-right">
+<div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+<div class="bg-blue-500 h-full w-[72%]"></div>
+</div>
+<span class="text-[10px] font-bold text-blue-600">72%</span>
+</td>
+</tr>
+<tr>
+<td class="px-6 py-4">
+<p class="text-sm font-bold text-slate-800 dark:text-slate-200">Sanjay Gupta</p>
+<p class="text-[10px] text-slate-500">Branch Lead</p>
+</td>
+<td class="px-6 py-4 text-xs font-medium text-slate-600 dark:text-slate-400 uppercase">Civil Eng.</td>
+<td class="px-6 py-4 text-center font-bold text-sm">29</td>
+<td class="px-6 py-4 text-right">
+<div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+<div class="bg-amber-500 h-full w-[45%]"></div>
+</div>
+<span class="text-[10px] font-bold text-amber-600">45%</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="space-y-6">
+<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden h-full">
+<div class="p-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex items-center justify-between">
+<h3 class="text-slate-900 dark:text-white text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">history</span>
+                                Recent Activity
+                            </h3>
+</div>
+<div class="p-4 space-y-6">
+<div class="flex gap-4">
+<div class="relative">
+<div class="size-2 bg-blue-500 rounded-full mt-1.5"></div>
+<div class="absolute top-4 left-1 w-px h-10 bg-slate-200 dark:bg-slate-800"></div>
+</div>
+<div>
+<p class="text-xs font-bold text-slate-800 dark:text-slate-200">Portal Setting Changed</p>
+<p class="text-[10px] text-slate-500 mb-1">Root Admin updated Fee Deadline</p>
+<p class="text-[10px] font-medium text-slate-400">2 mins ago</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="relative">
+<div class="size-2 bg-emerald-500 rounded-full mt-1.5"></div>
+<div class="absolute top-4 left-1 w-px h-10 bg-slate-200 dark:bg-slate-800"></div>
+</div>
+<div>
+<p class="text-xs font-bold text-slate-800 dark:text-slate-200">New Bulk Export</p>
+<p class="text-[10px] text-slate-500 mb-1">Admission Report - Phase 1</p>
+<p class="text-[10px] font-medium text-slate-400">15 mins ago</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="relative">
+<div class="size-2 bg-amber-500 rounded-full mt-1.5"></div>
+<div class="absolute top-4 left-1 w-px h-10 bg-slate-200 dark:bg-slate-800"></div>
+</div>
+<div>
+<p class="text-xs font-bold text-slate-800 dark:text-slate-200">Security Alert</p>
+<p class="text-[10px] text-slate-500 mb-1">Failed login attempt from IP 192.168.1.1</p>
+<p class="text-[10px] font-medium text-slate-400">1 hour ago</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="relative">
+<div class="size-2 bg-indigo-500 rounded-full mt-1.5"></div>
+<div class="absolute top-4 left-1 w-px h-10 bg-slate-200 dark:bg-slate-800"></div>
+</div>
+<div>
+<p class="text-xs font-bold text-slate-800 dark:text-slate-200">System Backup</p>
+<p class="text-[10px] text-slate-500 mb-1">Automatic nightly database backup complete</p>
+<p class="text-[10px] font-medium text-slate-400">4 hours ago</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="relative">
+<div class="size-2 bg-slate-300 rounded-full mt-1.5"></div>
+</div>
+<div>
+<p class="text-xs font-bold text-slate-800 dark:text-slate-200">Role Modified</p>
+<p class="text-[10px] text-slate-500 mb-1">Added "Department Head" role permissions</p>
+<p class="text-[10px] font-medium text-slate-400">6 hours ago</p>
+</div>
+</div>
+</div>
+<div class="p-4 border-t border-slate-100 dark:border-slate-800">
+<button class="w-full text-xs font-bold text-slate-500 hover:text-primary transition-colors py-2">View Full Audit Trail</button>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-12 pt-8 border-t border-slate-200 dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4 text-slate-400">
+<div class="flex items-center gap-4">
+<p class="text-xs font-medium uppercase tracking-widest">Master Control Unit</p>
+<span class="text-slate-300">|</span>
+<p class="text-xs">© 2024 Er. Perumal Manimekalai College of Engineering</p>
+</div>
+<div class="flex gap-6 text-xs font-bold uppercase tracking-tighter">
+<a class="hover:text-primary transition-colors" href="#">Documentation</a>
+<a class="hover:text-primary transition-colors" href="#">IT Support</a>
+<a class="hover:text-primary transition-colors" href="#">Security Policy</a>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+</body></html>

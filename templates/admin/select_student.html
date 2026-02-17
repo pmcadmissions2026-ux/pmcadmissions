@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Select Student - Document Upload</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <style>
+        body { font-family: 'Lexend', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-blue-50 to-blue-100">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <h1 class="text-2xl font-bold text-blue-600">PMC ADMISSION PORTAL</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="text-gray-600">User</span>
+                <a href="{{ url_for('auth.logout') }}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Breadcrumb -->
+    <div class="bg-white px-4 py-3 shadow-sm">
+        <div class="max-w-7xl mx-auto text-sm text-gray-600">
+            <a href="{{ url_for('admin.admin_dashboard') }}" class="hover:text-blue-600">Dashboard</a>
+            <span class="mx-2">→</span>
+            <span class="text-blue-600 font-semibold">Select Student</span>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">Select Student for Document Upload</h1>
+            <p class="text-gray-600">Choose a student to upload their required documents</p>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="mb-6">
+            <input type="text" id="searchInput" placeholder="Search by Student Name or Unique ID..." 
+                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+        </div>
+
+        {% if pending_students and pending_students|length > 0 %}
+        <!-- Pending Students Grid -->
+        <div class="mb-8">
+            <div class="flex items-center gap-2 mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">Pending Document Upload</h2>
+                <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-semibold">{{ pending_students|length }}</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for student in pending_students %}
+                <a href="{{ url_for('admin.applications', student_id=student.id) }}" class="group">
+                    <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg hover:border-blue-500 border-2 border-transparent transition-all cursor-pointer">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-800 group-hover:text-blue-600">{{ student.name }}</h3>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    <span class="font-semibold">Unique ID:</span> 
+                                    <span class="font-mono text-blue-600">{{ student.unique_id }}</span>
+                                </p>
+                            </div>
+                            <div class="bg-yellow-100 p-3 rounded-lg group-hover:bg-yellow-200 transition">
+                                <span class="material-symbols-outlined text-yellow-600">upload_file</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 text-sm text-gray-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Click to upload documents
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Completed/Submitted Students -->
+        {% if completed_students and completed_students|length > 0 %}
+        <div>
+            <div class="flex items-center gap-2 mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">Documents Submitted</h2>
+                <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">{{ completed_students|length }}</span>
+            </div>
+            <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for student in completed_students %}
+                    <div class="bg-white rounded-lg p-4 border border-green-200">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <h3 class="text-lg font-bold text-gray-800">{{ student.name }}</h3>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    <span class="font-semibold">Unique ID:</span> 
+                                    <span class="font-mono text-green-600">{{ student.unique_id }}</span>
+                                </p>
+                                {% if student.application_number %}
+                                <p class="text-sm text-gray-600 mt-1">
+                                    <span class="font-semibold">Application #:</span> 
+                                    <span class="font-mono text-blue-600">{{ student.application_number }}</span>
+                                </p>
+                                {% endif %}
+                                <p class="text-xs text-gray-500 mt-2">
+                                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-800">
+                                        <span class="material-symbols-outlined text-sm">check_circle</span>
+                                        {{ student.documents_count }} file(s) uploaded
+                                    </span>
+                                </p>
+                            </div>
+                            <div class="bg-green-100 p-2 rounded-lg">
+                                <span class="material-symbols-outlined text-green-600 text-2xl">done</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Empty State -->
+        {% if not pending_students and not completed_students or (pending_students|length == 0 and completed_students|length == 0) %}
+        <!-- No Students -->
+        <div class="bg-yellow-50 border-l-4 border-yellow-500 rounded-lg p-6">
+            <div class="flex items-start gap-4">
+                <div class="flex-shrink-0">
+                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="font-bold text-yellow-900 mb-1">No Students Available</h3>
+                    <p class="text-yellow-800 text-sm">
+                        There are no students available for document upload yet. 
+                        <a href="{{ url_for('admin.admin_dashboard') }}" class="underline font-semibold hover:text-yellow-900">Go back to dashboard</a> 
+                        to assign branches to students first.
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Back Button -->
+        <div class="mt-8">
+            <a href="{{ url_for('admin.admin_dashboard') }}" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 font-semibold">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        const pendingStudentCards = document.querySelectorAll('.grid:nth-of-type(1) a[href*="student_id"]');
+        const completedStudentCards = document.querySelectorAll('.bg-green-50 .grid a, .bg-green-50 .grid div[class*="grid"]');
+
+        searchInput.addEventListener('keyup', function() {
+            const searchTerm = this.value.toLowerCase();
+            let pendingVisibleCount = 0;
+            let completedVisibleCount = 0;
+
+            // Filter pending students
+            pendingStudentCards.forEach(card => {
+                const studentName = card.querySelector('h3').textContent.toLowerCase();
+                const uniqueId = card.querySelector('span.font-mono').textContent.toLowerCase();
+
+                if (studentName.includes(searchTerm) || uniqueId.includes(searchTerm)) {
+                    card.style.display = '';
+                    pendingVisibleCount++;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Filter completed students
+            const completedContainer = document.querySelector('.bg-green-50 .grid');
+            if (completedContainer) {
+                const completedCards = completedContainer.querySelectorAll('div[class*="rounded-lg"]');
+                completedCards.forEach(card => {
+                    const studentName = card.querySelector('h3')?.textContent.toLowerCase() || '';
+                    const uniqueId = card.querySelector('span.font-mono')?.textContent.toLowerCase() || '';
+
+                    if (studentName.includes(searchTerm) || uniqueId.includes(searchTerm)) {
+                        card.style.display = '';
+                        completedVisibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            }
+
+            // Show "no results" message if needed
+            let noResultsMsg = document.getElementById('noResultsMsg');
+            
+            if (pendingVisibleCount === 0 && completedVisibleCount === 0 && searchTerm) {
+                if (!noResultsMsg) {
+                    noResultsMsg = document.createElement('div');
+                    noResultsMsg.id = 'noResultsMsg';
+                    noResultsMsg.className = 'bg-gray-50 border-l-4 border-gray-400 rounded-lg p-6 text-center';
+                    noResultsMsg.innerHTML = '<p class="text-gray-600">No students found matching your search.</p>';
+                    searchInput.parentNode.parentNode.appendChild(noResultsMsg);
+                }
+                noResultsMsg.style.display = 'block';
+            } else {
+                if (noResultsMsg) {
+                    noResultsMsg.style.display = 'none';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

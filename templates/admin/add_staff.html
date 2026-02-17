@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Staff Member - PMC Admission</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-indigo-800 text-white">
+            <div class="p-6">
+                <h1 class="text-2xl font-bold">PMC Admission</h1>
+                <p class="text-sm text-indigo-200 mt-1">{{ user.role|title }}</p>
+            </div>
+            <nav class="mt-6">
+                <a href="{{ url_for('admin.dashboard') }}" class="flex items-center px-6 py-3 text-indigo-100 hover:bg-indigo-700">
+                    <span class="material-symbols-outlined mr-3">dashboard</span>
+                    Dashboard
+                </a>
+                <a href="{{ url_for('admin.staff_management') }}" class="flex items-center px-6 py-3 bg-indigo-900 text-white">
+                    <span class="material-symbols-outlined mr-3">group</span>
+                    Staff Management
+                </a>
+                <a href="{{ url_for('auth.logout') }}" class="flex items-center px-6 py-3 text-indigo-100 hover:bg-indigo-700 mt-auto">
+                    <span class="material-symbols-outlined mr-3">logout</span>
+                    Logout
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto p-8">
+            <div class="max-w-3xl mx-auto">
+                <a href="{{ url_for('admin.staff_management') }}" class="text-indigo-600 hover:text-indigo-900 mb-4 inline-block">
+                    ← Back to Staff Management
+                </a>
+                
+                <div class="bg-white rounded-lg shadow p-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Add New Staff Member</h2>
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                            <div class="mb-4 p-4 rounded-lg {% if category == 'success' %}bg-green-50 text-green-800{% else %}bg-red-50 text-red-800{% endif %}">
+                                {{ message }}
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" action="{{ url_for('admin.add_staff') }}">
+                        <div class="grid grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Employee ID *</label>
+                                <input type="text" name="employee_id" required 
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                       placeholder="EMP001">
+                            </div>
+
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Email *</label>
+                                <input type="email" name="email" required 
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                       placeholder="email@pmc.edu">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">First Name *</label>
+                                <input type="text" name="first_name" required 
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Last Name</label>
+                                <input type="text" name="last_name" 
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Phone Number</label>
+                                <input type="tel" name="phone" 
+                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                       placeholder="10-digit number">
+                            </div>
+
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Role *</label>
+                                <select name="role_id" required 
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                    <option value="">Select Role</option>
+                                    {% for role in roles %}
+                                    <option value="{{ role.role_id }}">{{ role.role_name|replace('_', ' ')|title }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            <label class="block text-gray-700 font-medium mb-2">Password *</label>
+                            <input type="password" name="password" required 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                   placeholder="Temporary password">
+                            <p class="text-sm text-gray-500 mt-1">User should change this password after first login</p>
+                        </div>
+
+                        <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                            <p class="text-sm text-blue-700">
+                                <strong>Note:</strong> The password will be stored in plain text as per system requirements. 
+                                Ensure the user changes it after first login.
+                            </p>
+                        </div>
+
+                        <div class="flex gap-4">
+                            <button type="submit" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 font-medium">
+                                Add Staff Member
+                            </button>
+                            <a href="{{ url_for('admin.staff_management') }}" 
+                               class="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 font-medium">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

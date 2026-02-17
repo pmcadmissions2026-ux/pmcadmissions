@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Applications - PMC Admission</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-indigo-800 text-white">
+            <div class="p-6">
+                <h1 class="text-2xl font-bold">PMC Admission</h1>
+                <p class="text-sm text-indigo-200 mt-1">{{ user.role|title }}</p>
+            </div>
+            <nav class="mt-6">
+                <a href="{{ url_for('admin.dashboard') }}" class="flex items-center px-6 py-3 text-indigo-100 hover:bg-indigo-700">
+                    <span class="material-symbols-outlined mr-3">dashboard</span>
+                    Dashboard
+                </a>
+                <a href="{{ url_for('admin.applications') }}" class="flex items-center px-6 py-3 bg-indigo-900 text-white">
+                    <span class="material-symbols-outlined mr-3">description</span>
+                    Applications
+                </a>
+
+                <a href="{{ url_for('auth.logout') }}" class="flex items-center px-6 py-3 text-indigo-100 hover:bg-indigo-700 mt-auto">
+                    <span class="material-symbols-outlined mr-3">logout</span>
+                    Logout
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto">
+            <div class="p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-bold text-gray-800">Admission Applications</h2>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="mb-6">
+                    <input type="text" id="searchInput" placeholder="Search by Student Name, Registration ID, or Unique ID..." 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600">
+                </div>
+
+                <!-- Filters -->
+                <div class="flex gap-4 mb-6">
+                    <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-lg">
+                        <option value="">All Status</option>
+                        <option value="submitted">Submitted</option>
+                        <option value="under_review">Under Review</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                    <select id="deptFilter" class="px-4 py-2 border border-gray-300 rounded-lg">
+                        <option value="">All Departments</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.dept_id }}">{{ dept.dept_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Applications Table -->
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Registration ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Student Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Department</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Percentage</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for app in applications %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {{ app.registration_id }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                    {{ app.full_name }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ app.dept_name or 'Not Allocated' }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ "%.2f"|format(app.percentage or 0) }}%
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                        {% if app.application_status == 'approved' %}bg-green-100 text-green-800
+                                        {% elif app.application_status == 'rejected' %}bg-red-100 text-red-800
+                                        {% elif app.application_status == 'under_review' %}bg-yellow-100 text-yellow-800
+                                        {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                        {{ app.application_status|replace('_', ' ')|title }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {% if app.created_at is string %}
+                                        {{ app.created_at[:10] }}
+                                    {% elif app.created_at %}
+                                        {{ app.created_at.strftime('%Y-%m-%d') }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <a href="{{ url_for('admin.view_application', app_id=app.app_id) }}" 
+                                       class="text-indigo-600 hover:text-indigo-900 mr-4">View</a>
+                                    {% if app.application_status == 'submitted' %}
+                                    <button onclick="allocateDept({{ app.app_id }})" 
+                                            class="text-green-600 hover:text-green-900">Allocate</button>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="7" class="px-6 py-4 text-center text-gray-500">No applications found</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        const statusFilter = document.getElementById('statusFilter');
+        const deptFilter = document.getElementById('deptFilter');
+        const tableRows = document.querySelectorAll('tbody tr');
+
+        function filterTable() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const statusValue = statusFilter.value.toLowerCase();
+            const deptValue = deptFilter.value;
+
+            tableRows.forEach(row => {
+                if (row.cells.length === 7) {  // Skip the "No applications" row
+                    const registrationId = row.cells[0].textContent.toLowerCase();
+                    const studentName = row.cells[1].textContent.toLowerCase();
+                    const department = row.cells[2].textContent.toLowerCase();
+                    const status = row.cells[4].textContent.toLowerCase();
+
+                    // Check search term
+                    const searchMatch = !searchTerm || 
+                        registrationId.includes(searchTerm) || 
+                        studentName.includes(searchTerm);
+
+                    // Check status filter
+                    const statusMatch = !statusValue || status.includes(statusValue);
+
+                    // Check department filter
+                    const deptMatch = !deptValue || row.cells[2].textContent.includes(deptValue);
+
+                    row.style.display = searchMatch && statusMatch && deptMatch ? '' : 'none';
+                }
+            });
+        }
+
+        searchInput.addEventListener('keyup', filterTable);
+        statusFilter.addEventListener('change', filterTable);
+        deptFilter.addEventListener('change', filterTable);
+
+        function allocateDept(appId) {
+            if(confirm('Proceed with department allocation?')) {
+                window.location.href = `/admin/allocate-department/${appId}`;
+            }
+        }
+    </script>
+</body>
+</html>

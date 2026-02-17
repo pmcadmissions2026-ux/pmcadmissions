@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Payments - PMC Engineering</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-nav {
+            background-color: #137fec;
+            color: white !important;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white min-h-screen flex flex-col">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] px-6 py-3 sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<div class="text-primary">
+<svg fill="none" height="32" viewbox="0 0 48 48" width="32" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Er. Perumal Manimekalai College of Engineering</h2>
+</div>
+<div class="flex items-center gap-4">
+<a href="{{ url_for('auth.logout') }}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">Logout</a>
+</div>
+</header>
+
+<div class="flex flex-1">
+<aside class="w-56 border-r border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#111827] hidden md:flex flex-col">
+<nav class="flex-1 overflow-y-auto px-2 py-6 flex flex-col gap-2">
+<a href="{{ url_for('admin.payments_list') }}" class="flex items-center gap-3 px-4 py-2 text-white bg-primary rounded-lg transition-colors active-nav">
+<span class="material-symbols-outlined text-xl">payments</span>
+<span class="text-sm font-medium">Payments</span>
+</a>
+</nav>
+<div class="border-t border-[#e5e7eb] dark:border-[#2d3748] px-4 py-4">
+<p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">{{ user.name }}</p>
+<p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">{{ user.role }}</p>
+</div>
+</aside>
+
+<main class="flex-1 overflow-y-auto">
+<div class="max-w-[1400px] mx-auto p-6 flex flex-col gap-6">
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+        <div class="bg-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-50 border border-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-200 text-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-800 px-4 py-3 rounded-lg">
+            {{ message }}
+        </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<div class="flex flex-wrap justify-between items-end gap-3">
+<div class="flex min-w-72 flex-col gap-1">
+<p class="text-[#111418] dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">Payments</p>
+<p class="text-[#617589] dark:text-[#a0aec0] text-base font-normal leading-normal">Manage initial payment collection for admitted students.</p>
+</div>
+</div>
+
+<div class="flex flex-col gap-8">
+
+<!-- PENDING STUDENTS TABLE -->
+<div class="flex flex-col bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden">
+<div class="flex items-center justify-between px-6 py-5 border-b border-[#e5e7eb] dark:border-[#2d3748]">
+<h2 class="text-[#111418] dark:text-white text-xl font-bold leading-tight">Pending Payment</h2>
+<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">{{ pending_students|length }} Student(s)</span>
+</div>
+
+<div class="px-6 py-4">
+    <input id="pendingSearch" type="search" placeholder="Search pending payments (name, id, reg, dept)..." class="w-full md:w-1/2 px-3 py-2 border rounded-lg focus:outline-none focus:ring" />
+</div>
+
+<div class="overflow-x-auto">
+<table id="pendingTable" class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-[#f8fafc] dark:bg-[#2d3748] border-b border-[#e5e7eb] dark:border-[#2d3748]">
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">App #</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Student Name</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Unique ID</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Registration ID</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Allotted Department</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Quota</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
+{% if pending_students %}
+    {% for s in pending_students %}
+    <tr class="hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors">
+        <td class="px-6 py-4">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">#{{ s.app_id }}</span>
+        </td>
+        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">{{ s.student_name }}</td>
+        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">{{ s.unique_id }}</td>
+        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">{{ s.registration_id }}</td>
+        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white">{{ s.allotted_dept }}</td>
+        <td class="px-6 py-4">
+            {% if s.quota_type == 'GQ' %}
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">General Quota</span>
+            {% elif s.quota_type == 'MQ' %}
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">Management Quota</span>
+            {% endif %}
+        </td>
+        <td class="px-6 py-4">
+            <a href="{{ url_for('admin.payments_form', app_id=s.app_id) }}" class="inline-flex items-center gap-2 bg-primary text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-primary/90 shadow-sm transition-all active:scale-95">
+                <span class="material-symbols-outlined text-sm">payments</span>
+                Add Payment
+            </a>
+        </td>
+    </tr>
+    {% endfor %}
+{% else %}
+    <tr>
+        <td colspan="7" class="px-6 py-12 text-center text-slate-500">
+            <span class="material-symbols-outlined text-4xl mb-2">check_circle</span>
+            <p class="text-sm font-medium">No pending payments</p>
+        </td>
+    </tr>
+{% endif %}
+</tbody>
+</table>
+</div>
+</div>
+
+<!-- COMPLETED PAYMENTS TABLE -->
+<div class="flex flex-col bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden">
+<div class="flex items-center justify-between px-6 py-5 border-b border-[#e5e7eb] dark:border-[#2d3748]">
+<h2 class="text-[#111418] dark:text-white text-xl font-bold leading-tight">Payment Collected</h2>
+<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">{{ completed_students|length }} Student(s)</span>
+</div>
+
+<div class="px-6 py-4">
+    <input id="completedSearch" type="search" placeholder="Search collected payments (name, id, bill no, mode)..." class="w-full md:w-1/2 px-3 py-2 border rounded-lg focus:outline-none focus:ring" />
+</div>
+
+<div class="overflow-x-auto">
+<table id="completedTable" class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-[#f8fafc] dark:bg-[#2d3748] border-b border-[#e5e7eb] dark:border-[#2d3748]">
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">App #</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Student Name</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Unique ID</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Bill No</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Mode of Payment</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Amount</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
+{% if completed_students %}
+    {% for s in completed_students %}
+    <tr class="hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors">
+        <td class="px-6 py-4">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">#{{ s.app_id }}</span>
+        </td>
+        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">{{ s.student_name }}</td>
+        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">{{ s.unique_id }}</td>
+        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-bold">{{ s.bill_no }}</td>
+        <td class="px-6 py-4">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold 
+            {% if s.mode_of_payment == 'Cash' %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400
+            {% elif s.mode_of_payment == 'Card' %}bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400
+            {% elif s.mode_of_payment == 'Cheque' %}bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400
+            {% elif s.mode_of_payment == 'Bank Transfer' %}bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400
+            {% else %}bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400{% endif %}">
+                {{ s.mode_of_payment }}
+            </span>
+            {% if s.mode_of_payment == 'UPI' and s.upi_id %}
+            <div class="text-xs text-slate-500 mt-1">{{ s.upi_id }}</div>
+            {% endif %}
+        </td>
+        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-bold">₹ {{ "%.2f"|format(s.amount) }}</td>
+    </tr>
+    {% endfor %}
+{% else %}
+    <tr>
+        <td colspan="6" class="px-6 py-12 text-center text-slate-500">
+            <span class="material-symbols-outlined text-4xl mb-2">folder_open</span>
+            <p class="text-sm font-medium">No payments collected yet</p>
+        </td>
+    </tr>
+{% endif %}
+</tbody>
+</table>
+</div>
+</div>
+
+</div>
+</div>
+</main>
+</div>
+<script>
+(function(){
+    function debounce(fn, delay){ let t; return function(){ const args=arguments; const ctx=this; clearTimeout(t); t=setTimeout(function(){ fn.apply(ctx, args); }, delay); }; }
+    function filterTable(tableId, query){
+        const q = (query || '').trim().toLowerCase();
+        const rows = document.querySelectorAll('#'+tableId+' tbody tr');
+        rows.forEach(function(r){
+            const text = r.textContent.toLowerCase();
+            r.style.display = (q === '' || text.indexOf(q) !== -1) ? '' : 'none';
+        });
+    }
+
+    var pendingInput = document.getElementById('pendingSearch');
+    var completedInput = document.getElementById('completedSearch');
+
+    if(pendingInput){
+        pendingInput.addEventListener('input', debounce(function(e){ filterTable('pendingTable', e.target.value); }, 200));
+    }
+    if(completedInput){
+        completedInput.addEventListener('input', debounce(function(e){ filterTable('completedTable', e.target.value); }, 200));
+    }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Document Upload - Step 3</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <style>
+        body { font-family: 'Lexend', sans-serif; }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-blue-50 to-blue-100 min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-blue-600">PMC ADMISSION PORTAL</h1>
+            <a href="{{ url_for('auth.logout') }}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">Logout</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-5xl mx-auto px-4 py-8">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Step 3 of 3: Document Upload</h1>
+            <p class="text-gray-600 mb-4">Upload required documents to finalize your application</p>
+            <div class="w-full bg-gray-300 rounded-full h-2">
+                <div class="bg-green-500 h-2 rounded-full" style="width: 100%"></div>
+            </div>
+        </div>
+
+        <!-- Student Info Card -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-2">Student Name</label>
+                    <p class="text-lg font-bold text-gray-800">{{ student.full_name }}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-2">UNIQUE ID</label>
+                    <p class="text-lg font-bold text-green-600">{{ student.unique_id }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <form method="POST" enctype="multipart/form-data" class="space-y-8">
+            <!-- Application Number Entry -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Application Number</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Enter Application Number</label>
+                        <input 
+                            type="text" 
+                            name="application_number" 
+                            placeholder="ADM-2026-XXX"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value="{{ application_id if application_id != 'ADM-2026-5' else '' }}"
+                        />
+                        <p class="text-xs text-gray-500 mt-1">Example: ADM-2026-5</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Documents Section -->
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Upload Documents</h2>
+                <p class="text-sm text-gray-600 mb-6">Upload available documents. You can submit now and add remaining documents later.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- 10th Mark Sheet -->
+                    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+                        <div class="flex items-center justify-between mb-4">
+                            <label class="text-lg font-semibold text-gray-800">10th Mark Sheet</label>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-4">Upload your 10th standard mark sheet (PDF or JPG)</p>
+                        <div class="border-2 border-dashed border-blue-300 rounded-lg p-6 text-center hover:bg-blue-50 transition cursor-pointer" onclick="document.getElementById('file_10th_mark').click()">
+                            <svg class="w-12 h-12 mx-auto text-blue-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p class="text-gray-700 font-semibold mb-1">Click to upload or drag and drop</p>
+                            <p class="text-gray-500 text-sm">Max 5MB</p>
+                        </div>
+                        <input type="file" id="file_10th_mark" name="file_10th_mark" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
+                        <div class="mt-2 text-sm text-gray-600" id="file_10th_mark_name">No file selected</div>
+                    </div>
+
+                    <!-- 12th Mark Sheet -->
+                    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+                        <div class="flex items-center justify-between mb-4">
+                            <label class="text-lg font-semibold text-gray-800">12th Mark Sheet</label>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-4">Upload your 12th standard mark sheet (PDF or JPG)</p>
+                        <div class="border-2 border-dashed border-blue-300 rounded-lg p-6 text-center hover:bg-blue-50 transition cursor-pointer" onclick="document.getElementById('file_12th_mark').click()">
+                            <svg class="w-12 h-12 mx-auto text-blue-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p class="text-gray-700 font-semibold mb-1">Click to upload or drag and drop</p>
+                            <p class="text-gray-500 text-sm">Max 5MB</p>
+                        </div>
+                        <input type="file" id="file_12th_mark" name="file_12th_mark" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
+                        <div class="mt-2 text-sm text-gray-600" id="file_12th_mark_name">No file selected</div>
+                    </div>
+
+                    <!-- Community Certificate -->
+                    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+                        <div class="flex items-center justify-between mb-4">
+                            <label class="text-lg font-semibold text-gray-800">Community Certificate</label>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-4">Upload your community certificate (PDF or JPG)</p>
+                        <div class="border-2 border-dashed border-blue-300 rounded-lg p-6 text-center hover:bg-blue-50 transition cursor-pointer" onclick="document.getElementById('file_community').click()">
+                            <svg class="w-12 h-12 mx-auto text-blue-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p class="text-gray-700 font-semibold mb-1">Click to upload or drag and drop</p>
+                            <p class="text-gray-500 text-sm">Max 5MB</p>
+                        </div>
+                        <input type="file" id="file_community" name="file_community" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
+                        <div class="mt-2 text-sm text-gray-600" id="file_community_name">No file selected</div>
+                    </div>
+
+                    <!-- Passport Photo -->
+                    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+                        <div class="flex items-center justify-between mb-4">
+                            <label class="text-lg font-semibold text-gray-800">Passport Photo</label>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-4">Upload your passport size photo (JPG or PNG)</p>
+                        <div class="border-2 border-dashed border-blue-300 rounded-lg p-6 text-center hover:bg-blue-50 transition cursor-pointer" onclick="document.getElementById('file_photo').click()">
+                            <svg class="w-12 h-12 mx-auto text-blue-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p class="text-gray-700 font-semibold mb-1">Click to upload or drag and drop</p>
+                            <p class="text-gray-500 text-sm">Max 5MB</p>
+                        </div>
+                        <input type="file" id="file_photo" name="file_photo" class="hidden" accept=".jpg,.jpeg,.png">
+                        <div class="mt-2 text-sm text-gray-600" id="file_photo_name">No file selected</div>
+                    </div>
+
+                    <!-- Transfer Certificate -->
+                    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+                        <div class="flex items-center justify-between mb-4">
+                            <label class="text-lg font-semibold text-gray-800">Transfer Certificate</label>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-4">Upload your transfer certificate (PDF or JPG)</p>
+                        <div class="border-2 border-dashed border-blue-300 rounded-lg p-6 text-center hover:bg-blue-50 transition cursor-pointer" onclick="document.getElementById('file_tc').click()">
+                            <svg class="w-12 h-12 mx-auto text-blue-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p class="text-gray-700 font-semibold mb-1">Click to upload or drag and drop</p>
+                            <p class="text-gray-500 text-sm">Max 5MB</p>
+                        </div>
+                        <input type="file" id="file_tc" name="file_tc" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
+                        <div class="mt-2 text-sm text-gray-600" id="file_tc_name">No file selected</div>
+                    </div>
+
+                    <!-- FG Certificate -->
+                    <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+                        <div class="flex items-center justify-between mb-4">
+                            <label class="text-lg font-semibold text-gray-800">FG Certificate</label>
+                            <span class="bg-green-100 text-green-800 text-xs font-bold px-3 py-1 rounded-full">OPTIONAL</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-4">Upload your FG certificate if applicable (PDF or JPG)</p>
+                        <div class="border-2 border-dashed border-green-300 rounded-lg p-6 text-center hover:bg-green-50 transition cursor-pointer" onclick="document.getElementById('file_fg').click()">
+                            <svg class="w-12 h-12 mx-auto text-green-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p class="text-gray-700 font-semibold mb-1">Click to upload or drag and drop</p>
+                            <p class="text-gray-500 text-sm">Max 5MB</p>
+                        </div>
+                        <input type="file" id="file_fg" name="file_fg" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
+                        <div class="mt-2 text-sm text-gray-600" id="file_fg_name">No file selected</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Box -->
+            <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-6">
+                <p class="text-blue-900 text-sm">
+                    <span class="font-semibold">Important:</span> All files must be in PDF or JPG format with a maximum size of 5MB each. Upload at least one document now - you can add remaining documents later.
+                </p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-4 justify-end">
+                <button type="button" class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-3 rounded-lg font-semibold transition" onclick="window.history.back()">
+                    Cancel
+                </button>
+                <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Submit Documents
+                </button>
+                </button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
+
+<script>
+const fileInputs = ['file_10th_mark', 'file_12th_mark', 'file_community', 'file_photo', 'file_tc', 'file_fg'];
+
+fileInputs.forEach(inputId => {
+    const fileInput = document.getElementById(inputId);
+    const nameDisplay = document.getElementById(inputId + '_name');
+    
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                const file = this.files[0];
+                const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+                nameDisplay.textContent = `✓ ${file.name} (${sizeMB}MB)`;
+            } else {
+                nameDisplay.textContent = 'No file selected';
+            }
+        });
+    }
+});
+
+document.querySelector('form').addEventListener('submit', function(e) {
+    // Check if at least one file is uploaded (not all required)
+    const allFiles = ['file_10th_mark', 'file_12th_mark', 'file_community', 'file_photo', 'file_tc', 'file_fg'];
+    let hasAnyFile = false;
+    
+    allFiles.forEach(fileId => {
+        const fileInput = document.getElementById(fileId);
+        if (fileInput.files && fileInput.files.length > 0) {
+            hasAnyFile = true;
+        }
+    });
+    
+    if (!hasAnyFile) {
+        e.preventDefault();
+        alert('Please upload at least one document to proceed.');
+    }
+});
+</script>

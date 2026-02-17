@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Status - PMC Admission</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-4xl mx-auto p-8">
+        <h2 class="text-3xl font-bold text-gray-800 mb-6">Application Status</h2>
+        
+        <div class="bg-white rounded-lg shadow p-8">
+            {% if application %}
+                <!-- Status Banner -->
+                <div class="mb-6 p-4 rounded-lg 
+                    {% if application.application_status == 'approved' %}bg-green-50 border-l-4 border-green-400
+                    {% elif application.application_status == 'rejected' %}bg-red-50 border-l-4 border-red-400
+                    {% elif application.application_status == 'under_review' %}bg-yellow-50 border-l-4 border-yellow-400
+                    {% else %}bg-blue-50 border-l-4 border-blue-400{% endif %}">
+                    <h3 class="font-semibold text-lg 
+                        {% if application.application_status == 'approved' %}text-green-800
+                        {% elif application.application_status == 'rejected' %}text-red-800
+                        {% elif application.application_status == 'under_review' %}text-yellow-800
+                        {% else %}text-blue-800{% endif %}">
+                        Status: {{ application.application_status|replace('_', ' ')|title }}
+                    </h3>
+                </div>
+
+                <!-- Application Details -->
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label class="text-sm text-gray-500">Registration ID</label>
+                        <p class="text-gray-900 font-medium">{{ application.registration_id }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm text-gray-500">Full Name</label>
+                        <p class="text-gray-900 font-medium">{{ application.full_name }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm text-gray-500">Allocated Department</label>
+                        <p class="text-gray-900 font-medium">{{ application.dept_name or 'Pending Allocation' }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm text-gray-500">Application Date</label>
+                        <p class="text-gray-900">{{ application.created_at.strftime('%Y-%m-%d') if application.created_at else 'N/A' }}</p>
+                    </div>
+                </div>
+
+                <!-- Progress Tracker -->
+                <div class="mt-8">
+                    <h3 class="font-semibold text-gray-700 mb-4">Application Progress</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center">✓</div>
+                            <div class="ml-4">
+                                <p class="font-medium">Step 1: Personal & Academic Details</p>
+                                <p class="text-sm text-gray-500">Completed</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 rounded-full {{ 'bg-green-500 text-white' if application.step2_completed else 'bg-gray-300' }} flex items-center justify-center">
+                                {{ '✓' if application.step2_completed else '2' }}
+                            </div>
+                            <div class="ml-4">
+                                <p class="font-medium">Step 2: Branch Selection</p>
+                                <p class="text-sm text-gray-500">{{ 'Completed' if application.step2_completed else 'Pending' }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 rounded-full {{ 'bg-green-500 text-white' if application.step3_completed else 'bg-gray-300' }} flex items-center justify-center">
+                                {{ '✓' if application.step3_completed else '3' }}
+                            </div>
+                            <div class="ml-4">
+                                <p class="font-medium">Step 3: Review & Submit</p>
+                                <p class="text-sm text-gray-500">{{ 'Completed' if application.step3_completed else 'Pending' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="mt-8">
+                    {% if not application.step3_completed %}
+                        <a href="{{ url_for('student.step1') }}" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 inline-block">
+                            Continue Application
+                        </a>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <span class="material-symbols-outlined text-6xl text-gray-400">description</span>
+                    <p class="text-gray-500 mt-4">No application found</p>
+                    <a href="{{ url_for('student.step1') }}" class="mt-4 bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 inline-block">
+                        Start New Application
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

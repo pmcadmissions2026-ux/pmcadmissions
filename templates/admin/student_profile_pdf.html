@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>Student Profile - {{ profile.student.full_name or profile.student.name }}</title>
+<style>
+@page{size:A4;margin:1cm}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#f8fafc;color:#111418;padding:15px;font-size:11px}
+
+/* Header */
+.header{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.1);display:flex;align-items:center;gap:15px}
+.avatar{width:50px;height:50px;border-radius:8px;background:linear-gradient(135deg,#3b82f6 0%,#2563eb 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold}
+.header-info h1{font-size:18px;font-weight:bold;margin-bottom:3px}
+.header-info p{font-size:10px;color:#64748b}
+
+/* Section Card */
+.section{background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.1);page-break-inside:avoid}
+.section-header{padding:12px 20px;color:#fff;font-size:14px;font-weight:bold;display:flex;align-items:center;gap:8px}
+.section-body{padding:20px}
+
+/* Gradient Headers */
+.bg-blue{background:linear-gradient(90deg,#3b82f6 0%,#2563eb 100%)}
+.bg-indigo{background:linear-gradient(90deg,#6366f1 0%,#4f46e5 100%)}
+.bg-purple{background:linear-gradient(90deg,#a855f7 0%,#9333ea 100%)}
+.bg-green{background:linear-gradient(90deg,#10b981 0%,#059669 100%)}
+.bg-rose{background:linear-gradient(90deg,#f43f5e 0%,#e11d48 100%)}
+.bg-emerald{background:linear-gradient(90deg,#10b981 0%,#059669 100%)}
+
+/* Grid Layout */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+.grid-item{margin-bottom:10px}
+.grid-item .label{font-size:9px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
+.grid-item .value{font-size:11px;font-weight:600;color:#111418}
+.value-amber{color:#d97706;font-weight:bold;font-size:12px}
+.value-orange{color:#ea580c;font-weight:bold;font-size:12px}
+.badge{display:inline-block;padding:4px 10px;border-radius:12px;font-size:9px;font-weight:bold;background:#d1fae5;color:#065f46}
+
+/* Tables */
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th{background:#f8fafc;padding:10px 12px;text-align:left;border:1px solid #e5e7eb;font-size:9px;font-weight:600;color:#475569;text-transform:uppercase}
+td{padding:10px 12px;border:1px solid #e5e7eb;font-size:10px;background:#fff}
+tr:nth-child(even) td{background:#f8fafc}
+
+/* Branch Assignment */
+.branch-card{padding:15px;background:#f8fafc;border:1px solid#e5e7eb;border-radius:8px;margin-bottom:10px}
+.branch-card .label{font-size:9px;font-weight:600;color:#64748b;margin-bottom:4px}
+.branch-card .value{font-size:11px;font-weight:bold;color:#2563eb}
+
+/* Applications */
+.app-card{background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;padding:15px;margin-bottom:15px;page-break-inside:avoid}
+.app-title{font-size:12px;font-weight:bold;color:#111418;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #e5e7eb}
+.doc-label{font-size:9px;font-weight:600;color:#64748b;text-transform:uppercase;margin-bottom:8px}
+.docs-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;text-align:center}
+.doc-btn{padding:8px;border-radius:6px;color:#fff;font-size:16px;font-weight:bold;text-align:center}
+.doc-btn.blue{background:#3b82f6}
+.doc-btn.cyan{background:#06b6d4}
+.doc-btn.teal{background:#14b8a6}
+.doc-btn.indigo{background:#6366f1}
+.doc-btn.emerald{background:#10b981}
+.doc-btn.purple{background:#a855f7}
+.doc-btn.orange{background:#f97316}
+.doc-btn.empty{background:#e2e8f0;color:#94a3b8}
+.doc-name{font-size:9px;font-weight:600;color:#64748b;margin-top:3px}
+
+/* Footer */
+.footer{margin-top:30px;padding-top:15px;border-top:2px solid #e5e7eb;text-align:center;color:#64748b;font-size:9px}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+<div class="avatar">{{ (profile.student.full_name or profile.student.name or 'S')[0]|upper }}</div>
+<div class="header-info">
+<h1>{{ profile.student.full_name or profile.student.name or 'Student Profile' }}</h1>
+<p>ID: {{ profile.student.unique_id or 'N/A' }}</p>
+</div>
+</div>
+
+<!-- Personal Information -->
+<div class="section">
+<div class="section-header bg-blue">Personal Information</div>
+<div class="section-body">
+<div class="grid">
+<div class="grid-item">
+<div class="label">Full Name</div>
+<div class="value">{{ profile.student.full_name or profile.student.name or 'N/A' }}</div>
+</div>
+<div class="grid-item">
+<div class="label">Email</div>
+<div class="value">{{ profile.student.email or 'N/A' }}</div>
+</div>
+<div class="grid-item">
+<div class="label">Phone</div>
+<div class="value">{{ profile.student.phone or 'N/A' }}</div>
+</div>
+<div class="grid-item">
+<div class="label">Gender</div>
+<div class="value">{{ profile.student.gender or 'N/A' }}</div>
+</div>
+<div class="grid-item">
+<div class="label">Date of Birth</div>
+<div class="value">{{ profile.student.dob or 'N/A' }}</div>
+</div>
+<div class="grid-item">
+<div class="label">Status</div>
+<div class="value"><span class="badge">{{ profile.student.status or 'N/A' }}</span></div>
+</div>
+<div class="grid-item">
+<div class="label">Community</div>
+<div class="value">{{ profile.student.community or 'N/A' }}</div>
+</div>
+<div class="grid-item">
+<div class="label">Religion</div>
+<div class="value">{{ profile.student.religion or 'N/A' }}</div>
+</div>
+</div>
+</div>
+</div>
+
+{% if profile.academic %}
+<div class="section">
+<div class="section-header bg-indigo">Academic Information</div>
+<div class="section-body">
+<div class="grid">
+<div class="grid-item">
+<div class="label">School Name</div>
+<div class="value">{{ profile.academic.school_name or 'N/A' }}</div>
+</div>
+<div class="grid-item">
+<div class="label">HSC Percentage</div>
+<div class="value value-amber">{{ profile.student.plus2_percentage or 'N/A' }}%</div>
+</div>
+<div class="grid-item">
+<div class="label">Cutoff Score</div>
+<div class="value value-orange">{{ profile.academic.cutoff or 'N/A' }}</div>
+</div>
+<div class="grid-item">
+<div class="label">TNEA Eligible</div>
+<div class="value">{{ profile.academic.tnea_eligible or 'N/A' }}</div>
+</div>
+<div class="grid-item">
+<div class="label">TNEA Average</div>
+<div class="value">{{ profile.academic.tnea_average or 'N/A' }}</div>
+</div>
+</div>
+</div>
+</div>
+{% endif %}
+
+
+
+{% if profile.admissions %}
+<div class="section">
+<div class="section-header bg-purple">Branch Assignment</div>
+<div class="section-body">
+<div class="grid" style="grid-template-columns:repeat(2,1fr)">
+{% for adm in profile.admissions %}
+<div class="branch-card">
+<div class="label">Preferred Branch</div>
+<div class="value">{{ adm.preferred_dept_name or 'N/A' }}</div>
+</div>
+<div class="branch-card">
+<div class="label">Optional Branches</div>
+<div class="value" style="color:#111418;font-weight:600">{{ adm.optional_dept_name or 'N/A' }}</div>
+</div>
+{% endfor %}
+</div>
+</div>
+</div>
+{% endif %}
+
+{% if profile.applications %}
+<div class="section">
+<div class="section-header bg-green">Applications & Documents</div>
+<div class="section-body">
+{% for app in profile.applications %}
+<div class="app-card">
+<div class="app-title">Application {{ app.app_id }}</div>
+{% if profile.documents_by_app and profile.documents_by_app.get(app.app_id) %}
+<div class="doc-label">Documents</div>
+<div class="docs-grid">
+{% set docs = profile.documents_by_app.get(app.app_id, {}) %}
+<div>
+<div class="doc-btn {% if docs.get('10th_Mark_Sheet') %}blue{% else %}empty{% endif %}">✓</div>
+<div class="doc-name">10th</div>
+</div>
+<div>
+<div class="doc-btn {% if docs.get('12th_Mark_Sheet') %}cyan{% else %}empty{% endif %}">✓</div>
+<div class="doc-name">12th</div>
+</div>
+<div>
+<div class="doc-btn {% if docs.get('Community_Certificate') %}teal{% else %}empty{% endif %}">✓</div>
+<div class="doc-name">CC</div>
+</div>
+<div>
+<div class="doc-btn {% if docs.get('Transfer_Certificate') %}indigo{% else %}empty{% endif %}">✓</div>
+<div class="doc-name">TC</div>
+</div>
+<div>
+<div class="doc-btn {% if docs.get('FG_Certificate') %}emerald{% else %}empty{% endif %}">✓</div>
+<div class="doc-name">FG</div>
+</div>
+<div>
+<div class="doc-btn {% if docs.get('Passport_Photo') %}purple{% else %}empty{% endif %}">✓</div>
+<div class="doc-name">Photo</div>
+</div>
+{% set allotment = profile.counselling | selectattr('app_id', 'equalto', app.app_id) | first if profile.counselling else None %}
+<div>
+<div class="doc-btn {% if allotment and allotment.allotment_order_url %}orange{% else %}empty{% endif %}">✓</div>
+<div class="doc-name">Allotment</div>
+</div>
+</div>
+{% endif %}
+</div>
+{% endfor %}
+</div>
+</div>
+{% endif %}
+
+{% if profile.counselling %}
+<div class="section">
+<div class="section-header bg-rose">Counselling</div>
+<div class="section-body">
+<table>
+<thead>
+<tr>
+<th>App #</th>
+<th>Quota</th>
+<th>Allotted Dept</th>
+<th>Order #</th>
+<th>Consortium #</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+{% for c in profile.counselling %}
+<tr>
+<td>{{ c.app_id }}</td>
+<td>{{ c.quota_type or 'N/A' }}</td>
+<td style="font-weight:bold;color:#059669">{{ c.dept_name or 'N/A' }}</td>
+<td>{{ c.allotment_order_number or 'N/A' }}</td>
+<td>{{ c.consortium_number or 'N/A' }}</td>
+<td>{{ c.status or 'N/A' }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% endif %}
+
+{% if profile.payments %}
+<div class="section">
+<div class="section-header bg-emerald">Payments</div>
+<div class="section-body">
+<table>
+<thead>
+<tr>
+<th>App #</th>
+<th>Bill No</th>
+<th>Payment Mode</th>
+<th>Amount</th>
+</tr>
+</thead>
+<tbody>
+{% for p in profile.payments %}
+<tr>
+<td>{{ p.app_id }}</td>
+<td style="font-weight:bold">{{ p.bill_no or 'N/A' }}</td>
+<td>{{ p.mode_of_payment or 'N/A' }}</td>
+<td style="font-weight:bold;color:#059669;font-size:12px">₹ {{ "%.2f"|format(p.amount or 0) }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% endif %}
+
+<div class="footer">
+<p>Er. Perumal Manimekalai College of Engineering</p>
+</div>
+
+</body>
+</html>

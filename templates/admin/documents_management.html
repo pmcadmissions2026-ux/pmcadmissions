@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Documents Management - PMC Engineering</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-nav {
+            background-color: #137fec;
+            color: white !important;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] px-6 py-3 sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<div class="text-primary">
+<svg fill="none" height="32" viewbox="0 0 48 48" width="32" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Er. Perumal Manimekalai College of Engineering</h2>
+</div>
+<div class="flex items-center gap-4">
+<button class="cursor-pointer bg-none border-0 p-0 text-[#617589]">
+<svg fill="currentColor" height="24" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"></path>
+</svg>
+</button>
+<button class="cursor-pointer bg-none border-0 p-0 text-[#617589]">
+<svg fill="currentColor" height="24" viewbox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+<path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"></path>
+</svg>
+</button>
+</div>
+</header>
+<!-- Main Container -->
+<div class="flex flex-1">
+<!-- Sidebar Navigation -->
+<aside class="w-56 border-r border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#111827] hidden md:flex flex-col">
+<nav class="flex-1 overflow-y-auto px-2 py-6 flex flex-col gap-2">
+<a href="{{ url_for('admin.documents_management') }}" class="flex items-center gap-3 px-4 py-2 text-white bg-primary rounded-lg transition-colors active-nav">
+<span class="material-symbols-outlined text-xl">description</span>
+<span class="text-sm font-medium">Documents</span>
+</a>
+</nav>
+<div class="border-t border-[#e5e7eb] dark:border-[#2d3748] px-4 py-4">
+<p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">{{ user.name }}</p>
+<p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">{{ user.role }}</p>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto">
+<div class="max-w-[1400px] mx-auto p-6 flex flex-col gap-6">
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+        <div class="bg-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-50 border border-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-200 text-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-800 px-4 py-3 rounded-lg">
+            {{ message }}
+        </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<!-- Page Header -->
+<div class="flex flex-wrap justify-between items-end gap-3">
+<div class="flex min-w-72 flex-col gap-1">
+<p class="text-[#111418] dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">Documents Management</p>
+<p class="text-[#617589] dark:text-[#a0aec0] text-base font-normal leading-normal">View and manage all submitted student documents.</p>
+</div>
+<div class="flex gap-2">
+<input type="text" id="searchInput" placeholder="Search by student name, ID, or app number..." class="px-4 py-2 border border-[#e5e7eb] dark:border-[#2d3748] rounded-lg bg-white dark:bg-[#1a202c] text-[#111418] dark:text-white text-sm"/>
+</div>
+</div>
+
+<!-- Stats -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] p-4">
+<div class="flex items-center justify-between">
+<div>
+<p class="text-xs text-[#617589] dark:text-[#a0aec0] font-medium uppercase">Total Documents</p>
+<p class="text-2xl font-bold text-[#111418] dark:text-white mt-1">{{ total_documents }}</p>
+</div>
+<span class="material-symbols-outlined text-3xl text-primary opacity-20">description</span>
+</div>
+</div>
+</div>
+
+<!-- Documents Table -->
+<div class="flex flex-col bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden">
+<div class="flex items-center justify-between px-6 py-5 border-b border-[#e5e7eb] dark:border-[#2d3748]">
+<h2 class="text-[#111418] dark:text-white text-xl font-bold leading-tight">Student Documents</h2>
+<div class="flex gap-2">
+<button class="text-primary text-sm font-bold flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-sm">download</span> Export
+</button>
+</div>
+</div>
+
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-[#f8fafc] dark:bg-[#2d3748] border-b border-[#e5e7eb] dark:border-[#2d3748]">
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">App #</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Student Name</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Unique ID</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">10th Mark Sheet</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">12th Mark Sheet</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Community Cert</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Passport Photo</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Transfer Cert</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">FG Certificate</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
+{% if documents %}
+    {% for student in documents %}
+    <tr class="hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors group">
+        <td class="px-6 py-4">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                #{{ student.app_id or 'N/A' }}
+            </span>
+        </td>
+        <td class="px-6 py-4">
+            <div class="text-sm font-semibold text-[#111418] dark:text-white">{{ student.student_name }}</div>
+        </td>
+        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">{{ student.unique_id }}</td>
+        
+        <!-- 10th Mark Sheet -->
+        <td class="px-6 py-4">
+            {% if student.documents.get('10th_Mark_Sheet') %}
+                {% set doc = student.documents['10th_Mark_Sheet'] %}
+                <div class="flex gap-1">
+                    <a href="{{ doc.document_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-blue-600 transition-colors" title="View">
+                        <span class="material-symbols-outlined text-xs">visibility</span>
+                    </a>
+                    <a href="{{ doc.document_url }}" download class="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-green-600 transition-colors" title="Download">
+                        <span class="material-symbols-outlined text-xs">download</span>
+                    </a>
+                </div>
+            {% else %}
+                <span class="text-xs text-slate-400">-</span>
+            {% endif %}
+        </td>
+        
+        <!-- 12th Mark Sheet -->
+        <td class="px-6 py-4">
+            {% if student.documents.get('12th_Mark_Sheet') %}
+                {% set doc = student.documents['12th_Mark_Sheet'] %}
+                <div class="flex gap-1">
+                    <a href="{{ doc.document_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-blue-600 transition-colors" title="View">
+                        <span class="material-symbols-outlined text-xs">visibility</span>
+                    </a>
+                    <a href="{{ doc.document_url }}" download class="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-green-600 transition-colors" title="Download">
+                        <span class="material-symbols-outlined text-xs">download</span>
+                    </a>
+                </div>
+            {% else %}
+                <span class="text-xs text-slate-400">-</span>
+            {% endif %}
+        </td>
+        
+        <!-- Community Certificate -->
+        <td class="px-6 py-4">
+            {% if student.documents.get('Community_Certificate') %}
+                {% set doc = student.documents['Community_Certificate'] %}
+                <div class="flex gap-1">
+                    <a href="{{ doc.document_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-blue-600 transition-colors" title="View">
+                        <span class="material-symbols-outlined text-xs">visibility</span>
+                    </a>
+                    <a href="{{ doc.document_url }}" download class="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-green-600 transition-colors" title="Download">
+                        <span class="material-symbols-outlined text-xs">download</span>
+                    </a>
+                </div>
+            {% else %}
+                <span class="text-xs text-slate-400">-</span>
+            {% endif %}
+        </td>
+        
+        <!-- Passport Photo -->
+        <td class="px-6 py-4">
+            {% if student.documents.get('Passport_Photo') %}
+                {% set doc = student.documents['Passport_Photo'] %}
+                <div class="flex gap-1">
+                    <a href="{{ doc.document_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-blue-600 transition-colors" title="View">
+                        <span class="material-symbols-outlined text-xs">visibility</span>
+                    </a>
+                    <a href="{{ doc.document_url }}" download class="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-green-600 transition-colors" title="Download">
+                        <span class="material-symbols-outlined text-xs">download</span>
+                    </a>
+                </div>
+            {% else %}
+                <span class="text-xs text-slate-400">-</span>
+            {% endif %}
+        </td>
+        
+        <!-- Transfer Certificate -->
+        <td class="px-6 py-4">
+            {% if student.documents.get('Transfer_Certificate') %}
+                {% set doc = student.documents['Transfer_Certificate'] %}
+                <div class="flex gap-1">
+                    <a href="{{ doc.document_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-blue-600 transition-colors" title="View">
+                        <span class="material-symbols-outlined text-xs">visibility</span>
+                    </a>
+                    <a href="{{ doc.document_url }}" download class="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-green-600 transition-colors" title="Download">
+                        <span class="material-symbols-outlined text-xs">download</span>
+                    </a>
+                </div>
+            {% else %}
+                <span class="text-xs text-slate-400">-</span>
+            {% endif %}
+        </td>
+        
+        <!-- FG Certificate -->
+        <td class="px-6 py-4">
+            {% if student.documents.get('FG_Certificate') %}
+                {% set doc = student.documents['FG_Certificate'] %}
+                <div class="flex gap-1">
+                    <a href="{{ doc.document_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-blue-600 transition-colors" title="View">
+                        <span class="material-symbols-outlined text-xs">visibility</span>
+                    </a>
+                    <a href="{{ doc.document_url }}" download class="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-green-600 transition-colors" title="Download">
+                        <span class="material-symbols-outlined text-xs">download</span>
+                    </a>
+                </div>
+            {% else %}
+                <span class="text-xs text-slate-400">-</span>
+            {% endif %}
+        </td>
+        
+        <!-- Actions Column -->
+        <td class="px-6 py-4">
+            <button onclick="openEditModal('{{ student.app_id or '' }}', '{{ student.student_id or '' }}', '{{ student.student_name }}')" class="inline-flex items-center gap-1 bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded hover:bg-blue-700 transition-colors">
+                <span class="material-symbols-outlined text-sm">edit</span>
+                Edit Documents
+            </button>
+        </td>
+    </tr>
+    {% endfor %}
+{% else %}
+    <tr>
+        <td colspan="9" class="px-6 py-12 text-center text-slate-500">
+            <span class="material-symbols-outlined text-4xl mb-2">folder_open</span>
+            <p class="text-sm font-medium">No documents found</p>
+            <p class="text-xs text-slate-400 mt-1">Students haven't uploaded any documents yet.</p>
+        </td>
+    </tr>
+{% endif %}
+</tbody>
+</table>
+</div>
+
+<!-- Pagination -->
+<div class="px-6 py-4 flex items-center justify-between border-t border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c]">
+<p class="text-sm text-[#617589]">Showing {{ documents|length if documents else 0 }} documents</p>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+<!-- Edit Documents Modal -->
+<div id="editModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-[#1a202c] rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <!-- Modal Header -->
+        <div class="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4 border-b border-blue-800">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold">Edit Student Documents</h2>
+                <button onclick="closeEditModal()" class="text-white hover:bg-blue-800 rounded-lg p-1 transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <p class="text-blue-100 text-sm mt-1">Student: <span id="modalStudentName"></span></p>
+        </div>
+        
+        <!-- Modal Content -->
+        <div class="p-6 space-y-4">
+            <div class="grid grid-cols-1 gap-4">
+                <!-- 10th Mark Sheet -->
+                <div class="border border-[#e5e7eb] dark:border-[#2d3748] rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <h3 class="font-semibold text-[#111418] dark:text-white">10th Mark Sheet</h3>
+                            <p class="text-xs text-[#617589] dark:text-[#a0aec0] mt-1">PDF or JPG (Max 5MB)</p>
+                        </div>
+                        <span id="status_10th" class="text-xs font-bold px-2 py-1 rounded"></span>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="file" id="file_10th_new" accept=".pdf,.jpg,.jpeg,.png" class="hidden"/>
+                        <button type="button" id="add_10th" onclick="document.getElementById('file_10th_new').click()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 px-4 rounded transition-colors">
+                            <span class="material-symbols-outlined text-sm inline mr-1">upload_file</span>
+                            <span id="btn_10th_text">Add Document</span>
+                        </button>
+                        <button type="button" id="replace_10th" onclick="replaceDocument('10th_Mark_Sheet', 'file_10th_new')" class="hidden flex-1 bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold py-2 px-4 rounded transition-colors">
+                            <span class="material-symbols-outlined text-sm inline mr-1">refresh</span>
+                            Replace
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2" id="file_10th_new_name">No file selected</p>
+                </div>
+
+                <!-- 12th Mark Sheet -->
+                <div class="border border-[#e5e7eb] dark:border-[#2d3748] rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <h3 class="font-semibold text-[#111418] dark:text-white">12th Mark Sheet</h3>
+                            <p class="text-xs text-[#617589] dark:text-[#a0aec0] mt-1">PDF or JPG (Max 5MB)</p>
+                        </div>
+                        <span id="status_12th" class="text-xs font-bold px-2 py-1 rounded"></span>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="file" id="file_12th_new" accept=".pdf,.jpg,.jpeg,.png" class="hidden"/>
+                        <button type="button" id="add_12th" onclick="document.getElementById('file_12th_new').click()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 px-4 rounded transition-colors">
+                            <span class="material-symbols-outlined text-sm inline mr-1">upload_file</span>
+                            <span id="btn_12th_text">Add Document</span>
+                        </button>
+                        <button type="button" id="replace_12th" onclick="replaceDocument('12th_Mark_Sheet', 'file_12th_new')" class="hidden flex-1 bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold py-2 px-4 rounded transition-colors">
+                            <span class="material-symbols-outlined text-sm inline mr-1">refresh</span>
+                            Replace
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2" id="file_12th_new_name">No file selected</p>
+                </div>
+
+                <!-- Community Certificate -->
+                <div class="border border-[#e5e7eb] dark:border-[#2d3748] rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <h3 class="font-semibold text-[#111418] dark:text-white">Community Certificate</h3>
+                            <p class="text-xs text-[#617589] dark:text-[#a0aec0] mt-1">PDF or JPG (Max 5MB)</p>
+                        </div>
+                        <span id="status_community" class="text-xs font-bold px-2 py-1 rounded"></span>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="file" id="file_community_new" accept=".pdf,.jpg,.jpeg,.png" class="hidden"/>
+                        <button type="button" id="add_community" onclick="document.getElementById('file_community_new').click()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 px-4 rounded transition-colors">
+                            <span class="material-symbols-outlined text-sm inline mr-1">upload_file</span>
+                            <span id="btn_community_text">Add Document</span>
+                        </button>
+                        <button type="button" id="replace_community" onclick="replaceDocument('Community_Certificate', 'file_community_new')" class="hidden flex-1 bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold py-2 px-4 rounded transition-colors">
+                            <span class="material-symbols-outlined text-sm inline mr-1">refresh</span>
+                            Replace
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2" id="file_community_new_name">No file selected</p>
+                </div>
+
+                <!-- Passport Photo -->
+                <div class="border border-[#e5e7eb] dark:border-[#2d3748] rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <h3 class="font-semibold text-[#111418] dark:text-white">Passport Photo</h3>
+                            <p class="text-xs text-[#617589] dark:text-[#a0aec0] mt-1">JPG or PNG (Max 5MB)</p>
+                        </div>
+                        <span id="status_photo" class="text-xs font-bold px-2 py-1 rounded"></span>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="file" id="file_photo_new" accept=".jpg,.jpeg,.png" class="hidden"/>
+                        <button type="button" id="add_photo" onclick="document.getElementById('file_photo_new').click()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 px-4 rounded transition-colors">
+                            <span class="material-symbols-outlined text-sm inline mr-1">upload_file</span>
+                            <span id="btn_photo_text">Add Document</span>
+                        </button>
+                        <button type="button" id="replace_photo" onclick="replaceDocument('Passport_Photo', 'file_photo_new')" class="hidden flex-1 bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold py-2 px-4 rounded transition-colors">
+                            <span class="material-symbols-outlined text-sm inline mr-1">refresh</span>
+                            Replace
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2" id="file_photo_new_name">No file selected</p>
+                </div>
+
+                <!-- Transfer Certificate -->
+                <div class="border border-[#e5e7eb] dark:border-[#2d3748] rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <h3 class="font-semibold text-[#111418] dark:text-white">Transfer Certificate</h3>
+                            <p class="text-xs text-[#617589] dark:text-[#a0aec0] mt-1">PDF or JPG (Max 5MB)</p>
+                        </div>
+                        <span id="status_tc" class="text-xs font-bold px-2 py-1 rounded"></span>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="file" id="file_tc_new" accept=".pdf,.jpg,.jpeg,.png" class="hidden"/>
+                        <button type="button" id="add_tc" onclick="document.getElementById('file_tc_new').click()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 px-4 rounded transition-colors">
+                            <span class="material-symbols-outlined text-sm inline mr-1">upload_file</span>
+                            <span id="btn_tc_text">Add Document</span>
+                        </button>
+                        <button type="button" id="replace_tc" onclick="replaceDocument('Transfer_Certificate', 'file_tc_new')" class="hidden flex-1 bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold py-2 px-4 rounded transition-colors">
+                            <span class="material-symbols-outlined text-sm inline mr-1">refresh</span>
+                            Replace
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2" id="file_tc_new_name">No file selected</p>
+                </div>
+
+                <!-- FG Certificate -->
+                <div class="border border-[#e5e7eb] dark:border-[#2d3748] rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <h3 class="font-semibold text-[#111418] dark:text-white">FG Certificate</h3>
+                            <p class="text-xs text-[#617589] dark:text-[#a0aec0] mt-1">PDF or JPG (Max 5MB)</p>
+                        </div>
+                        <span id="status_fg" class="text-xs font-bold px-2 py-1 rounded"></span>
+                    </div>
+                    <div class="flex gap-2">
+                        <input type="file" id="file_fg_new" accept=".pdf,.jpg,.jpeg,.png" class="hidden"/>
+                        <button type="button" id="add_fg" onclick="document.getElementById('file_fg_new').click()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 px-4 rounded transition-colors">
+                            <span class="material-symbols-outlined text-sm inline mr-1">upload_file</span>
+                            <span id="btn_fg_text">Add Document</span>
+                        </button>
+                        <button type="button" id="replace_fg" onclick="replaceDocument('FG_Certificate', 'file_fg_new')" class="hidden flex-1 bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold py-2 px-4 rounded transition-colors">
+                            <span class="material-symbols-outlined text-sm inline mr-1">refresh</span>
+                            Replace
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2" id="file_fg_new_name">No file selected</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="sticky bottom-0 border-t border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#0f1419] px-6 py-4 flex justify-end gap-2">
+            <button onclick="closeEditModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition-colors">
+                Close
+            </button>
+            <button onclick="uploadDocuments()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors">
+                <span class="material-symbols-outlined text-sm inline mr-1">upload</span>
+                Upload Selected
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentModalData = {
+    appId: '',
+    studentId: '',
+    studentName: '',
+    existingDocuments: {}
+};
+
+// File input change handlers
+document.getElementById('file_10th_new')?.addEventListener('change', function(e) {
+    document.getElementById('file_10th_new_name').textContent = e.target.files[0]?.name || 'No file selected';
+});
+document.getElementById('file_12th_new')?.addEventListener('change', function(e) {
+    document.getElementById('file_12th_new_name').textContent = e.target.files[0]?.name || 'No file selected';
+});
+document.getElementById('file_community_new')?.addEventListener('change', function(e) {
+    document.getElementById('file_community_new_name').textContent = e.target.files[0]?.name || 'No file selected';
+});
+document.getElementById('file_photo_new')?.addEventListener('change', function(e) {
+    document.getElementById('file_photo_new_name').textContent = e.target.files[0]?.name || 'No file selected';
+});
+document.getElementById('file_tc_new')?.addEventListener('change', function(e) {
+    document.getElementById('file_tc_new_name').textContent = e.target.files[0]?.name || 'No file selected';
+});
+document.getElementById('file_fg_new')?.addEventListener('change', function(e) {
+    document.getElementById('file_fg_new_name').textContent = e.target.files[0]?.name || 'No file selected';
+});
+
+function openEditModal(appId, studentId, studentName) {
+    currentModalData = {
+        appId: appId,
+        studentId: studentId,
+        studentName: studentName,
+        existingDocuments: {}
+    };
+    
+    document.getElementById('modalStudentName').textContent = studentName;
+    
+    // Reset all file inputs and display texts
+    const fileInputs = ['10th_new', '12th_new', 'community_new', 'photo_new', 'tc_new', 'fg_new'];
+    fileInputs.forEach(inputId => {
+        const input = document.getElementById(`file_${inputId}`);
+        if (input) {
+            input.value = '';
+        }
+        const nameDisplay = document.getElementById(`file_${inputId}_name`);
+        if (nameDisplay) {
+            nameDisplay.textContent = 'No file selected';
+        }
+    });
+    
+    // Fetch existing documents for this student
+    fetch(`/admin/get-student-documents/${appId}`)
+        .then(response => {
+            console.log('Fetch response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Fetch response data:', data);
+            if (data.success) {
+                currentModalData.existingDocuments = data.documents || {};
+                console.log('Set existingDocuments:', currentModalData.existingDocuments);
+                updateModalStatus();
+            } else {
+                console.error('Fetch returned success: false', data);
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching documents:', error);
+            updateModalStatus(); // Call anyway to show missing status
+        });
+    
+    document.getElementById('editModal').classList.remove('hidden');
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').classList.add('hidden');
+    // Reset file inputs
+    const fileInputs = ['10th_new', '12th_new', 'community_new', 'photo_new', 'tc_new', 'fg_new'];
+    fileInputs.forEach(inputId => {
+        const input = document.getElementById(`file_${inputId}`);
+        if (input) {
+            input.value = '';
+        }
+        const nameDisplay = document.getElementById(`file_${inputId}_name`);
+        if (nameDisplay) {
+            nameDisplay.textContent = 'No file selected';
+        }
+    });
+}
+
+function updateModalStatus() {
+    const docMap = {
+        '10th_Mark_Sheet': '10th',
+        '12th_Mark_Sheet': '12th',
+        'Community_Certificate': 'community',
+        'Passport_Photo': 'photo',
+        'Transfer_Certificate': 'tc',
+        'FG_Certificate': 'fg'
+    };
+    
+    console.log('Current modal documents:', currentModalData.existingDocuments);
+    
+    Object.entries(docMap).forEach(([docType, shortName]) => {
+        const statusEl = document.getElementById(`status_${shortName}`);
+        const replaceBtn = document.getElementById(`replace_${shortName}`);
+        const addBtn = document.getElementById(`add_${shortName}`);
+        
+        console.log(`Checking ${docType}: exists=${!!currentModalData.existingDocuments[docType]}`);
+        
+        if (currentModalData.existingDocuments[docType]) {
+            statusEl.textContent = 'Already Submitted';
+            statusEl.className = 'text-xs font-bold px-2 py-1 rounded bg-green-100 text-green-800';
+            replaceBtn?.classList.remove('hidden');
+            replaceBtn?.classList.add('flex');
+            addBtn?.classList.add('hidden');
+        } else {
+            statusEl.textContent = 'Missing';
+            statusEl.className = 'text-xs font-bold px-2 py-1 rounded bg-red-100 text-red-800';
+            replaceBtn?.classList.add('hidden');
+            addBtn?.classList.remove('hidden');
+        }
+    });
+}
+
+function replaceDocument(docType, fileInputId) {
+    // Delete existing document first, then allow upload
+    const docMap = {
+        '10th_Mark_Sheet': '10th',
+        '12th_Mark_Sheet': '12th',
+        'Community_Certificate': 'community',
+        'Passport_Photo': 'photo',
+        'Transfer_Certificate': 'tc',
+        'FG_Certificate': 'fg'
+    };
+    
+    if (confirm(`Delete existing ${docType.replace(/_/g, ' ')} and upload a new one?`)) {
+        const existingDoc = currentModalData.existingDocuments[docType];
+        if (existingDoc && existingDoc.id) {
+            fetch(`/admin/delete-document/${existingDoc.id}`, {
+                method: 'DELETE',
+                headers: {'Content-Type': 'application/json'}
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById(fileInputId).click();
+                    delete currentModalData.existingDocuments[docType];
+                    updateModalStatus();
+                }
+            })
+            .catch(error => console.error('Error deleting document:', error));
+        }
+    }
+}
+
+function uploadDocuments() {
+    const formData = new FormData();
+    formData.append('application_id', currentModalData.appId);
+    formData.append('student_id', currentModalData.studentId);
+    
+    const fileMappings = [
+        { id: 'file_10th_new', name: 'file_10th_mark' },
+        { id: 'file_12th_new', name: 'file_12th_mark' },
+        { id: 'file_community_new', name: 'file_community' },
+        { id: 'file_photo_new', name: 'file_photo' },
+        { id: 'file_tc_new', name: 'file_tc' },
+        { id: 'file_fg_new', name: 'file_fg' }
+    ];
+    
+    let hasFiles = false;
+    fileMappings.forEach(mapping => {
+        const fileInput = document.getElementById(mapping.id);
+        if (fileInput?.files.length > 0) {
+            formData.append(mapping.name, fileInput.files[0]);
+            hasFiles = true;
+        }
+    });
+    
+    if (!hasFiles) {
+        alert('Please select at least one document to upload');
+        return;
+    }
+    
+    fetch('/admin/applications', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Documents uploaded successfully!');
+            closeEditModal();
+            location.reload();
+        } else {
+            alert('Error uploading documents: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error uploading documents');
+    });
+}
+// Search functionality
+document.getElementById('searchInput').addEventListener('keyup', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('table tbody tr');
+    
+    rows.forEach(row => {
+        const studentName = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+        const uniqueId = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+        const appNum = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
+        
+        if (studentName.includes(searchTerm) || 
+            uniqueId.includes(searchTerm) || 
+            appNum.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+
+function deleteDocument(docId, studentName) {
+    if (confirm(`Delete document from ${studentName}? This action cannot be undone.`)) {
+        // Send delete request
+        fetch(`/admin/delete-document/${docId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Document deleted successfully');
+                location.reload();
+            } else {
+                alert('Error deleting document: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting document');
+        });
+    }
+}
+</script>
+</body>
+</html>

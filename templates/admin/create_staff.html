@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Create Staff Member - PMC Engineering</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white min-h-screen flex flex-col">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] px-6 py-3 sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<div class="text-primary">
+<svg fill="none" height="32" viewbox="0 0 48 48" width="32" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Er. Perumal Manimekalai College of Engineering</h2>
+</div>
+<div class="flex items-center gap-4">
+<a href="{{ url_for('auth.logout') }}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium">Logout</a>
+</div>
+</header>
+
+<main class="flex-1 overflow-y-auto">
+<div class="max-w-3xl mx-auto p-6 flex flex-col gap-6">
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+        <div class="bg-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-50 border border-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-200 text-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-800 px-4 py-3 rounded-lg flex items-center gap-2">
+            <span class="material-symbols-outlined text-lg">{% if category == 'success' %}check_circle{% elif category == 'error' %}error{% else %}info{% endif %}</span>
+            {{ message }}
+        </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<!-- Page Header -->
+<div class="flex items-center gap-3 mb-6">
+<a href="{{ url_for('admin.staff_management') }}" class="text-primary hover:text-blue-700 flex items-center gap-1">
+<span class="material-symbols-outlined">arrow_back</span>
+Back
+</a>
+<div>
+<p class="text-[#111418] dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">Create Staff Member</p>
+<p class="text-[#617589] dark:text-[#a0aec0] text-base font-normal leading-normal">Add a new staff member to the system</p>
+</div>
+</div>
+
+<!-- Form Card -->
+<div class="bg-white dark:bg-[#1a202c] rounded-lg border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden">
+<form method="POST" class="p-6 flex flex-col gap-6">
+
+<!-- Employee ID -->
+<div class="flex flex-col gap-2">
+<label class="text-sm font-bold text-[#111418] dark:text-white">Employee ID *</label>
+<input type="text" name="employee_id" placeholder="Enter employee ID (e.g., EMP001, FAC001)" required class="px-4 py-2 border border-[#e5e7eb] dark:border-[#2d3748] rounded-lg bg-white dark:bg-[#111827] text-[#111418] dark:text-white placeholder-[#a0aec0] focus:border-primary focus:outline-none"/>
+<p class="text-xs text-[#617589] dark:text-[#a0aec0]">Unique identifier for the employee</p>
+</div>
+
+<!-- First Name -->
+<div class="flex flex-col gap-2">
+<label class="text-sm font-bold text-[#111418] dark:text-white">First Name *</label>
+<input type="text" name="first_name" placeholder="Enter first name" required class="px-4 py-2 border border-[#e5e7eb] dark:border-[#2d3748] rounded-lg bg-white dark:bg-[#111827] text-[#111418] dark:text-white placeholder-[#a0aec0] focus:border-primary focus:outline-none"/>
+</div>
+
+<!-- Last Name -->
+<div class="flex flex-col gap-2">
+<label class="text-sm font-bold text-[#111418] dark:text-white">Last Name *</label>
+<input type="text" name="last_name" placeholder="Enter last name" required class="px-4 py-2 border border-[#e5e7eb] dark:border-[#2d3748] rounded-lg bg-white dark:bg-[#111827] text-[#111418] dark:text-white placeholder-[#a0aec0] focus:border-primary focus:outline-none"/>
+</div>
+
+<!-- Email -->
+<div class="flex flex-col gap-2">
+<label class="text-sm font-bold text-[#111418] dark:text-white">Email Address *</label>
+<input type="email" name="email" placeholder="Enter email address" required class="px-4 py-2 border border-[#e5e7eb] dark:border-[#2d3748] rounded-lg bg-white dark:bg-[#111827] text-[#111418] dark:text-white placeholder-[#a0aec0] focus:border-primary focus:outline-none"/>
+</div>
+
+<!-- Phone -->
+<div class="flex flex-col gap-2">
+<label class="text-sm font-bold text-[#111418] dark:text-white">Phone Number</label>
+<input type="tel" name="phone" placeholder="Enter phone number (optional)" class="px-4 py-2 border border-[#e5e7eb] dark:border-[#2d3748] rounded-lg bg-white dark:bg-[#111827] text-[#111418] dark:text-white placeholder-[#a0aec0] focus:border-primary focus:outline-none"/>
+</div>
+
+<!-- Password -->
+<div class="flex flex-col gap-2">
+<label class="text-sm font-bold text-[#111418] dark:text-white">Password *</label>
+<input type="password" name="password" placeholder="Enter password" required class="px-4 py-2 border border-[#e5e7eb] dark:border-[#2d3748] rounded-lg bg-white dark:bg-[#111827] text-[#111418] dark:text-white placeholder-[#a0aec0] focus:border-primary focus:outline-none"/>
+<p class="text-xs text-[#617589] dark:text-[#a0aec0]">Minimum 6 characters recommended</p>
+</div>
+
+<!-- Role -->
+<div class="flex flex-col gap-2">
+<label class="text-sm font-bold text-[#111418] dark:text-white">Role *</label>
+<select name="role_id" required class="px-4 py-2 border border-[#e5e7eb] dark:border-[#2d3748] rounded-lg bg-white dark:bg-[#111827] text-[#111418] dark:text-white focus:border-primary focus:outline-none">
+<option value="">Select Role</option>
+<option value="1">Super Admin</option>
+<option value="2">Admin</option>
+<option value="3">Faculty</option>
+<option value="4">Staff</option>
+</select>
+</div>
+
+<!-- Active Status -->
+<div class="flex items-center gap-3">
+<input type="checkbox" name="is_active" id="is_active" checked class="w-4 h-4 text-primary border-[#e5e7eb] dark:border-[#2d3748] rounded focus:ring-primary"/>
+<label for="is_active" class="text-sm font-medium text-[#111418] dark:text-white">Active (User can log in)</label>
+</div>
+
+<!-- Form Actions -->
+<div class="flex gap-3 pt-4 border-t border-[#e5e7eb] dark:border-[#2d3748]">
+<button type="submit" class="flex-1 bg-primary text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">person_add</span>
+Create Staff Member
+</button>
+<a href="{{ url_for('admin.staff_management') }}" class="flex-1 bg-[#f0f2f4] dark:bg-[#2d3748] text-[#111418] dark:text-white px-6 py-3 rounded-lg font-bold hover:bg-[#e5e7eb] dark:hover:bg-[#3d4758] transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">close</span>
+Cancel
+</a>
+</div>
+
+</form>
+</div>
+
+<!-- Info Card -->
+<div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-900 rounded-lg p-4 flex gap-3">
+<span class="material-symbols-outlined text-blue-600 dark:text-blue-400 flex-shrink-0">info</span>
+<div class="flex flex-col gap-1">
+<p class="text-sm font-bold text-blue-800 dark:text-blue-200">Creating a new staff member</p>
+<p class="text-xs text-blue-700 dark:text-blue-300">This staff member will be able to log in with the provided credentials and manage admission data based on their assigned role.</p>
+</div>
+</div>
+
+</div>
+</main>
+
+</body>
+</html>

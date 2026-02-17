@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Edit Department</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen p-6 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+  <div class="max-w-3xl mx-auto">
+    <div class="bg-gradient-to-r from-indigo-600 to-pink-500 text-white rounded-lg p-4 mb-6 shadow flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <span class="material-symbols-outlined text-3xl opacity-90">domain</span>
+        <div>
+          <h1 class="text-lg font-bold">Edit Department</h1>
+          <p class="text-sm opacity-90">Update department details and seat allocations</p>
+        </div>
+      </div>
+      <a href="{{ url_for('admin.departments') }}" class="px-3 py-2 bg-white/20 hover:bg-white/30 rounded">Back to list</a>
+    </div>
+
+    <div class="bg-white/90 rounded-lg shadow p-6">
+      <form method="POST" action="{{ url_for('admin.edit_department', dept_id=dept.id) }}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Dept Code</label>
+          <input name="dept_code" value="{{ dept.dept_code }}" required class="w-full border px-3 py-2 rounded" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Dept Name</label>
+          <input name="dept_name" value="{{ dept.dept_name }}" required class="w-full border px-3 py-2 rounded" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Short Name</label>
+          <input name="short_name" value="{{ dept.short_name }}" class="w-full border px-3 py-2 rounded" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Active</label>
+          <div class="mt-1">
+            <label class="inline-flex items-center gap-2 px-2 py-1 bg-emerald-50 rounded">
+              <input type="checkbox" name="is_active" {% if dept.is_active %}checked{% endif %} />
+              <span class="text-sm">Enabled</span>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">GQ Seats</label>
+          <input name="gq_seats" type="number" min="0" value="{{ dept.gq_seats or dept.gq or 0 }}" class="w-full border px-3 py-2 rounded" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">MQ Seats</label>
+          <input name="mq_seats" type="number" min="0" value="{{ dept.mq_seats or dept.mq or 0 }}" class="w-full border px-3 py-2 rounded" />
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="block text-xs font-medium text-slate-600 mb-1">Description</label>
+          <textarea name="description" rows="4" class="w-full border px-3 py-2 rounded">{{ dept.description or '' }}</textarea>
+        </div>
+
+        <div class="md:col-span-2 flex justify-end gap-3 mt-2">
+          <a href="{{ url_for('admin.departments') }}" class="px-4 py-2 bg-white border rounded">Cancel</a>
+          <button type="submit" class="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-400 text-white rounded shadow">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

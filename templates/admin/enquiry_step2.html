@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Step 2: Branch Selection</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Google Fonts: Lexend -->
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display min-h-screen text-[#111418] dark:text-white">
+<!-- Top Navigation Bar -->
+<div class="relative flex h-auto w-full flex-col bg-white dark:bg-background-dark border-b border-[#f0f2f4] dark:border-gray-800">
+    <header class="flex items-center justify-between whitespace-nowrap px-10 py-3 max-w-[1280px] mx-auto w-full">
+        <div class="flex items-center gap-4 text-[#111418] dark:text-white">
+            <div class="size-6 text-primary">
+                <span class="material-symbols-outlined text-3xl">school</span>
+            </div>
+            <h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">College Admission Portal</h2>
+        </div>
+        <div class="flex flex-1 justify-end gap-8">
+            <div class="flex items-center gap-9">
+                <a class="text-[#111418] dark:text-gray-300 text-sm font-medium leading-normal hover:text-primary transition-colors" href="{{ url_for('admin.dashboard') }}">Dashboard</a>
+                <a class="text-[#111418] dark:text-gray-300 text-sm font-medium leading-normal hover:text-primary transition-colors" href="{{ url_for('admin.enquiries') }}">Enquiries</a>
+            </div>
+            <div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border border-gray-200" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAKpHhCdAy6W7FJY3NFMHgrcFvXcioz1A2pS5qlbo28udGJ6qaqpk5T7GwVARui817PMgfltVLkqURjCb8-jsicts55A2ixewZmOQpoS7qjWcxxGLTH1AXK4ddLo4qNLSW5jws0zWKO0cTmeGCPj-2El6GxRF7E9lTtH0eGzU1CpugdX32zVybwrP29AgkSoo6K7xvhTJE_PgmsuqcsxXoEi69RB_7mrVnZK8FA6tSOdwNilsApm54caqaqmyEH_hy_F1SgR6BdTiI");'></div>
+        </div>
+    </header>
+</div>
+
+<div class="max-w-[960px] mx-auto w-full px-4 py-8">
+    <!-- Breadcrumbs -->
+    <div class="flex flex-wrap gap-2 py-2 mb-4">
+        <a class="text-[#617589] dark:text-gray-400 text-sm font-medium leading-normal hover:text-primary" href="{{ url_for('admin.dashboard') }}">Dashboard</a>
+        <span class="text-[#617589] dark:text-gray-400 text-sm font-medium leading-normal">/</span>
+        <a class="text-[#617589] dark:text-gray-400 text-sm font-medium leading-normal hover:text-primary" href="{{ url_for('admin.enquiries') }}">Enquiries</a>
+        <span class="text-[#617589] dark:text-gray-400 text-sm font-medium leading-normal">/</span>
+        <span class="text-[#111418] dark:text-white text-sm font-medium leading-normal">Step 2: Branch Selection</span>
+    </div>
+
+    <!-- Progress Bar Section -->
+    <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-[#f0f2f4] dark:border-gray-800 mb-6">
+        <div class="flex flex-col gap-3 p-6">
+            <div class="flex gap-6 justify-between items-center">
+                <p class="text-[#111418] dark:text-white text-base font-bold leading-normal">Step 2 of 3: Branch Selection</p>
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-yellow-500 text-sm">schedule</span>
+                    <p class="text-yellow-600 dark:text-yellow-400 text-sm font-bold leading-normal">In Progress</p>
+                </div>
+            </div>
+            <div class="rounded-full bg-[#dbe0e6] dark:bg-gray-700 h-2.5 overflow-hidden">
+                <div class="h-full rounded-full bg-primary" style="width: 66%;"></div>
+            </div>
+            <p class="text-[#617589] dark:text-gray-400 text-sm font-normal leading-normal">Select your preferred and optional departments below.</p>
+        </div>
+    </div>
+
+    <!-- Student Information Section -->
+    <div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-[#f0f2f4] dark:border-gray-800 mb-6 p-6">
+        <div class="flex @container">
+            <div class="flex w-full flex-col gap-4 @[520px]:flex-row @[520px]:justify-between @[520px]:items-center">
+                <div class="flex flex-col gap-3">
+                    {% if student %}
+                    <h3 class="text-[#111418] dark:text-white text-xl font-bold">{{ student.get('full_name', 'Student') }}</h3>
+                    <div class="flex flex-col gap-2">
+                        <p class="text-[#617589] dark:text-gray-400 text-sm font-medium flex items-center gap-1">
+                            <span class="text-xs font-semibold">Unique ID:</span> {{ student.get('unique_id', 'N/A') }}
+                        </p>
+                        <p class="text-[#617589] dark:text-gray-400 text-sm font-medium flex items-center gap-1">
+                            <span class="text-xs font-semibold">Community:</span> {{ student.get('community', 'N/A') }}
+                        </p>
+                        <p class="text-[#617589] dark:text-gray-400 text-sm font-medium flex items-center gap-1">
+                            <span class="text-xs font-semibold">Category:</span> 
+                            {% if student.get('category_7_5') %}7.5 Category{% else %}General{% endif %}
+                        </p>
+                    </div>
+                    {% else %}
+                    <p class="text-red-600">Student information not found</p>
+                    {% endif %}
+                </div>
+                <div class="flex flex-col items-end gap-2">
+                    <span class="inline-flex items-center px-4 py-2 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                        <span class="material-symbols-outlined text-sm mr-1">info</span>
+                        BRANCH SELECTION IN PROGRESS
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page Heading -->
+    <div class="mb-6">
+        <h1 class="text-[#111418] dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">Department Selection</h1>
+        <p class="text-[#617589] dark:text-gray-400 text-base font-normal leading-normal">Choose your preferred and optional departments carefully. Selection affects your allotment.</p>
+    </div>
+
+    <!-- Branch Selection Form -->
+    <form method="POST" class="space-y-6 mb-10">
+        <!-- Academic Information -->
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-[#f0f2f4] dark:border-gray-800 overflow-hidden">
+            <div class="px-6 py-4 border-b border-[#f0f2f4] dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                <h3 class="font-bold text-[#111418] dark:text-white flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">school</span>
+                    Academic Information
+                </h3>
+            </div>
+            <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <p class="text-[#617589] dark:text-gray-500 text-xs uppercase tracking-wider font-bold mb-2">School Name</p>
+                    <p class="text-[#111418] dark:text-white font-medium">{{ student.get('plus2_school_name', 'N/A') }}</p>
+                </div>
+                <div>
+                    <p class="text-[#617589] dark:text-gray-500 text-xs uppercase tracking-wider font-bold mb-2">Board</p>
+                    <p class="text-[#111418] dark:text-white font-medium">{{ student.get('board', 'N/A') }}</p>
+                </div>
+                <div>
+                    <p class="text-[#617589] dark:text-gray-500 text-xs uppercase tracking-wider font-bold mb-2">Group Studied</p>
+                    <p class="text-[#111418] dark:text-white font-medium">{{ student.get('group_studied', 'N/A') }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Department Selection -->
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-[#f0f2f4] dark:border-gray-800 overflow-hidden">
+            <div class="px-6 py-4 border-b border-[#f0f2f4] dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                <h3 class="font-bold text-[#111418] dark:text-white flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">domain</span>
+                    Department Selection
+                </h3>
+            </div>
+            <div class="p-6 space-y-6">
+                <!-- Preferred Department (Mandatory) -->
+                <div>
+                    <label class="block text-[#111418] dark:text-white font-bold mb-3 flex items-center gap-2">
+                        <span class="text-red-500">*</span>
+                        <span class="material-symbols-outlined text-primary text-sm">star</span>
+                        Preferred Department (Mandatory)
+                    </label>
+                    <select name="primary_department" required class="w-full px-4 py-3 rounded-lg border border-[#d0d5dd] dark:border-gray-700 dark:bg-gray-800 dark:text-white bg-white text-[#111418] focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                        <option value="">-- Select your preferred department --</option>
+                        {% if departments %}
+                            {% for dept in departments %}
+                            <option value="{{ dept.id }}">{{ dept.dept_name }} ({{ dept.short_name }})</option>
+                            {% endfor %}
+                        {% endif %}
+                    </select>
+                    <p class="text-xs text-[#617589] dark:text-gray-500 mt-2 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">info</span>
+                        This is your primary choice for admission
+                    </p>
+                </div>
+
+                <!-- Optional Department -->
+                <div>
+                    <label class="block text-[#111418] dark:text-white font-bold mb-3 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-blue-500 text-sm">help</span>
+                        Optional Department
+                    </label>
+                    <select name="secondary_department" class="w-full px-4 py-3 rounded-lg border border-[#d0d5dd] dark:border-gray-700 dark:bg-gray-800 dark:text-white bg-white text-[#111418] focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
+                        <option value="">-- Select optional department --</option>
+                        {% if departments %}
+                            {% for dept in departments %}
+                            <option value="{{ dept.id }}">{{ dept.dept_name }} ({{ dept.short_name }})</option>
+                            {% endfor %}
+                        {% endif %}
+                    </select>
+                    <p class="text-xs text-[#617589] dark:text-gray-500 mt-2 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">info</span>
+                        If your preferred department is full, you may be allotted here
+                    </p>
+                </div>
+
+                <!-- Important Notice -->
+                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 flex gap-3">
+                    <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 flex-shrink-0">warning</span>
+                    <div class="text-sm text-blue-800 dark:text-blue-300">
+                        <p class="font-semibold mb-1">Important:</p>
+                        <p>Please select your departments carefully. Your merit score and category will determine your final allotment among students with similar profiles.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seats Availability Information -->
+        <div class="bg-white dark:bg-gray-900 rounded-xl border border-[#f0f2f4] dark:border-gray-800 overflow-hidden">
+            <div class="px-6 py-4 border-b border-[#f0f2f4] dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+                <h3 class="font-bold text-[#111418] dark:text-white flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">event_seat</span>
+                    Available Seats by Department
+                </h3>
+            </div>
+            <div class="p-6 overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-[#f0f2f4] dark:border-gray-800">
+                            <th class="px-4 py-3 text-left font-bold text-[#111418] dark:text-white">Department</th>
+                            <th class="px-4 py-3 text-left font-bold text-[#111418] dark:text-white">General</th>
+                            <th class="px-4 py-3 text-left font-bold text-[#111418] dark:text-white">Reserved</th>
+                            <th class="px-4 py-3 text-left font-bold text-[#111418] dark:text-white">Management</th>
+                            <th class="px-4 py-3 text-left font-bold text-[#111418] dark:text-white">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if departments %}
+                            {% for dept in departments %}
+                            <tr class="border-b border-[#f0f2f4] dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
+                                <td class="px-4 py-3 font-medium text-[#111418] dark:text-white">{{ dept.dept_name }}</td>
+                                <td class="px-4 py-3 text-[#617589] dark:text-gray-400"><span class="inline-block bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-3 py-1 rounded-full text-xs font-semibold">15</span></td>
+                                <td class="px-4 py-3 text-[#617589] dark:text-gray-400"><span class="inline-block bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 px-3 py-1 rounded-full text-xs font-semibold">8</span></td>
+                                <td class="px-4 py-3 text-[#617589] dark:text-gray-400"><span class="inline-block bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 px-3 py-1 rounded-full text-xs font-semibold">5</span></td>
+                                <td class="px-4 py-3 text-[#111418] dark:text-white font-semibold">28</td>
+                            </tr>
+                            {% endfor %}
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </form>
+
+    <!-- Action Buttons -->
+    <div class="border-t border-[#f0f2f4] dark:border-gray-800 pt-8 flex flex-col items-center gap-6">
+        <div class="flex gap-4 w-full justify-center">
+            <a href="{{ url_for('admin.enquiries') }}" class="flex-1 max-w-[240px] flex cursor-pointer items-center justify-center overflow-hidden rounded-xl h-12 px-6 bg-[#f0f2f4] dark:bg-gray-800 text-[#111418] dark:text-white text-base font-bold leading-normal tracking-[0.015em] hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                <span class="truncate">Cancel</span>
+            </a>
+            <button form="department-form" type="submit" class="flex-1 max-w-[240px] flex cursor-pointer items-center justify-center overflow-hidden rounded-xl h-12 px-6 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em] shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all gap-2">
+                <span class="truncate">Proceed to Step 3</span>
+                <span class="material-symbols-outlined text-lg">arrow_forward</span>
+            </button>
+        </div>
+        <p class="text-xs text-[#617589] dark:text-gray-500">You can edit your selections in the next step if needed.</p>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="mt-20 border-t border-[#f0f2f4] dark:border-gray-800 bg-white dark:bg-background-dark py-8">
+    <div class="max-w-[960px] mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
+        <p class="text-sm text-[#617589] dark:text-gray-500">© 2024 College Admission Portal. All rights reserved.</p>
+        <div class="flex gap-6">
+            <a class="text-sm text-[#617589] dark:text-gray-500 hover:text-primary" href="#">Privacy Policy</a>
+            <a class="text-sm text-[#617589] dark:text-gray-500 hover:text-primary" href="#">Support Center</a>
+        </div>
+    </div>
+</footer>
+
+<script>
+    // Add form ID to the form
+    document.querySelector('form').id = 'department-form';
+</script>
+</body>
+</html>

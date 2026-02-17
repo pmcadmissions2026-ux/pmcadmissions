@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Step 1: Student Enquiry Form</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display min-h-screen text-[#111418] dark:text-white">
+<div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+    
+    <!-- Header / Navigation Bar -->
+    <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#dbe0e6] dark:border-[#2d3748] px-10 py-3 bg-white dark:bg-background-dark sticky top-0 z-50">
+        <div class="flex items-center gap-4">
+            <div class="size-8 text-primary">
+                <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                    <path clip-rule="evenodd" d="M39.475 21.6262C40.358 21.4363 40.6863 21.5589 40.7581 21.5934C40.7876 21.655 40.8547 21.857 40.8082 22.3336C40.7408 23.0255 40.4502 24.0046 39.8572 25.2301C38.6799 27.6631 36.5085 30.6631 33.5858 33.5858C30.6631 36.5085 27.6632 38.6799 25.2301 39.8572C24.0046 40.4502 23.0255 40.7407 22.3336 40.8082C21.8571 40.8547 21.6551 40.7875 21.5934 40.7581C21.5589 40.6863 21.4363 40.358 21.6262 39.475C21.8562 38.4054 22.4689 36.9657 23.5038 35.2817C24.7575 33.2417 26.5497 30.9744 28.7621 28.762C30.9744 26.5497 33.2417 24.7574 35.2817 23.5037C36.9657 22.4689 38.4054 21.8562 39.475 21.6262ZM4.41189 29.2403L18.7597 43.5881C19.8813 44.7097 21.4027 44.9179 22.7217 44.7893C24.0585 44.659 25.5148 44.1631 26.9723 43.4579C29.9052 42.0387 33.2618 39.5667 36.4142 36.4142C39.5667 33.2618 42.0387 29.9052 43.4579 26.9723C44.1631 25.5148 44.659 24.0585 44.7893 22.7217C44.9179 21.4027 44.7097 19.8813 43.5881 18.7597L29.2403 4.41187C27.8527 3.02428 25.8765 3.02573 24.2861 3.36776C22.6081 3.72863 20.7334 4.58419 18.8396 5.74801C16.4978 7.18716 13.9881 9.18353 11.5858 11.5858C9.18354 13.988 7.18717 16.4978 5.74802 18.8396C4.58421 20.7334 3.72865 22.6081 3.36778 24.2861C3.02574 25.8765 3.02429 27.8527 4.41189 29.2403Z" fill="currentColor" fill-rule="evenodd"></path>
+                </svg>
+            </div>
+            <h2 class="text-lg font-bold leading-tight tracking-tight">PMC Admission Portal</h2>
+        </div>
+        <div class="flex flex-1 justify-end gap-4">
+            <a href="{{ url_for('admin.dashboard') }}" class="flex items-center justify-center rounded-lg h-10 bg-primary/10 text-primary px-3 hover:bg-primary/20 transition-colors">
+                <span class="material-symbols-outlined">dashboard</span>
+            </a>
+            <div class="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                <span class="material-symbols-outlined text-sm">badge</span>
+                <span class="text-sm font-medium">{{ user.name if user else 'Staff' }}</span>
+            </div>
+        </div>
+    </header>
+    
+    <main class="flex-1 flex flex-col items-center py-10 px-4">
+        <div class="max-w-[1000px] w-full">
+            
+            <!-- Headline -->
+            <h1 class="text-center text-[32px] font-bold tracking-tight mb-8">Step 1: Student Enquiry Form</h1>
+            
+            <!-- Progress Stepper -->
+            <div class="mb-10 bg-white dark:bg-background-dark border border-[#dbe0e6] dark:border-[#2d3748] rounded-xl p-6 shadow-sm">
+                <div class="grid grid-cols-3 gap-x-2">
+                    <!-- Step 1: Active -->
+                    <div class="flex items-center gap-3">
+                        <div class="flex flex-col items-center">
+                            <div class="bg-primary text-white rounded-full size-10 flex items-center justify-center">
+                                <span class="material-symbols-outlined">description</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col">
+                            <p class="text-primary text-base font-bold leading-none">Enquiry</p>
+                            <p class="text-[#617589] text-sm mt-1">Step 1: Active</p>
+                        </div>
+                    </div>
+                    <!-- Step 2: Pending -->
+                    <div class="flex items-center gap-3 opacity-50">
+                        <div class="flex flex-col items-center">
+                            <div class="bg-[#dbe0e6] text-[#111418] rounded-full size-10 flex items-center justify-center">
+                                <span class="material-symbols-outlined">account_tree</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col">
+                            <p class="text-[#111418] dark:text-white text-base font-medium leading-none">Branch Selection</p>
+                            <p class="text-[#617589] text-sm mt-1">Pending</p>
+                        </div>
+                    </div>
+                    <!-- Step 3: Pending -->
+                    <div class="flex items-center gap-3 opacity-50">
+                        <div class="flex flex-col items-center">
+                            <div class="bg-[#dbe0e6] text-[#111418] rounded-full size-10 flex items-center justify-center">
+                                <span class="material-symbols-outlined">how_to_reg</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col">
+                            <p class="text-[#111418] dark:text-white text-base font-medium leading-none">Application Filing</p>
+                            <p class="text-[#617589] text-sm mt-1">Pending</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Progress Bar Track -->
+                <div class="relative mt-4 h-1.5 w-full bg-[#dbe0e6] rounded-full overflow-hidden">
+                    <div class="absolute left-0 top-0 h-full w-1/3 bg-primary"></div>
+                </div>
+            </div>
+            
+            <!-- Form Container -->
+            <form method="POST" class="bg-white dark:bg-background-dark border border-[#dbe0e6] dark:border-[#2d3748] rounded-xl shadow-lg overflow-hidden">
+        
+        <!-- Personal Details Section -->
+        <div class="p-8 border-b border-[#f0f2f4] dark:border-gray-800">
+            <div class="flex items-center gap-2 mb-6">
+                <span class="material-symbols-outlined text-primary">person</span>
+                <h2 class="text-[22px] font-bold text-[#111418] dark:text-white">Personal Details</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="text-sm font-semibold text-[#111418] dark:text-white mb-2 block">Full Name *</label>
+                    <input type="text" name="full_name" placeholder="Enter full name as per marksheet" 
+                           class="w-full rounded-lg border border-[#dbe0e6] dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-[#111418] dark:text-white focus:border-primary focus:ring-1 focus:ring-primary" required/>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-semibold text-[#111418] dark:text-white mb-2 block">WhatsApp Number *</label>
+                    <input type="tel" name="whatsapp_number" placeholder="+91 00000 00000" 
+                           class="w-full rounded-lg border border-[#dbe0e6] dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-[#111418] dark:text-white focus:border-primary focus:ring-1 focus:ring-primary" required/>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-semibold text-[#111418] dark:text-white mb-2 block">Email Address *</label>
+                    <input type="email" name="email" placeholder="yourname@example.com" 
+                           class="w-full rounded-lg border border-[#dbe0e6] dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text[#111418] dark:text-white focus:border-primary focus:ring-1 focus:ring-primary" required/>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-semibold text-[#111418] dark:text-white mb-2 block">Father's Name</label>
+                    <input type="text" name="father_name" placeholder="Father's full name" 
+                           class="w-full rounded-lg border border-[#dbe0e6] dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-[#111418] dark:text-white focus:border-primary focus:ring-1 focus:ring-primary"/>
+                </div>
+                
+                <div class="md:col-span-2">
+                    <label class="text-sm font-semibold text-[#111418] dark:text-white mb-2 block">Mother's Name</label>
+                    <input type="text" name="mother_name" placeholder="Mother's full name" 
+                           class="w-full rounded-lg border border-[#dbe0e6] dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-[#111418] dark:text-white focus:border-primary focus:ring-1 focus:ring-primary"/>
+                </div>
+            </div>
+        </div>
+
+        <!-- Academic Background Section -->
+        <div class="p-8 border-b border-[#f0f2f4] dark:border-gray-800 bg-primary/5">
+            <div class="flex items-center gap-2 mb-6">
+                <span class="material-symbols-outlined text-primary">school</span>
+                <h2 class="text-[22px] font-bold text-[#111418] dark:text-white">Academic Background</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="text-sm font-semibold text-[#111418] dark:text-white mb-2 block">12th School Name *</label>
+                    <input type="text" name="school_name" placeholder="Enter school name" 
+                           class="w-full rounded-lg border border-[#dbe0e6] dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-[#111418] dark:text-white focus:border-primary focus:ring-1 focus:ring-primary" required/>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-semibold text-[#111418] dark:text-white mb-2 block">Board of Examination *</label>
+                    <select name="board" class="w-full rounded-lg border border-[#dbe0e6] dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-[#111418] dark:text-white focus:border-primary focus:ring-1 focus:ring-primary" required>
+                        <option value="">Select Board</option>
+                        <option value="state">State Board</option>
+                        <option value="cbse">CBSE</option>
+                        <option value="icse">ICSE</option>
+                        <option value="others">Others</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="text-sm font-semibold text-[#111418] dark:text-white mb-2 block">Maths Marks *</label>
+                    <input type="number" name="maths_marks" placeholder="0-100" min="0" max="100"
+                           class="w-full rounded-lg border border-[#dbe0e6] dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-[#111418] dark:text-white focus:border-primary focus:ring-1 focus:ring-primary" required/>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-semibold text-[#111418] dark:text-white mb-2 block">Physics Marks *</label>
+                    <input type="number" name="physics_marks" placeholder="0-100" min="0" max="100"
+                           class="w-full rounded-lg border border-[#dbe0e6] dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-[#111418] dark:text-white focus:border-primary focus:ring-1 focus:ring-primary" required/>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-semibold text-[#111418] dark:text-white mb-2 block">Chemistry Marks *</label>
+                    <input type="number" name="chemistry_marks" placeholder="0-100" min="0" max="100"
+                           class="w-full rounded-lg border border-[#dbe0e6] dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-[#111418] dark:text-white focus:border-primary focus:ring-1 focus:ring-primary" required/>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-semibold text-[#111418] dark:text-white mb-2 block">Quota Type</label>
+                    <select name="quota_type" class="w-full rounded-lg border border-[#dbe0e6] dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-[#111418] dark:text-white focus:border-primary focus:ring-1 focus:ring-primary">
+                        <option value="government">Government Quota</option>
+                        <option value="management">Management Quota</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Social & Categories Section -->
+        <div class="p-8 border-b border-[#f0f2f4] dark:border-gray-800">
+            <div class="flex items-center gap-2 mb-6">
+                <span class="material-symbols-outlined text-primary">diversity_3</span>
+                <h2 class="text-[22px] font-bold text-[#111418] dark:text-white">Social & Categories</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="text-sm font-semibold text-[#111418] dark:text-white mb-2 block">Religion</label>
+                    <select name="religion" class="w-full rounded-lg border border-[#dbe0e6] dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-[#111418] dark:text-white focus:border-primary focus:ring-1 focus:ring-primary">
+                        <option value="">Select Religion</option>
+                        <option value="hindu">Hindu</option>
+                        <option value="muslim">Muslim</option>
+                        <option value="christian">Christian</option>
+                        <option value="others">Others</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-semibold text-[#111418] dark:text-white mb-2 block">Caste / Community</label>
+                    <select name="community" class="w-full rounded-lg border border-[#dbe0e6] dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-[#111418] dark:text-white focus:border-primary focus:ring-1 focus:ring-primary">
+                        <option value="">Select Community</option>
+                        <option value="general">General</option>
+                        <option value="obc">OBC</option>
+                        <option value="bc">BC</option>
+                        <option value="mbc">MBC</option>
+                        <option value="scst">SC/ST</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer / Actions -->
+        <div class="bg-gray-50 dark:bg-gray-800 border-t border-[#f0f2f4] dark:border-gray-800 px-8 py-6 flex justify-between items-center">
+            <a href="{{ url_for('admin.enquiries') }}" class="flex items-center gap-2 text-[#617589] hover:text-primary font-bold transition-colors">
+                <span class="material-symbols-outlined">arrow_back</span>
+                Back
+            </a>
+            
+            <div class="flex gap-4">
+                <button type="reset" class="px-8 py-3 rounded-lg font-bold border border-[#dbe0e6] dark:border-gray-700 text-[#111418] dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    Reset
+                </button>
+                <button type="submit" class="px-10 py-3 bg-primary text-white rounded-lg font-bold flex items-center gap-2 hover:bg-primary/90 transition-colors">
+                    Next Step
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

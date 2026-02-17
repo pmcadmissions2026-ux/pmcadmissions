@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Admin Branch Selection Dashboard - PMC Engineering</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-nav {
+            background-color: #137fec;
+            color: white !important;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] px-6 py-3 sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<div class="text-primary">
+<svg fill="none" height="32" viewbox="0 0 48 48" width="32" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Er. Perumal Manimekalai College of Engineering</h2>
+</div>
+<div class="flex flex-1 justify-end gap-4 items-center">
+<label class="flex flex-col min-w-64 !h-10 max-w-96">
+<div class="flex w-full flex-1 items-stretch rounded-lg h-full bg-[#f0f2f4] dark:bg-[#2d3748]">
+<div class="text-[#617589] flex items-center justify-center pl-4">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111418] dark:text-white focus:outline-0 focus:ring-0 border-none bg-transparent h-full placeholder:text-[#617589] px-2 text-sm font-normal" placeholder="Search Unique ID or Student Name..." value=""/>
+</div>
+</label>
+<div class="flex gap-2">
+<a href="{{ url_for('admin.profile') }}" class="flex items-center justify-center rounded-lg h-10 w-10 bg-[#f0f2f4] dark:bg-[#2d3748] text-[#111418] dark:text-white hover:bg-slate-200 transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</a>
+<a href="{{ url_for('auth.logout') }}" class="flex items-center justify-center rounded-lg h-10 w-10 bg-[#f0f2f4] dark:bg-[#2d3748] text-[#111418] dark:text-white hover:bg-slate-200 transition-colors">
+<span class="material-symbols-outlined">logout</span>
+</a>
+</div>
+</div>
+</header>
+<div class="flex flex-1">
+<!-- SideNavBar -->
+<aside class="w-64 border-r border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] hidden md:flex flex-col p-4 gap-6 sticky top-[65px] h-[calc(100vh-65px)]">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-3 px-3 py-4">
+<div class="bg-primary/10 text-primary p-2 rounded-lg">
+<span class="material-symbols-outlined">shield_person</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-[#111418] dark:text-white text-sm font-bold leading-none">Admin Portal</h1>
+<p class="text-[#617589] text-xs font-normal">Management Dashboard</p>
+</div>
+</div>
+</div>
+<nav class="flex flex-col gap-2">
+{% if user.role == 'super_admin' or 'enquiries' in user.assigned_modules %}
+<a href="{{ url_for('admin.enquiries') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#111418] dark:text-white hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] cursor-pointer">
+<span class="material-symbols-outlined">mail</span>
+<p class="text-sm font-medium">Enquiries</p>
+</a>
+{% endif %}
+{% if user.role == 'super_admin' or 'branch_selection' in user.assigned_modules %}
+<a href="{{ url_for('admin.admin_dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg active-nav cursor-pointer">
+<span class="material-symbols-outlined">account_tree</span>
+<p class="text-sm font-medium">Branch Assignment</p>
+</a>
+{% endif %}
+{% if user.role == 'super_admin' or 'counselling' in user.assigned_modules %}
+<a href="{{ url_for('admin.counselling_list') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#111418] dark:text-white hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] cursor-pointer">
+<span class="material-symbols-outlined">how_to_vote</span>
+<p class="text-sm font-medium">Counselling</p>
+</a>
+{% endif %}
+{% if user.role == 'super_admin' or 'payments' in user.assigned_modules %}
+<a href="{{ url_for('admin.payments_list') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#111418] dark:text-white hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] cursor-pointer">
+<span class="material-symbols-outlined">payments</span>
+<p class="text-sm font-medium">Payments</p>
+</a>
+{% endif %}
+{% if user.role == 'super_admin' or 'documents' in user.assigned_modules %}
+<a href="{{ url_for('admin.documents_management') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#111418] dark:text-white hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] cursor-pointer">
+<span class="material-symbols-outlined">description</span>
+<p class="text-sm font-medium">Documents</p>
+</a>
+{% endif %}
+{% if user.role == 'super_admin' or 'applications' in user.assigned_modules %}
+<a href="{{ url_for('admin.applications_list') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#111418] dark:text-white hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] cursor-pointer">
+<span class="material-symbols-outlined">how_to_reg</span>
+<p class="text-sm font-medium">Applications</p>
+</a>
+{% endif %}
+{% if user.role == 'super_admin' or 'reports' in user.assigned_modules %}
+<a href="{{ url_for('admin.reports') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#111418] dark:text-white hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] cursor-pointer">
+<span class="material-symbols-outlined">analytics</span>
+<p class="text-sm font-medium">Admission Reports</p>
+</a>
+{% endif %}
+</nav>
+<div class="mt-auto pt-4 border-t border-[#e5e7eb] dark:border-[#2d3748]">
+<p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">System Status</p>
+<div class="flex items-center gap-2 px-3 py-2">
+<div class="size-2 rounded-full bg-green-500"></div>
+<span class="text-xs text-[#617589]">Admission Server Live</span>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto">
+<div class="max-w-[1200px] mx-auto p-6 flex flex-col gap-6">
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+        <div class="bg-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-50 border border-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-200 text-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-800 px-4 py-3 rounded-lg">
+            {{ message }}
+        </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<!-- Access Check -->
+{% if user.role != 'super_admin' and 'branch_selection' not in user.assigned_modules %}
+<div class="grid grid-cols-1 gap-6">
+<!-- Assigned Modules Card -->
+<div class="bg-white dark:bg-[#1a202c] rounded-lg border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden">
+<div class="p-6 border-b border-[#e5e7eb] dark:border-[#2d3748]">
+<div class="flex items-center gap-3 mb-4">
+<div class="bg-blue-100 dark:bg-blue-900 p-3 rounded-lg">
+<span class="material-symbols-outlined text-blue-600 dark:text-blue-400">dashboard</span>
+</div>
+<div>
+<h2 class="text-2xl font-bold text-[#111418] dark:text-white">Your Assigned Modules</h2>
+<p class="text-sm text-[#617589] dark:text-[#a0aec0]">Access only the modules assigned to you</p>
+</div>
+</div>
+</div>
+
+<div class="p-6">
+{% if user.assigned_modules and user.assigned_modules|length > 0 %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+{% set module_info = {
+  'enquiries': {'icon': 'mail', 'color': 'blue', 'desc': 'Manage student enquiries'},
+  'applications': {'icon': 'how_to_reg', 'color': 'green', 'desc': 'Process applications'},
+  'counselling': {'icon': 'how_to_vote', 'color': 'purple', 'desc': 'Counselling management'},
+  'payments': {'icon': 'payments', 'color': 'orange', 'desc': 'Payment management'},
+  'documents': {'icon': 'description', 'color': 'red', 'desc': 'Document management'},
+  'reports': {'icon': 'analytics', 'color': 'indigo', 'desc': 'Reports & analytics'},
+  'staff': {'icon': 'people', 'color': 'cyan', 'desc': 'Staff management'},
+    'branch_selection': {'icon': 'account_tree', 'color': 'amber', 'desc': 'Branch selection'}
+} %}
+{% for module in user.assigned_modules %}
+{% set info = module_info.get(module, {'icon': 'module', 'color': 'gray', 'desc': module|replace('_', ' ')|title}) %}
+<!-- Module Card -->
+<div class="rounded-lg border border-[#e5e7eb] dark:border-[#2d3748] p-4 hover:shadow-lg transition-shadow bg-white dark:bg-[#111827]">
+<div class="flex items-start gap-3">
+<div class="p-2 rounded-lg flex-shrink-0 {% if info.color == 'blue' %}bg-blue-100 dark:bg-blue-900{% elif info.color == 'green' %}bg-green-100 dark:bg-green-900{% elif info.color == 'purple' %}bg-purple-100 dark:bg-purple-900{% elif info.color == 'orange' %}bg-orange-100 dark:bg-orange-900{% elif info.color == 'red' %}bg-red-100 dark:bg-red-900{% elif info.color == 'indigo' %}bg-indigo-100 dark:bg-indigo-900{% elif info.color == 'cyan' %}bg-cyan-100 dark:bg-cyan-900{% elif info.color == 'amber' %}bg-amber-100 dark:bg-amber-900{% endif %}">
+<span class="material-symbols-outlined {% if info.color == 'blue' %}text-blue-600 dark:text-blue-400{% elif info.color == 'green' %}text-green-600 dark:text-green-400{% elif info.color == 'purple' %}text-purple-600 dark:text-purple-400{% elif info.color == 'orange' %}text-orange-600 dark:text-orange-400{% elif info.color == 'red' %}text-red-600 dark:text-red-400{% elif info.color == 'indigo' %}text-indigo-600 dark:text-indigo-400{% elif info.color == 'cyan' %}text-cyan-600 dark:text-cyan-400{% elif info.color == 'amber' %}text-amber-600 dark:text-amber-400{% endif %}">{{ info.icon }}</span>
+</div>
+<div class="flex-1">
+<h3 class="font-bold text-[#111418] dark:text-white">{{ module|replace('_', ' ')|title }}</h3>
+<p class="text-xs text-[#617589] dark:text-[#a0aec0] mt-1">{{ info.desc }}</p>
+</div>
+</div>
+</div>
+{% endfor %}
+</div>
+{% else %}
+<div class="text-center py-12">
+<span class="material-symbols-outlined text-6xl text-[#e5e7eb] dark:text-[#2d3748] mx-auto block mb-4">lock</span>
+<h3 class="text-lg font-bold text-[#111418] dark:text-white mb-2">No Modules Assigned</h3>
+<p class="text-[#617589] dark:text-[#a0aec0]">You do not have any modules assigned yet. Please contact your Super Admin to assign modules.</p>
+</div>
+{% endif %}
+</div>
+</div>
+</div>
+{% else %}<!-- PageHeading -->
+<div class="flex flex-wrap justify-between items-end gap-3">
+<div class="flex min-w-72 flex-col gap-1">
+<p class="text-[#111418] dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">Admin Branch Management</p>
+<p class="text-[#617589] dark:text-[#a0aec0] text-base font-normal leading-normal">Manage and assign departments to enquired students.</p>
+</div>
+</div>
+<!-- Filters/Chips -->
+<div class="flex flex-wrap items-center gap-3 bg-white dark:bg-[#1a202c] p-4 rounded-xl border border-[#e5e7eb] dark:border-[#2d3748]">
+<span class="text-sm font-semibold text-[#111418] dark:text-white mr-2">Filters:</span>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#f0f2f4] dark:bg-[#2d3748] px-4 hover:bg-[#e5e7eb] transition-colors">
+<span class="text-[#111418] dark:text-white text-sm font-medium">Admission Date: Today</span>
+<span class="material-symbols-outlined text-sm">calendar_today</span>
+</button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-[#f0f2f4] dark:bg-[#2d3748] px-4 hover:bg-[#e5e7eb] transition-colors">
+<span class="text-[#111418] dark:text-white text-sm font-medium">All Communities</span>
+<span class="material-symbols-outlined text-sm">filter_alt</span>
+</button>
+<div class="ml-auto flex items-center gap-2">
+<p class="text-xs text-[#617589] font-medium">Total Pending: {{ pending_students|length if pending_students else 0 }}</p>
+</div>
+</div>
+<!-- SectionHeader + Table -->
+<div class="flex flex-col bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden">
+<div class="flex items-center justify-between px-6 py-5 border-b border-[#e5e7eb] dark:border-[#2d3748]">
+<h2 class="text-[#111418] dark:text-white text-xl font-bold leading-tight">Pending Branch Selection</h2>
+<button class="text-primary text-sm font-bold flex items-center gap-1 hover:underline">
+<span class="material-symbols-outlined text-sm">download</span> Export List
+                        </button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-[#f8fafc] dark:bg-[#2d3748] border-b border-[#e5e7eb] dark:border-[#2d3748]">
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Student Name</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Unique ID</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Cut-off</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Community</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
+{% if pending_students %}
+    {% for student in pending_students %}
+    <tr class="hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors group">
+        <td class="px-6 py-4">
+            <div class="text-sm font-semibold text-[#111418] dark:text-white">{{ student.name }}</div>
+            <div class="text-xs text-[#617589]">Enquired {{ student.time_ago }}</div>
+        </td>
+        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">{{ student.unique_id or 'N/A' }}</td>
+        <td class="px-6 py-4">
+            {% if student.cutoff %}
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold 
+                {% if student.cutoff >= 190 %}bg-green-100 text-green-800{% elif student.cutoff >= 180 %}bg-blue-100 text-blue-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                {{ "%.2f"|format(student.cutoff) }}
+            </span>
+            {% else %}
+            <span class="text-xs text-slate-400">Pending</span>
+            {% endif %}
+        </td>
+        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">{{ student.community or 'General' }}</td>
+        <td class="px-6 py-4 text-right">
+            <a href="{{ url_for('admin.assign_branch', student_id=student.student_id) }}" class="inline-flex items-center gap-2 bg-primary text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-primary/90 shadow-sm transition-all active:scale-95">
+                <span class="material-symbols-outlined text-sm">assignment</span>
+                Assign Branch
+            </a>
+        </td>
+    </tr>
+    {% endfor %}
+{% else %}
+    <tr>
+        <td colspan="5" class="px-6 py-12 text-center text-slate-500">
+            <span class="material-symbols-outlined text-4xl mb-2">check_circle</span>
+            <p class="text-sm font-medium">All students have been assigned branches</p>
+            <p class="text-xs text-slate-400 mt-1">No pending branch selections at this time</p>
+        </td>
+    </tr>
+{% endif %}
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-6 py-4 flex items-center justify-between border-t border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c]">
+<p class="text-sm text-[#617589]">Showing {{ pending_students|length if pending_students else 0 }} pending students</p>
+<div class="flex gap-2">
+<button class="px-3 py-1 text-sm border border-[#e5e7eb] dark:border-[#2d3748] rounded hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors disabled:opacity-50">Previous</button>
+<button class="px-3 py-1 text-sm border border-primary bg-primary text-white rounded">1</button>
+<button class="px-3 py-1 text-sm border border-[#e5e7eb] dark:border-[#2d3748] rounded hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors">Next</button>
+</div>
+</div>
+</div>
+
+<!-- Assigned Branches Section -->
+<div class="mt-8">
+    <!-- Accepted by You Section: show students accepted by current admin -->
+    {% if accepted_students and accepted_students|length > 0 %}
+    <div class="mb-6 rounded-xl shadow-sm border border-[#f0f2f4] dark:border-gray-800 overflow-hidden bg-white dark:bg-[#1a202c]">
+        <div class="px-6 py-4 border-b border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#0f1419]">
+            <div class="flex items-center justify-between">
+                <h2 class="text-[#111418] dark:text-white text-xl font-bold leading-tight flex items-center gap-3">
+                    <span class="material-symbols-outlined text-primary text-2xl">verified_user</span>
+                    Accepted Students (You)
+                </h2>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{{ accepted_students|length }} Accepted</span>
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 dark:bg-gray-800">
+                    <tr class="border-b border-[#e5e7eb] dark:border-[#2d3748]">
+                        <th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Unique ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Accepted At</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Cut-off</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
+                    {% for s in accepted_students %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
+                        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">{{ s.name }}</td>
+                        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">{{ s.unique_id or 'N/A' }}</td>
+                        <td class="px-6 py-4 text-sm text-[#617589]">{{ s.accepted_at or '-' }}</td>
+                        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white">{% if s.cutoff %}{{ "%.2f"|format(s.cutoff) }}{% else %}-{% endif %}</td>
+                        <td class="px-6 py-4 text-sm text-right">
+                            {% if s.has_admission %}
+                                <span class="inline-flex items-center gap-2 bg-green-600 text-white text-xs font-bold py-2 px-3 rounded-lg animate-pulse opacity-95">
+                                    <span class="material-symbols-outlined text-sm">check_circle</span>
+                                    Branch Assigned
+                                </span>
+                            {% else %}
+                                <a href="{{ url_for('admin.assign_branch', student_id=s.student_id) }}" class="inline-flex items-center gap-2 bg-primary text-white text-xs font-bold py-2 px-3 rounded-lg hover:bg-primary/90">Department Allocation</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+    <div class="rounded-xl shadow-sm border border-[#f0f2f4] dark:border-gray-800 overflow-hidden bg-white dark:bg-[#1a202c]">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#0f1419]">
+            <div class="flex items-center justify-between">
+                <h2 class="text-[#111418] dark:text-white text-xl font-bold leading-tight flex items-center gap-3">
+                    <span class="material-symbols-outlined text-primary text-2xl">check_circle</span>
+                    Assigned Branches
+                </h2>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                    {% if assigned_students %}{{ assigned_students|length }} Assigned{% else %}0 Assigned{% endif %}
+                </span>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 dark:bg-gray-800">
+                    <tr class="border-b border-[#e5e7eb] dark:border-[#2d3748]">
+                        <th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">App #</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Unique ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Preferred Dept</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Optional Dept</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Allotted Dept</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Cutoff</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
+                    {% if assigned_students %}
+                        {% for student in assigned_students %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
+                            <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono font-bold">
+                                {% if student.app_id %}#{{ student.app_id }}{% else %}<span class="text-xs text-slate-400">N/A</span>{% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">{{ student.name }}</td>
+                            <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">{{ student.unique_id or 'N/A' }}</td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                                    {{ student.preferred_dept_code }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if student.optional_depts and student.optional_depts|length > 0 %}
+                                <div class="flex flex-wrap gap-1">
+                                    {% for dept in student.optional_depts %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+                                        {{ dept.dept_code }}
+                                    </span>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <span class="text-xs text-[#617589] dark:text-gray-500">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if student.allotted_dept != '-' %}
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-green-600 text-sm">check</span>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                        {{ student.allotted_dept_code }}
+                                    </span>
+                                </div>
+                                {% else %}
+                                <span class="text-xs text-[#617589] dark:text-gray-500">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold {% if student.cutoff >= 190 %}bg-green-100 text-green-800{% elif student.cutoff >= 180 %}bg-blue-100 text-blue-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                    {{ "%.2f"|format(student.cutoff) }}
+                                </span>
+                            </td>
+                            <!-- Status, Documents and Actions columns removed per request -->
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="px-6 py-12 text-center text-slate-500">
+                                <span class="material-symbols-outlined text-4xl mb-2">assignment_late</span>
+                                <p class="text-sm font-medium">No branches assigned yet</p>
+                                <p class="text-xs text-slate-400 mt-1">Start assigning branches to students from the pending list above</p>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-6 py-4 flex items-center justify-between border-t border-[#e5e7eb] dark:border-[#2d3748] bg-gray-50 dark:bg-gray-800">
+            <p class="text-sm text-[#617589]">Total Assigned: {{ assigned_students|length if assigned_students else 0 }}</p>
+            <div class="text-xs text-[#617589] dark:text-gray-400">
+                <span>✓ Confirmed Assignments</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Guidance Note -->
+<div class="bg-primary/5 border border-primary/20 rounded-xl p-4 flex gap-4 mt-8">
+<div class="text-primary">
+<span class="material-symbols-outlined">info</span>
+</div>
+<div>
+<p class="text-sm font-semibold text-[#111418] dark:text-white">Administration Tip</p>
+<p class="text-xs text-[#617589] mt-1">Students with cut-off marks above 190 are highlighted for immediate counseling. Priority allocation is recommended for scholarship eligible candidates.</p>
+</div>
+</div>
+</div>
+{% endif %}
+</main>
+</div>
+</body>
+</html>

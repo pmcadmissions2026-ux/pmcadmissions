@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Mark Applied for Counselling - PMC</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
+  <style>
+    body { font-family: 'Lexend', sans-serif; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    .active-nav { background-color: #137fec; color: white !important; }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white min-h-screen flex flex-col">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] px-6 py-3 sticky top-0 z-50">
+  <div class="flex items-center gap-4">
+    <div class="text-primary">
+      <svg fill="none" height="32" viewbox="0 0 48 48" width="32" xmlns="http://www.w3.org/2000/svg">
+        <path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
+      </svg>
+    </div>
+    <h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Er. Perumal Manimekalai College of Engineering</h2>
+  </div>
+  <div class="flex items-center gap-4">
+    <a href="{{ url_for('auth.logout') }}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">Logout</a>
+  </div>
+</header>
+
+<div class="flex flex-1">
+  <aside class="w-56 border-r border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#111827] hidden md:flex flex-col">
+    <nav class="flex-1 overflow-y-auto px-2 py-6 flex flex-col gap-2">
+      <a href="{{ url_for('admin.counselling_list') }}" class="flex items-center gap-3 px-4 py-2 text-white bg-primary rounded-lg transition-colors active-nav">
+        <span class="material-symbols-outlined text-xl">how_to_vote</span>
+        <span class="text-sm font-medium">Counselling</span>
+      </a>
+    </nav>
+    <div class="border-t border-[#e5e7eb] dark:border-[#2d3748] px-4 py-4">
+      <p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">{{ user.name }}</p>
+      <p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">{{ user.role }}</p>
+    </div>
+  </aside>
+
+  <main class="flex-1 overflow-y-auto">
+    <div class="max-w-[900px] mx-auto p-6 flex flex-col gap-6">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="bg-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-50 border border-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-200 text-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-800 px-4 py-3 rounded-lg">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-extrabold text-primary">Mark Applied for Counselling</h1>
+          <p class="text-sm text-primary/80">Record counselling application number and date (step 1)</p>
+        </div>
+        <div class="hidden md:block">
+          <span class="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary font-medium">Step 1</span>
+        </div>
+      </div>
+
+      <div class="bg-gradient-to-tr from-white to-sky-50 dark:from-[#071029] dark:to-[#071019] rounded-xl border border-transparent p-1 shadow-2xl">
+        <div class="bg-white dark:bg-[#071019] rounded-xl p-6">
+          <form method="post" action="{{ url_for('admin.counselling_apply', app_id=app.get('app_id') or app.get('id')) }}">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <!-- Left: Student / step info -->
+              <div class="md:col-span-1 flex flex-col gap-4">
+                <div class="rounded-lg p-4 bg-gradient-to-r from-primary/10 to-indigo-50 dark:from-primary/20 dark:to-indigo-900 border border-primary/10">
+                  <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">AP</div>
+                    <div>
+                      <div class="text-sm text-slate-600 dark:text-slate-300">Application</div>
+                      <div class="text-lg font-semibold text-[#0f172a] dark:text-white">#{{ app.get('app_id') or app.get('id') }}</div>
+                      <div class="text-xs text-slate-500 dark:text-slate-400">Registered: {{ app.get('created_at') or 'N/A' }}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="rounded-lg p-4 bg-white dark:bg-[#08111a] border border-[#e6eefc] dark:border-[#0f172a]">
+                  <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-200">Counselling Step 1</h3>
+                  <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">Record which counselling streams the student has applied for and capture application numbers, dates and GQ round.</p>
+                </div>
+              </div>
+
+              <!-- Right: Form controls -->
+              <div class="md:col-span-2">
+                <div class="flex items-center gap-6 mb-4">
+                  <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-transparent hover:border-primary/20 transition">
+                    <input type="checkbox" name="applied_gq" id="applied_gq" class="h-5 w-5 text-green-600 ring-1 ring-green-200 rounded-sm" {% if app.get('applied_gq') %}checked{% endif %} />
+                    <div class="ml-2">
+                      <div class="font-semibold text-green-700">General Quota (GQ)</div>
+                      <div class="text-xs text-slate-500">Select if applied for General Quota counselling</div>
+                    </div>
+                  </label>
+
+                  <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-transparent hover:border-indigo-200 transition">
+                    <input type="checkbox" name="applied_mq" id="applied_mq" class="h-5 w-5 text-indigo-600 ring-1 ring-indigo-200 rounded-sm" {% if app.get('applied_mq') %}checked{% endif %} />
+                    <div class="ml-2">
+                      <div class="font-semibold text-indigo-700">Management Quota (MQ)</div>
+                      <div class="text-xs text-slate-500">Select if applied for Management Quota counselling</div>
+                    </div>
+                  </label>
+                </div>
+
+                <div id="gq_section" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3 opacity-0 max-h-0 overflow-hidden transform transition-all duration-300">
+                  <div class="col-span-1">
+                    <label class="block text-sm font-medium mb-2 text-green-800">GQ Application Number</label>
+                    <input name="gq_application_number" type="text" value="{{ app.get('gq_application_number') or app.get('counselling_application_number') or '' }}" class="w-full border rounded px-3 py-2 bg-white dark:bg-[#071019] focus:ring-2 focus:ring-green-200" placeholder="Enter GQ application number" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2 text-green-800">GQ Applied Date</label>
+                    <input name="gq_applied_at" type="datetime-local" value="{% if app.get('gq_applied_at') %}{{ app.get('gq_applied_at') }}{% endif %}" class="w-full border rounded px-3 py-2 bg-white dark:bg-[#071019] focus:ring-2 focus:ring-green-200" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2 text-green-800">GQ Round</label>
+                    <select name="gq_round" id="gq_round" class="w-full border rounded px-3 py-2 bg-white dark:bg-[#071019] focus:ring-2 focus:ring-green-200">
+                      <option value="">Select round</option>
+                      <option value="1" {% if app.get('gq_round') == '1' %}selected{% endif %}>1</option>
+                      <option value="2" {% if app.get('gq_round') == '2' %}selected{% endif %}>2</option>
+                      <option value="3" {% if app.get('gq_round') == '3' %}selected{% endif %}>3</option>
+                      <option value="4" {% if app.get('gq_round') == '4' %}selected{% endif %}>4</option>
+                      <option value="supplementary" {% if app.get('gq_round') == 'supplementary' %}selected{% endif %}>Supplementary</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div id="mq_section" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 opacity-0 max-h-0 overflow-hidden transform transition-all duration-300">
+                  <div>
+                    <label class="block text-sm font-medium mb-2 text-indigo-800">MQ Consortium Number</label>
+                    <input name="mq_consortium_number" type="text" value="{{ app.get('mq_consortium_number') or '' }}" class="w-full border rounded px-3 py-2 bg-white dark:bg-[#071019] focus:ring-2 focus:ring-indigo-200" placeholder="Enter MQ consortium number" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-2 text-indigo-800">MQ Applied Date</label>
+                    <input name="mq_applied_at" type="datetime-local" value="{% if app.get('mq_applied_at') %}{{ app.get('mq_applied_at') }}{% endif %}" class="w-full border rounded px-3 py-2 bg-white dark:bg-[#071019] focus:ring-2 focus:ring-indigo-200" />
+                  </div>
+                </div>
+
+                <div class="flex justify-end gap-3 mt-6">
+                  <a href="{{ url_for('admin.counselling_list') }}" class="px-4 py-2 rounded-md border border-transparent bg-gray-100 hover:bg-gray-200 text-sm">Cancel</a>
+                  <button type="submit" class="px-4 py-2 rounded-md bg-gradient-to-r from-green-600 to-primary text-white font-semibold shadow-lg">Save</button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+<script>
+  (function(){
+    function toggleSections() {
+      const gq = document.getElementById('applied_gq');
+      const mq = document.getElementById('applied_mq');
+      const gqSection = document.getElementById('gq_section');
+      const mqSection = document.getElementById('mq_section');
+
+      if (gq && gq.checked) {
+        gqSection.style.opacity = '1';
+        gqSection.style.maxHeight = '200px';
+        gqSection.style.paddingTop = '0.5rem';
+      } else {
+        gqSection.style.opacity = '0';
+        gqSection.style.maxHeight = '0';
+        gqSection.style.paddingTop = '0';
+      }
+
+      if (mq && mq.checked) {
+        mqSection.style.opacity = '1';
+        mqSection.style.maxHeight = '200px';
+        mqSection.style.paddingTop = '0.5rem';
+      } else {
+        mqSection.style.opacity = '0';
+        mqSection.style.maxHeight = '0';
+        mqSection.style.paddingTop = '0';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const gq = document.getElementById('applied_gq');
+      const mq = document.getElementById('applied_mq');
+      if (gq) gq.addEventListener('change', toggleSections);
+      if (mq) mq.addEventListener('change', toggleSections);
+      toggleSections();
+      setTimeout(toggleSections, 50);
+    });
+  })();
+</script>
+</html>

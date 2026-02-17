@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Enquiry Received</title>
+    <style>
+      body { font-family: Arial, sans-serif; color:#111; }
+      .container { max-width:600px; margin:0 auto; padding:20px; }
+      .header { background:#004b87; color:#fff; padding:12px; text-align:center }
+      .content { background:#fff; padding:18px; border:1px solid #e5e5e5 }
+      .footer { font-size:12px; color:#666; padding-top:12px }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>{{ college_name or 'College' }} Admissions</h1>
+      </div>
+      <div class="content">
+        <p>Hello {{ full_name }},</p>
+
+        <p>Thank you for contacting {{ college_name or 'our admissions office' }}. We have received your enquiry and created a reference for it.</p>
+
+        <p><strong>Student Unique ID:</strong> {{ unique_id }}</p>
+        <p><strong>Subject:</strong> {{ subject }}</p>
+
+        <h3>For any quires Contact</h3>
+        <p style="white-space:pre-wrap;">+91 6369077291</p>
+
+        <p>Our admissions team will review your query and get back to you shortly.</p>
+
+        <p class="footer">Best regards,<br>{{ college_name or 'Admissions Office' }}</p>
+      </div>
+    </div>
+  </body>
+</html>

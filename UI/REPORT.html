@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Daily Admission Status Report - EPMC</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#1e40af", // Deep blue for professional academic feel
+              "background-light": "#f8fafc",
+              "background-dark": "#0f172a",
+            },
+            fontFamily: {
+              display: ["Inter", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.5rem",
+            },
+          },
+        },
+      };
+      function toggleDarkMode() {
+        document.documentElement.classList.toggle('dark');
+      }
+      function printReport() {
+        window.print();
+      }
+    </script>
+<style>
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background-color: white !important;
+                color: black !important;
+            }
+            .report-container {
+                box-shadow: none !important;
+                border: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                max-width: 100% !important;
+            }
+            table {
+                border-collapse: collapse;
+                width: 100%;
+            }
+            th, td {
+                border: 1px solid #000 !important;
+            }
+        }
+        .table-container {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+            font-size: 0.875rem;
+        }
+        th, td {
+            border: 1px solid;
+            padding: 8px 4px;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-800 dark:text-slate-200 transition-colors duration-200">
+<nav class="no-print bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center sticky top-0 z-10 shadow-sm">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-3xl">school</span>
+<div>
+<h1 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">Admin Dashboard</h1>
+<p class="text-xs text-slate-500 dark:text-slate-400">Admission Control System</p>
+</div>
+</div>
+<div class="flex gap-4">
+<button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" onclick="toggleDarkMode()">
+<span class="material-symbols-outlined dark:hidden">dark_mode</span>
+<span class="material-symbols-outlined hidden dark:block">light_mode</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-700 transition-all font-medium text-sm" onclick="printReport()">
+<span class="material-symbols-outlined text-sm">print</span> Print Report
+            </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-all font-medium text-sm">
+<span class="material-symbols-outlined text-sm">description</span> Export to Excel
+            </button>
+</div>
+</nav>
+<main class="max-w-[1200px] mx-auto p-4 md:p-8">
+<div class="report-container bg-white dark:bg-slate-900 p-8 shadow-xl border border-slate-200 dark:border-slate-800 rounded-xl">
+<header class="text-center mb-8 border-b-2 border-primary pb-6">
+<h2 class="text-2xl md:text-3xl font-extrabold text-primary uppercase tracking-tight">Er. Perumal Manimekalai College of Engineering</h2>
+<h3 class="text-xl font-semibold text-slate-700 dark:text-slate-300 mt-2">Daily Admission Status - 2025-2026</h3>
+<div class="flex justify-between items-end mt-6">
+<div class="text-left">
+<span class="bg-primary text-white px-4 py-1 rounded text-sm font-bold uppercase tracking-wider">B.E - First Year</span>
+</div>
+<div class="text-right">
+<p class="text-sm font-semibold text-slate-600 dark:text-slate-400">Date: <span class="text-slate-900 dark:text-white ml-2 border-b border-slate-400">12.08.2025</span></p>
+</div>
+</div>
+</header>
+<div class="table-container">
+<table class="border-slate-300 dark:border-slate-700">
+<thead class="bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 uppercase text-[11px] font-bold">
+<tr>
+<th class="w-10" rowspan="3">S.No</th>
+<th class="w-20" rowspan="3">Dept</th>
+<th class="py-2" colspan="2">Actual No of Seats</th>
+<th colspan="3">Admitted Upto<br/>12.08.2025</th>
+<th colspan="3">Total Admitted As On<br/>12.08.2025</th>
+<th colspan="2">Vacancy</th>
+</tr>
+<tr>
+<th class="w-16">MQ</th>
+<th class="w-16">GQ</th>
+<th class="w-16">MQ</th>
+<th class="w-16">GQ</th>
+<th class="w-16">GQ(S)</th>
+<th class="w-16">MQ</th>
+<th class="w-16">GQ</th>
+<th class="w-16">GQ(S)</th>
+<th class="w-16">MQ</th>
+<th class="w-16">GQ</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+<script>
+                            const depts = [
+                                { code: 'AERO', mq: 4, gq: 56, adm_mq: 2, adm_gq: 45, adm_gqs: 2 },
+                                { code: 'AI', mq: 15, gq: 111, adm_mq: 10, adm_gq: 88, adm_gqs: 5 },
+                                { code: 'CSBS', mq: 5, gq: 58, adm_mq: 3, adm_gq: 40, adm_gqs: 1 },
+                                { code: 'CSE', mq: 15, gq: 111, adm_mq: 14, adm_gq: 105, adm_gqs: 6 },
+                                { code: 'CIVIL', mq: 2, gq: 58, adm_mq: 1, adm_gq: 20, adm_gqs: 0 },
+                                { code: 'EEE', mq: 3, gq: 60, adm_mq: 2, adm_gq: 35, adm_gqs: 1 },
+                                { code: 'IT', mq: 12, gq: 114, adm_mq: 10, adm_gq: 95, adm_gqs: 4 },
+                                { code: 'ECE', mq: 10, gq: 116, adm_mq: 8, adm_gq: 102, adm_gqs: 3 },
+                                { code: 'MCO', mq: 3, gq: 60, adm_mq: 1, adm_gq: 25, adm_gqs: 0 },
+                                { code: 'MECH', mq: 3, gq: 117, adm_mq: 2, adm_gq: 40, adm_gqs: 1 },
+                                { code: 'ML', mq: 10, gq: 53, adm_mq: 6, adm_gq: 38, adm_gqs: 2 },
+                                { code: 'CH', mq: 2, gq: 58, adm_mq: 1, adm_gq: 15, adm_gqs: 0 }
+                            ];
+                            let html = '';
+                            let totalMqSeats = 0, totalGqSeats = 0;
+                            let totalMqAdm = 0, totalGqAdm = 0, totalGqsAdm = 0;
+                            depts.forEach((dept, index) => {
+                                totalMqSeats += dept.mq;
+                                totalGqSeats += dept.gq;
+                                totalMqAdm += dept.adm_mq;
+                                totalGqAdm += dept.adm_gq;
+                                totalGqsAdm += dept.adm_gqs;
+                                const vacMq = dept.mq - dept.adm_mq;
+                                const vacGq = dept.gq - dept.adm_gq;
+                                html += `
+                                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                                        <td class="font-medium">${index + 1}</td>
+                                        <td class="font-bold text-slate-900 dark:text-white text-left px-4">${dept.code}</td>
+                                        <td>${dept.mq}</td>
+                                        <td>${dept.gq}</td>
+                                        <td>${dept.adm_mq}</td>
+                                        <td>${dept.adm_gq}</td>
+                                        <td>${dept.adm_gqs}</td>
+                                        <td class="bg-slate-50 dark:bg-slate-800/50 font-semibold">${dept.adm_mq}</td>
+                                        <td class="bg-slate-50 dark:bg-slate-800/50 font-semibold">${dept.adm_gq}</td>
+                                        <td class="bg-slate-50 dark:bg-slate-800/50 font-semibold">${dept.adm_gqs}</td>
+                                        <td class="text-red-600 dark:text-red-400 font-medium">${vacMq}</td>
+                                        <td class="text-red-600 dark:text-red-400 font-medium">${vacGq}</td>
+                                    </tr>
+                                `;
+                            });
+                            document.write(html);
+                        </script>
+</tbody>
+<tfoot class="bg-slate-100 dark:bg-slate-800 font-bold text-slate-900 dark:text-white">
+<tr>
+<td class="text-right px-4 py-3 uppercase" colspan="2">Total (1056)</td>
+<script>
+                                const totalVacMq = totalMqSeats - totalMqAdm;
+                                const totalVacGq = totalGqSeats - totalGqAdm;
+                                document.write(`
+                                    <td>${totalMqSeats}</td>
+                                    <td>${totalGqSeats}</td>
+                                    <td>${totalMqAdm}</td>
+                                    <td>${totalGqAdm}</td>
+                                    <td>${totalGqsAdm}</td>
+                                    <td>${totalMqAdm}</td>
+                                    <td>${totalGqAdm}</td>
+                                    <td>${totalGqsAdm}</td>
+                                    <td class="text-red-600 dark:text-red-400">${totalVacMq}</td>
+                                    <td class="text-red-600 dark:text-red-400">${totalVacGq}</td>
+                                `);
+                            </script>
+</tr>
+</tfoot>
+</table>
+</div>
+<div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-3">
+<div class="flex items-center justify-between p-3 border border-slate-200 dark:border-slate-800 rounded-lg">
+<span class="text-sm font-medium">MQ - TOTAL ADMITTED AS ON</span>
+<span class="text-lg font-bold text-primary" id="sum-mq">60</span>
+</div>
+<div class="flex items-center justify-between p-3 border border-slate-200 dark:border-slate-800 rounded-lg">
+<span class="text-sm font-medium">GQ - TOTAL ADMITTED AS ON</span>
+<span class="text-lg font-bold text-primary" id="sum-gq">553</span>
+</div>
+<div class="flex items-center justify-between p-3 border border-slate-200 dark:border-slate-800 rounded-lg">
+<span class="text-sm font-medium">GQ(S) - TOTAL ADMITTED AS ON</span>
+<span class="text-lg font-bold text-primary" id="sum-gqs">25</span>
+</div>
+</div>
+<div class="flex flex-col justify-center items-center bg-slate-50 dark:bg-slate-800/50 rounded-lg p-6 border-2 border-dashed border-slate-300 dark:border-slate-700">
+<span class="material-symbols-outlined text-4xl text-slate-400 mb-2">calendar_month</span>
+<p class="text-slate-500 dark:text-slate-400 uppercase text-xs font-bold tracking-widest mb-1">Status Reference Date</p>
+<p class="text-2xl font-black text-slate-900 dark:text-white">12.08.2025</p>
+</div>
+</div>
+<script>
+                document.getElementById('sum-mq').innerText = totalMqAdm;
+                document.getElementById('sum-gq').innerText = totalGqAdm;
+                document.getElementById('sum-gqs').innerText = totalGqsAdm;
+            </script>
+<div class="mt-12 flex justify-between items-end">
+<div class="text-xs text-slate-500 dark:text-slate-400">
+<p>Computer Generated Report</p>
+<p>Generated on: <span id="current-timestamp"></span></p>
+</div>
+<div class="text-center w-48 border-t-2 border-slate-300 dark:border-slate-700 pt-2">
+<p class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Admission Coordinator</p>
+</div>
+</div>
+</div>
+</main>
+<footer class="no-print mt-12 pb-8 text-center text-slate-500 dark:text-slate-400 text-sm">
+<p>© 2025 Er. Perumal Manimekalai College of Engineering. All rights reserved.</p>
+</footer>
+<script>
+        document.getElementById('current-timestamp').innerText = new Date().toLocaleString();
+    </script>
+
+</body></html>

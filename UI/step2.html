@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Step 3: Application Filing Summary</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display min-h-screen text-[#111418] dark:text-white">
+<!-- Top Navigation Bar -->
+<div class="relative flex h-auto w-full flex-col bg-white dark:bg-background-dark border-b border-[#f0f2f4] dark:border-gray-800">
+<header class="flex items-center justify-between whitespace-nowrap px-10 py-3 max-w-[1280px] mx-auto w-full">
+<div class="flex items-center gap-4 text-[#111418] dark:text-white">
+<div class="size-6 text-primary">
+<span class="material-symbols-outlined text-3xl">school</span>
+</div>
+<h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">College Admission Portal</h2>
+</div>
+<div class="flex flex-1 justify-end gap-8">
+<div class="flex items-center gap-9">
+<a class="text-[#111418] dark:text-gray-300 text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="text-[#111418] dark:text-gray-300 text-sm font-medium leading-normal hover:text-primary transition-colors underline decoration-2 underline-offset-8 decoration-primary" href="#">Applications</a>
+<a class="text-[#111418] dark:text-gray-300 text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Enquiries</a>
+<a class="text-[#111418] dark:text-gray-300 text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">Settings</a>
+</div>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border border-gray-200" data-alt="User avatar profile picture" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAKpHhCdAy6W7FJY3NFMHgrcFvXcioz1A2pS5qlbo28udGJ6qaqpk5T7GwVARui817PMgfltVLkqURjCb8-jsicts55A2ixewZmOQpoS7qjWcxxGLTH1AXK4ddLo4qNLSW5jws0zWKO0cTmeGCPj-2El6GxRF7E9lTtH0eGzU1CpugdX32zVybwrP29AgkSoo6K7xvhTJE_PgmsuqcsxXoEi69RB_7mrVnZK8FA6tSOdwNilsApm54caqaqmyEH_hy_F1SgR6BdTiI");'></div>
+</div>
+</header>
+</div>
+<div class="max-w-[960px] mx-auto w-full px-4 py-8">
+<!-- Breadcrumbs -->
+<div class="flex flex-wrap gap-2 py-2 mb-4">
+<a class="text-[#617589] dark:text-gray-400 text-sm font-medium leading-normal hover:text-primary" href="#">Home</a>
+<span class="text-[#617589] dark:text-gray-400 text-sm font-medium leading-normal">/</span>
+<a class="text-[#617589] dark:text-gray-400 text-sm font-medium leading-normal hover:text-primary" href="#">Admission Process</a>
+<span class="text-[#617589] dark:text-gray-400 text-sm font-medium leading-normal">/</span>
+<span class="text-[#111418] dark:text-white text-sm font-medium leading-normal">Step 3: Filing Summary</span>
+</div>
+<!-- Progress Bar Section -->
+<div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-[#f0f2f4] dark:border-gray-800 mb-6">
+<div class="flex flex-col gap-3 p-6">
+<div class="flex gap-6 justify-between items-center">
+<p class="text-[#111418] dark:text-white text-base font-bold leading-normal">Step 3 of 3: Final Review</p>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-green-500 text-sm">check_circle</span>
+<p class="text-green-600 dark:text-green-400 text-sm font-bold leading-normal">100% Complete</p>
+</div>
+</div>
+<div class="rounded-full bg-[#dbe0e6] dark:bg-gray-700 h-2.5 overflow-hidden">
+<div class="h-full rounded-full bg-primary" style="width: 100%;"></div>
+</div>
+<p class="text-[#617589] dark:text-gray-400 text-sm font-normal leading-normal">All sections have been completed and verified. You are ready to submit.</p>
+</div>
+</div>
+<!-- Profile Header Section -->
+<div class="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-[#f0f2f4] dark:border-gray-800 mb-6 p-6">
+<div class="flex @container">
+<div class="flex w-full flex-col gap-4 @[520px]:flex-row @[520px]:justify-between @[520px]:items-center">
+<div class="flex gap-6 items-center">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-xl min-h-24 w-24 border-2 border-primary/20" data-alt="Student profile portrait" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuChwUuUoD7F1ix8vlRudh52S1K6AK89lp89gAjkcr6En5K8-FChY4ZG9hV6gTm3CUGQmBXKG9T0MsvdmPuTwVzP_6Vbw3aoLIapAK9k9cM7ypqzJNGfynSG8eYL9_Y35E7f21hluLKEwFDhnWVQoxgE26uHk3GrVBU5CUcyzG1wJo2ttN0OOG7BWHQjLPjjIulN0w6fmaL1lJ8GJxlUjcxeeVVQB4RKBBkCxh1BorO6liHoEFobm0tf-qud-Jujq5cgq7RKtFoZe4M");'></div>
+<div class="flex flex-col justify-center">
+<p class="text-[#111418] dark:text-white text-2xl font-black leading-tight tracking-[-0.015em]">Jonathan Doe</p>
+<div class="flex flex-col mt-1">
+<p class="text-[#617589] dark:text-gray-400 text-sm font-medium leading-normal flex items-center gap-1">
+<span class="text-xs text-[#617589] dark:text-gray-500 font-normal">Application ID:</span> ADM-2023-8842
+                                </p>
+<p class="text-[#617589] dark:text-gray-400 text-sm font-medium leading-normal flex items-center gap-1">
+<span class="text-xs text-[#617589] dark:text-gray-500 font-normal">Unique ID:</span> UID-99210
+                                </p>
+</div>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2">
+<span class="inline-flex items-center px-4 py-2 rounded-full text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800">
+<span class="material-symbols-outlined text-sm mr-1">verified</span>
+                            COMPLETED STATUS
+                        </span>
+<p class="text-xs text-[#617589] dark:text-gray-500">Verified on Oct 24, 2023</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Page Heading & PDF Action -->
+<div class="flex flex-wrap justify-between items-end gap-3 mb-6">
+<div class="flex min-w-72 flex-col gap-1">
+<h1 class="text-[#111418] dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">Application Filing Summary</h1>
+<p class="text-[#617589] dark:text-gray-400 text-base font-normal leading-normal">Please review your information carefully before final submission.</p>
+</div>
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-primary/10 text-primary hover:bg-primary/20 transition-all text-sm font-bold leading-normal tracking-[0.015em]">
+<span class="material-symbols-outlined text-lg">download</span>
+<span class="truncate">Download PDF Summary</span>
+</button>
+</div>
+<!-- Summary Grid -->
+<div class="grid grid-cols-1 gap-6 mb-10">
+<!-- Personal Information -->
+<div class="bg-white dark:bg-gray-900 rounded-xl border border-[#f0f2f4] dark:border-gray-800 overflow-hidden">
+<div class="px-6 py-4 border-b border-[#f0f2f4] dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50">
+<h3 class="font-bold text-[#111418] dark:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">person</span>
+                        Personal Information
+                    </h3>
+<button class="text-primary text-sm font-semibold hover:underline">Edit</button>
+</div>
+<div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+<div>
+<p class="text-[#617589] dark:text-gray-500 text-xs uppercase tracking-wider font-bold mb-1">Full Name</p>
+<p class="text-[#111418] dark:text-white font-medium">Jonathan Doe</p>
+</div>
+<div>
+<p class="text-[#617589] dark:text-gray-500 text-xs uppercase tracking-wider font-bold mb-1">Email Address</p>
+<p class="text-[#111418] dark:text-white font-medium">j.doe@example.com</p>
+</div>
+<div>
+<p class="text-[#617589] dark:text-gray-500 text-xs uppercase tracking-wider font-bold mb-1">Phone Number</p>
+<p class="text-[#111418] dark:text-white font-medium">+1 (555) 012-3456</p>
+</div>
+<div>
+<p class="text-[#617589] dark:text-gray-500 text-xs uppercase tracking-wider font-bold mb-1">Date of Birth</p>
+<p class="text-[#111418] dark:text-white font-medium">March 12, 2002</p>
+</div>
+<div class="md:col-span-2">
+<p class="text-[#617589] dark:text-gray-500 text-xs uppercase tracking-wider font-bold mb-1">Permanent Address</p>
+<p class="text-[#111418] dark:text-white font-medium">123 University Drive, Academic Hills, CA 90210</p>
+</div>
+</div>
+</div>
+<!-- Academic Records -->
+<div class="bg-white dark:bg-gray-900 rounded-xl border border-[#f0f2f4] dark:border-gray-800 overflow-hidden">
+<div class="px-6 py-4 border-b border-[#f0f2f4] dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50">
+<h3 class="font-bold text-[#111418] dark:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">history_edu</span>
+                        Academic Records
+                    </h3>
+<button class="text-primary text-sm font-semibold hover:underline">Edit</button>
+</div>
+<div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+<div>
+<p class="text-[#617589] dark:text-gray-500 text-xs uppercase tracking-wider font-bold mb-1">Last Institution</p>
+<p class="text-[#111418] dark:text-white font-medium">Westside High Preparatory</p>
+</div>
+<div>
+<p class="text-[#617589] dark:text-gray-500 text-xs uppercase tracking-wider font-bold mb-1">GPA / Score</p>
+<p class="text-[#111418] dark:text-white font-medium">3.9 / 4.0</p>
+</div>
+<div>
+<p class="text-[#617589] dark:text-gray-500 text-xs uppercase tracking-wider font-bold mb-1">Applied Course</p>
+<p class="text-[#111418] dark:text-white font-medium">B.Sc. Computer Science</p>
+</div>
+</div>
+</div>
+<!-- Uploaded Documents -->
+<div class="bg-white dark:bg-gray-900 rounded-xl border border-[#f0f2f4] dark:border-gray-800 overflow-hidden">
+<div class="px-6 py-4 border-b border-[#f0f2f4] dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50">
+<h3 class="font-bold text-[#111418] dark:text-white flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">description</span>
+                        Uploaded Documents
+                    </h3>
+</div>
+<div class="p-6 space-y-3">
+<div class="flex items-center justify-between p-3 rounded-lg border border-[#f0f2f4] dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-red-500">picture_as_pdf</span>
+<div>
+<p class="text-sm font-bold text-[#111418] dark:text-white">High_School_Transcript_Final.pdf</p>
+<p class="text-xs text-[#617589]">2.4 MB • Uploaded on Oct 20</p>
+</div>
+</div>
+<button class="text-[#617589] hover:text-primary"><span class="material-symbols-outlined">visibility</span></button>
+</div>
+<div class="flex items-center justify-between p-3 rounded-lg border border-[#f0f2f4] dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-blue-500">image</span>
+<div>
+<p class="text-sm font-bold text-[#111418] dark:text-white">Identity_Proof_Passport.jpg</p>
+<p class="text-xs text-[#617589]">1.1 MB • Uploaded on Oct 20</p>
+</div>
+</div>
+<button class="text-[#617589] hover:text-primary"><span class="material-symbols-outlined">visibility</span></button>
+</div>
+</div>
+</div>
+</div>
+<!-- Submission Section -->
+<div class="border-t border-[#f0f2f4] dark:border-gray-800 pt-8 flex flex-col items-center gap-6 text-center">
+<div class="max-w-md">
+<p class="text-sm text-[#617589] dark:text-gray-400 mb-4">
+                    By clicking "Submit Application", you certify that all information provided is accurate and complete to the best of your knowledge.
+                </p>
+</div>
+<div class="flex gap-4 w-full justify-center">
+<button class="flex-1 max-w-[240px] flex cursor-pointer items-center justify-center overflow-hidden rounded-xl h-12 px-6 bg-[#f0f2f4] dark:bg-gray-800 text-[#111418] dark:text-white text-base font-bold leading-normal tracking-[0.015em] hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+<span class="truncate">Save as Draft</span>
+</button>
+<button class="flex-1 max-w-[240px] flex cursor-pointer items-center justify-center overflow-hidden rounded-xl h-12 px-6 bg-primary text-white text-base font-bold leading-normal tracking-[0.015em] shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
+<span class="truncate">Submit Application</span>
+</button>
+</div>
+<p class="text-xs text-red-500 font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">info</span>
+                Once submitted, you will not be able to change your details until the review period.
+            </p>
+</div>
+</div>
+<!-- Footer -->
+<footer class="mt-20 border-t border-[#f0f2f4] dark:border-gray-800 bg-white dark:bg-background-dark py-8">
+<div class="max-w-[960px] mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
+<p class="text-sm text-[#617589] dark:text-gray-500">© 2023 Centralized College Admission Board. All rights reserved.</p>
+<div class="flex gap-6">
+<a class="text-sm text-[#617589] dark:text-gray-500 hover:text-primary" href="#">Privacy Policy</a>
+<a class="text-sm text-[#617589] dark:text-gray-500 hover:text-primary" href="#">Support Center</a>
+</div>
+</div>
+</footer>
+</body></html>

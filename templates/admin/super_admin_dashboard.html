@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Super Admin Dashboard - PMC Engineering</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Lexend', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-nav {
+            background-color: #137fec;
+            color: white !important;
+        }
+        .tab-pane {
+            display: none;
+        }
+        .tab-pane.active {
+            display: block;
+        }
+        .tab-btn {
+            padding: 0.75rem 1rem;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .tab-btn.active {
+            border-bottom-color: #137fec;
+            color: #137fec;
+        }
+        .data-table {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .table-row:hover {
+            background-color: rgba(19, 127, 236, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white min-h-screen flex flex-col">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] px-6 py-3 sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<div class="text-primary">
+<svg fill="none" height="32" viewbox="0 0 48 48" width="32" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Master Data - PMC Engineering</h2>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-3 py-1 rounded-full text-xs font-bold">
+<span class="inline-block w-2 h-2 bg-green-600 rounded-full animate-pulse"></span>
+Live - Read Only
+</div>
+<a href="{{ url_for('auth.logout') }}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium">Logout</a>
+</div>
+</header>
+
+<div class="flex flex-1">
+<aside class="w-56 border-r border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#111827] hidden md:flex flex-col">
+<nav class="flex-1 overflow-y-auto px-2 py-6 flex flex-col gap-2">
+<a href="{{ url_for('admin.super_admin_dashboard') }}" class="flex items-center gap-3 px-4 py-2 text-white bg-primary rounded-lg transition-colors active-nav">
+<span class="material-symbols-outlined text-xl">dashboard</span>
+<span class="text-sm font-medium">Master Dashboard</span>
+</a>
+<a href="{{ url_for('admin.student_profiles') }}" class="flex items-center gap-3 px-4 py-2 text-[#111418] dark:text-white hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] rounded-lg transition-colors">
+<span class="material-symbols-outlined text-xl">account_circle</span>
+<span class="text-sm font-medium">Student Profiles</span>
+</a>
+<a href="{{ url_for('admin.staff_management') }}" class="flex items-center gap-3 px-4 py-2 text-[#111418] dark:text-white hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] rounded-lg transition-colors">
+<span class="material-symbols-outlined text-xl">people</span>
+<span class="text-sm font-medium">Staff Management</span>
+</a>
+<a href="{{ url_for('admin.departments') }}" class="flex items-center gap-3 px-4 py-2 text-[#111418] dark:text-white hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] rounded-lg transition-colors">
+<span class="material-symbols-outlined text-xl">apartment</span>
+<span class="text-sm font-medium">Departments</span>
+</a>
+<div class="my-2 border-t border-[#e5e7eb] dark:border-[#2d3748]"></div>
+<a href="{{ url_for('admin.reports') }}" class="flex items-center gap-3 px-4 py-2 text-[#111418] dark:text-white hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] rounded-lg transition-colors">
+<span class="material-symbols-outlined text-xl">analytics</span>
+<span class="text-sm font-medium">Reports</span>
+</a>
+</nav>
+<div class="border-t border-[#e5e7eb] dark:border-[#2d3748] px-4 py-4">
+<p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">{{ user.first_name }} {{ user.last_name }}</p>
+<p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">SUPER ADMIN</p>
+</div>
+</aside>
+
+<main class="flex-1 overflow-y-auto">
+<div class="max-w-[1400px] mx-auto p-6 flex flex-col gap-6">
+
+<!-- Page Header -->
+<div class="flex flex-wrap justify-between items-end gap-3">
+<div class="flex min-w-72 flex-col gap-1">
+<p class="text-[#111418] dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">Master Data Dashboard</p>
+<p class="text-[#617589] dark:text-[#a0aec0] text-base font-normal leading-normal">Complete system data in read-only view</p>
+</div>
+</div>
+
+<!-- Key Metrics Section -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+<div class="bg-white dark:bg-[#1a202c] p-6 rounded-lg border border-[#e5e7eb] dark:border-[#2d3748]">
+<div class="flex items-center justify-between mb-2">
+<p class="text-[#617589] dark:text-[#a0aec0] text-xs font-semibold uppercase">Total Enquiries</p>
+<span class="p-2 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-lg material-symbols-outlined text-lg">mail</span>
+</div>
+<p class="text-3xl font-black text-[#111418] dark:text-white">{{ total_enquiries|default(0) }}</p>
+<p class="text-xs text-[#617589] dark:text-[#a0aec0] mt-1">{{ open_enquiries|default(0) }} Open</p>
+</div>
+
+<div class="bg-white dark:bg-[#1a202c] p-6 rounded-lg border border-[#e5e7eb] dark:border-[#2d3748]">
+<div class="flex items-center justify-between mb-2">
+<p class="text-[#617589] dark:text-[#a0aec0] text-xs font-semibold uppercase">Applications</p>
+<span class="p-2 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300 rounded-lg material-symbols-outlined text-lg">how_to_reg</span>
+</div>
+<p class="text-3xl font-black text-[#111418] dark:text-white">{{ total_applications|default(0) }}</p>
+<p class="text-xs text-[#617589] dark:text-[#a0aec0] mt-1">{{ approved_applications|default(0) }} Approved</p>
+</div>
+
+<div class="bg-white dark:bg-[#1a202c] p-6 rounded-lg border border-[#e5e7eb] dark:border-[#2d3748]">
+<div class="flex items-center justify-between mb-2">
+<p class="text-[#617589] dark:text-[#a0aec0] text-xs font-semibold uppercase">Counselled</p>
+<span class="p-2 bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300 rounded-lg material-symbols-outlined text-lg">how_to_vote</span>
+</div>
+<p class="text-3xl font-black text-[#111418] dark:text-white">{{ total_counselled|default(0) }}</p>
+<p class="text-xs text-[#617589] dark:text-[#a0aec0] mt-1">Students Allotted</p>
+</div>
+
+<div class="bg-white dark:bg-[#1a202c] p-6 rounded-lg border border-[#e5e7eb] dark:border-[#2d3748]">
+<div class="flex items-center justify-between mb-2">
+<p class="text-[#617589] dark:text-[#a0aec0] text-xs font-semibold uppercase">Payments</p>
+<span class="p-2 bg-amber-100 dark:bg-amber-900 text-amber-600 dark:text-amber-300 rounded-lg material-symbols-outlined text-lg">payments</span>
+</div>
+<p class="text-3xl font-black text-[#111418] dark:text-white">₹{{ (total_payment_amount|default(0))|int }}</p>
+<p class="text-xs text-[#617589] dark:text-[#a0aec0] mt-1">{{ payment_count|default(0) }} Transactions</p>
+</div>
+
+<div class="bg-white dark:bg-[#1a202c] p-6 rounded-lg border border-[#e5e7eb] dark:border-[#2d3748]">
+<div class="flex items-center justify-between mb-2">
+<p class="text-[#617589] dark:text-[#a0aec0] text-xs font-semibold uppercase">Documents</p>
+<span class="p-2 bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-300 rounded-lg material-symbols-outlined text-lg">description</span>
+</div>
+<p class="text-3xl font-black text-[#111418] dark:text-white">{{ documents_uploaded|default(0) }}</p>
+<p class="text-xs text-[#617589] dark:text-[#a0aec0] mt-1">{{ documents_pending|default(0) }} Pending</p>
+</div>
+</div>
+
+<!-- Tabbed Data Section -->
+<div class="bg-white dark:bg-[#1a202c] rounded-lg border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden">
+<!-- Tab Headers -->
+<div class="flex gap-0 border-b border-[#e5e7eb] dark:border-[#2d3748] overflow-x-auto bg-[#f9fafb] dark:bg-[#111827]">
+<button class="tab-btn active text-primary" onclick="showTab('enquiries')">
+<span class="material-symbols-outlined inline text-lg">mail</span> Enquiries
+</button>
+<button class="tab-btn text-[#111418] dark:text-white" onclick="showTab('applications')">
+<span class="material-symbols-outlined inline text-lg">how_to_reg</span> Document Upload
+</button>
+<button class="tab-btn text-[#111418] dark:text-white" onclick="showTab('admissions')">
+<span class="material-symbols-outlined inline text-lg">verified_user</span> Branch Selection
+</button>
+<button class="tab-btn text-[#111418] dark:text-white" onclick="showTab('counselling')">
+<span class="material-symbols-outlined inline text-lg">how_to_vote</span> Counselling
+</button>
+<button class="tab-btn text-[#111418] dark:text-white" onclick="showTab('payments')">
+<span class="material-symbols-outlined inline text-lg">payments</span> Payments
+</button>
+<button class="tab-btn text-[#111418] dark:text-white" onclick="showTab('flow_summary')">
+<span class="material-symbols-outlined inline text-lg">hub</span> Flow Summary
+</button>
+<button class="tab-btn text-[#111418] dark:text-white" onclick="showTab('documents')">
+<span class="material-symbols-outlined inline text-lg">description</span> Documents
+</button>
+</div>
+
+<!-- Tab Content -->
+<div class="p-6">
+
+<!-- ENQUIRIES Tab -->
+<div id="enquiries" class="tab-pane active">
+<div class="flex justify-between items-center mb-4 gap-4">
+<h3 class="text-lg font-bold text-[#111418] dark:text-white">Enquiries ({{ flow_enquiries|length }})</h3>
+<div class="flex gap-2">
+<input type="text" placeholder="Search enquiries..." id="search_enquiries" class="px-3 py-2 border border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] rounded-lg text-sm text-[#111418] dark:text-white" />
+<button onclick="filterTableLocal('enquiries')" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-blue-600">Search</button>
+</div>
+</div>
+<div class="data-table" id="enquiries_data">
+<table class="w-full border-collapse">
+<thead class="sticky top-0 bg-[#f0f2f4] dark:bg-[#111827]">
+<tr>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Enquiry ID</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Student Name</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Unique ID</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Email</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Phone</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Status</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Created</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
+{% if flow_enquiries %}
+{% for enq in flow_enquiries %}
+<tr class="table-row hover:bg-[#f9fafb] dark:hover:bg-[#111827]/50">
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ enq.enquiry_id }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ enq.student_name }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ enq.unique_id }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ enq.email }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ enq.phone }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm">
+<span class="px-2 py-1 rounded-full text-xs font-bold {% if enq.status == 'open' %}bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200{% elif enq.status == 'converted' %}bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200{% else %}bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200{% endif %}">{{ enq.status|title }}</span>
+</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ enq.created_at[:10] if enq.created_at else 'N/A' }}</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+<td colspan="7" class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-8 text-center text-[#617589] dark:text-[#a0aec0]">No enquiry records found</td>
+</tr>
+{% endif %}
+</tbody>
+</table>
+</div>
+<div class="flex justify-center gap-2 mt-4" id="enquiries_pagination"></div>
+</div>
+
+<!-- APPLICATIONS Tab -->
+<div id="applications" class="tab-pane">
+<div class="flex justify-between items-center mb-4 gap-4">
+<h3 class="text-lg font-bold text-[#111418] dark:text-white">Document Upload ({{ flow_documents|length }})</h3>
+<div class="flex gap-2">
+<input type="text" placeholder="Search document uploads..." id="search_applications" class="px-3 py-2 border border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] rounded-lg text-sm text-[#111418] dark:text-white" />
+<button onclick="filterTableLocal('applications')" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-blue-600">Search</button>
+</div>
+</div>
+<div class="data-table" id="applications_data">
+<table class="w-full border-collapse">
+<thead class="sticky top-0 bg-[#f0f2f4] dark:bg-[#111827]">
+<tr>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Application ID</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Student Name</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Unique ID</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Documents</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Status</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Submitted</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
+{% if flow_documents %}
+{% for app in flow_documents %}
+<tr class="table-row hover:bg-[#f9fafb] dark:hover:bg-[#111827]/50">
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ app.application_number }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ app.student_name }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ app.unique_id }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ app.documents_count }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm">
+<span class="px-2 py-1 rounded-full text-xs font-bold {% if app.documents_status == 'Completed' %}bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200{% else %}bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200{% endif %}">{{ app.documents_status }}</span>
+</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ app.submitted_at[:10] if app.submitted_at else 'N/A' }}</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+<td colspan="6" class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-8 text-center text-[#617589] dark:text-[#a0aec0]">No document upload records found</td>
+</tr>
+{% endif %}
+</tbody>
+</table>
+</div>
+</div>
+
+<!-- STUDENTS Tab -->
+<div id="students" class="tab-pane">
+<div class="flex justify-between items-center mb-4 gap-4">
+<h3 class="text-lg font-bold text-[#111418] dark:text-white">All Students ({{ all_students|length }})</h3>
+<div class="flex gap-2">
+<input type="text" placeholder="Search students..." id="search_students" class="px-3 py-2 border border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] rounded-lg text-sm text-[#111418] dark:text-white" />
+<button onclick="searchTable('students')" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-blue-600">Search</button>
+</div>
+</div>
+<div class="data-table" id="students_data">
+<table class="w-full border-collapse">
+<thead class="sticky top-0 bg-[#f0f2f4] dark:bg-[#111827]">
+<tr>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">ID</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Name</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Email</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Phone</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Created</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
+{% if all_students %}
+{% for student in all_students %}
+<tr class="table-row hover:bg-[#f9fafb] dark:hover:bg-[#111827]/50">
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ student.id }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ student.first_name }} {{ student.last_name }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ student.email }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ student.phone or 'N/A' }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ student.created_at[:10] if student.created_at else 'N/A' }}</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+<td colspan="5" class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-8 text-center text-[#617589] dark:text-[#a0aec0]">No student records found</td>
+</tr>
+{% endif %}
+</tbody>
+</table>
+</div>
+<div class="flex justify-center gap-2 mt-4" id="students_pagination"></div>
+</div>
+
+<!-- ADMISSIONS Tab -->
+<div id="admissions" class="tab-pane">
+<div class="flex justify-between items-center mb-4 gap-4">
+<h3 class="text-lg font-bold text-[#111418] dark:text-white">Branch Selection ({{ flow_branch|length }})</h3>
+<div class="flex gap-2">
+<input type="text" placeholder="Search branch selection..." id="search_admissions" class="px-3 py-2 border border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] rounded-lg text-sm text-[#111418] dark:text-white" />
+<button onclick="filterTableLocal('admissions')" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-blue-600">Search</button>
+</div>
+</div>
+<div class="data-table" id="admissions_data">
+<table class="w-full border-collapse">
+<thead class="sticky top-0 bg-[#f0f2f4] dark:bg-[#111827]">
+<tr>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Student Name</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Unique ID</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Preferred Dept</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Optional Depts</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Allotted Dept</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Status</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Assigned</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
+{% if flow_branch %}
+{% for adm in flow_branch %}
+<tr class="table-row hover:bg-[#f9fafb] dark:hover:bg-[#111827]/50">
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ adm.student_name }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ adm.unique_id }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ adm.preferred_dept }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">
+    {% if adm.optional_depts and adm.optional_depts|length > 0 %}
+        {{ adm.optional_depts|join(', ') }}
+    {% else %}
+        N/A
+    {% endif %}
+</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ adm.allotted_dept }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm">
+<span class="px-2 py-1 rounded-full text-xs font-bold {% if adm.status == 'confirmed' %}bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200{% else %}bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200{% endif %}">{{ adm.status|title }}</span>
+</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ adm.created_at[:10] if adm.created_at else 'N/A' }}</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+<td colspan="7" class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-8 text-center text-[#617589] dark:text-[#a0aec0]">No branch selection records found</td>
+</tr>
+{% endif %}
+</tbody>
+</table>
+</div>
+<div class="flex justify-center gap-2 mt-4" id="admissions_pagination"></div>
+</div>
+
+<!-- COUNSELLING Tab -->
+<div id="counselling" class="tab-pane">
+<div class="flex justify-between items-center mb-4 gap-4">
+<h3 class="text-lg font-bold text-[#111418] dark:text-white">Counselling ({{ flow_counselling|length }})</h3>
+<div class="flex gap-2">
+<input type="text" placeholder="Search counselling..." id="search_counselling" class="px-3 py-2 border border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] rounded-lg text-sm text-[#111418] dark:text-white" />
+<button onclick="filterTableLocal('counselling')" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-blue-600">Search</button>
+</div>
+</div>
+<div class="data-table" id="counselling_data">
+<table class="w-full border-collapse">
+<thead class="sticky top-0 bg-[#f0f2f4] dark:bg-[#111827]">
+<tr>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Counselling ID</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Student Name</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Unique ID</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Allotted Department</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Allotted Quota</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
+{% if flow_counselling %}
+{% for counsel in flow_counselling %}
+<tr class="table-row hover:bg-[#f9fafb] dark:hover:bg-[#111827]/50">
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ counsel.counselling_id }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ counsel.student_name }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ counsel.unique_id }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ counsel.department }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ counsel.quota }}</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+<td colspan="5" class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-8 text-center text-[#617589] dark:text-[#a0aec0]">No counselling records found</td>
+</tr>
+{% endif %}
+</tbody>
+</table>
+</div>
+<div class="flex justify-center gap-2 mt-4" id="counselling_pagination"></div>
+</div>
+
+<!-- PAYMENTS Tab -->
+<div id="payments" class="tab-pane">
+<div class="flex justify-between items-center mb-4 gap-4">
+<h3 class="text-lg font-bold text-[#111418] dark:text-white">Fee Payments ({{ flow_payments|length }})</h3>
+<div class="flex gap-2">
+<input type="text" placeholder="Search payments..." id="search_payments" class="px-3 py-2 border border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] rounded-lg text-sm text-[#111418] dark:text-white" />
+<button onclick="filterTableLocal('payments')" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-blue-600">Search</button>
+</div>
+</div>
+<div class="data-table" id="payments_data">
+<table class="w-full border-collapse">
+<thead class="sticky top-0 bg-[#f0f2f4] dark:bg-[#111827]">
+<tr>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Payment ID</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">App ID</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Student Name</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Unique ID</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Bill No</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Mode</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Amount (₹)</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Date</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
+{% if flow_payments %}
+{% for payment in flow_payments %}
+<tr class="table-row hover:bg-[#f9fafb] dark:hover:bg-[#111827]/50">
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ payment.payment_id }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ payment.app_id or 'N/A' }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ payment.student_name }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ payment.unique_id }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ payment.bill_no }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ payment.mode_of_payment }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ payment.amount|int }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ payment.created_at[:10] if payment.created_at else 'N/A' }}</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+<td colspan="8" class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-8 text-center text-[#617589] dark:text-[#a0aec0]">No payment records found</td>
+</tr>
+{% endif %}
+</tbody>
+</table>
+</div>
+<div class="flex justify-center gap-2 mt-4" id="payments_pagination"></div>
+</div>
+
+<!-- FLOW SUMMARY Tab -->
+<div id="flow_summary" class="tab-pane">
+<div class="flex justify-between items-center mb-4 gap-4">
+<h3 class="text-lg font-bold text-[#111418] dark:text-white">Flow Summary ({{ flow_summary|length }})</h3>
+<div class="flex gap-2">
+<input type="text" placeholder="Search flow summary..." id="search_flow_summary" class="px-3 py-2 border border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] rounded-lg text-sm text-[#111418] dark:text-white" />
+<button onclick="filterFlowSummary()" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-blue-600">Search</button>
+</div>
+</div>
+<div class="data-table" id="flow_summary_data">
+<table class="w-full border-collapse">
+<thead class="sticky top-0 bg-[#f0f2f4] dark:bg-[#111827]">
+<tr>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Student Name</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Unique ID</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Enquiry</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Branch</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Documents</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Counselling</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Payment</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
+{% if flow_summary %}
+{% for row in flow_summary %}
+<tr class="table-row hover:bg-[#f9fafb] dark:hover:bg-[#111827]/50">
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ row.student_name }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ row.unique_id }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">
+    <div class="flex flex-col">
+        <span class="font-semibold">{{ row.enquiry_status }}</span>
+        <span class="text-xs text-[#617589] dark:text-[#a0aec0]">{{ row.enquiry_date[:10] if row.enquiry_date else 'N/A' }}</span>
+    </div>
+</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">
+    <div class="flex flex-col">
+        <span class="font-semibold">{{ row.allotted_dept }}</span>
+        <span class="text-xs text-[#617589] dark:text-[#a0aec0]">Preferred: {{ row.preferred_dept }}</span>
+        <span class="text-xs text-[#617589] dark:text-[#a0aec0]">Status: {{ row.branch_status }}</span>
+    </div>
+</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">
+    <div class="flex flex-col">
+        <span class="font-semibold">{{ row.documents_status }}</span>
+        <span class="text-xs text-[#617589] dark:text-[#a0aec0]">{{ row.documents_count }} file(s)</span>
+    </div>
+</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ row.counselling_date[:10] if row.counselling_date else 'N/A' }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">
+    <div class="flex flex-col">
+        <span class="font-semibold">{{ row.payment_status }}</span>
+        <span class="text-xs text-[#617589] dark:text-[#a0aec0]">₹{{ row.payment_amount|int }}</span>
+    </div>
+</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+<td colspan="7" class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-8 text-center text-[#617589] dark:text-[#a0aec0]">No flow summary records found</td>
+</tr>
+{% endif %}
+</tbody>
+</table>
+</div>
+</div>
+
+<!-- DOCUMENTS Tab -->
+<div id="documents" class="tab-pane">
+<div class="flex justify-between items-center mb-4 gap-4">
+<h3 class="text-lg font-bold text-[#111418] dark:text-white">Documents ({{ flow_document_items|length }})</h3>
+<div class="flex gap-2">
+<input type="text" placeholder="Search documents..." id="search_documents" class="px-3 py-2 border border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] rounded-lg text-sm text-[#111418] dark:text-white" />
+<button onclick="filterTableLocal('documents')" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-blue-600">Search</button>
+</div>
+</div>
+<div class="data-table" id="documents_data">
+<table class="w-full border-collapse">
+<thead class="sticky top-0 bg-[#f0f2f4] dark:bg-[#111827]">
+<tr>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Document ID</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Student Name</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Unique ID</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Application ID</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Document Type</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Status</th>
+<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Uploaded</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
+{% if flow_document_items %}
+{% for doc in flow_document_items %}
+<tr class="table-row hover:bg-[#f9fafb] dark:hover:bg-[#111827]/50">
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ doc.document_id }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ doc.student_name }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ doc.unique_id }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ doc.application_id or 'N/A' }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ doc.document_type }}</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm">
+<span class="px-2 py-1 rounded-full text-xs font-bold {% if doc.status == 'approved' %}bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200{% elif doc.status == 'rejected' %}bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200{% else %}bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200{% endif %}">{{ doc.status|title }}</span>
+</td>
+<td class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white">{{ doc.uploaded_at[:10] if doc.uploaded_at else 'N/A' }}</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+<td colspan="7" class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-8 text-center text-[#617589] dark:text-[#a0aec0]">No document records found</td>
+</tr>
+{% endif %}
+</tbody>
+</table>
+</div>
+<div class="flex justify-center gap-2 mt-4" id="documents_pagination"></div>
+</div>
+
+</div>
+</div>
+
+<div class="flex items-center justify-center gap-2 text-xs text-[#617589] dark:text-[#a0aec0] mt-4">
+<span class="material-symbols-outlined text-sm">info</span>
+<p>All data is read-only and updated in real-time from the database</p>
+</div>
+
+</div>
+</main>
+</div>
+
+<script>
+// Table mapping to database table names
+const tableMapping = {
+    'enquiries': 'enquiries',
+    'applications': 'admission_applications',
+    'students': 'students',
+    'admissions': 'admissions',
+    'counselling': 'counselling_records',
+    'payments': 'payments',
+    'documents': 'documents'
+};
+
+// Current pagination state
+const paginationState = {};
+
+function showTab(tabName) {
+    // Hide all tab panes
+    const panes = document.querySelectorAll('.tab-pane');
+    panes.forEach(pane => {
+        pane.classList.remove('active');
+    });
+    
+    // Remove active class from all buttons
+    const buttons = document.querySelectorAll('.tab-btn');
+    buttons.forEach(btn => {
+        btn.classList.remove('active');
+        btn.classList.remove('text-primary');
+        btn.classList.add('text-[#111418]', 'dark:text-white');
+    });
+    
+    // Show selected tab pane
+    const selectedPane = document.getElementById(tabName);
+    if (selectedPane) {
+        selectedPane.classList.add('active');
+    }
+    
+    // Add active class to clicked button
+    event.target.closest('.tab-btn').classList.add('active', 'text-primary');
+    event.target.closest('.tab-btn').classList.remove('text-[#111418]', 'dark:text-white');
+}
+
+async function searchTable(tabName) {
+    const searchInput = document.getElementById(`search_${tabName}`);
+    const searchQuery = searchInput ? searchInput.value : '';
+    const tableName = tableMapping[tabName];
+    
+    if (!tableName) {
+        console.error('Table mapping not found for:', tabName);
+        return;
+    }
+    
+    try {
+        const response = await fetch(`{{ url_for('admin.dashboard_search') }}?table=${tableName}&search=${encodeURIComponent(searchQuery)}&page=1&per_page=50`);
+        const result = await response.json();
+        
+        if (!response.ok) {
+            console.error('Error:', result.error);
+            return;
+        }
+        
+        // Render the results
+        renderTableData(tabName, result.data);
+        renderPagination(tabName, result);
+        
+        // Store pagination state
+        paginationState[tabName] = {
+            currentPage: 1,
+            totalPages: result.total_pages,
+            totalItems: result.total_items,
+            searchQuery: searchQuery,
+            tableName: tableName
+        };
+    } catch (error) {
+        console.error('Search error:', error);
+    }
+}
+
+function filterFlowSummary() {
+    const searchInput = document.getElementById('search_flow_summary');
+    const query = searchInput ? searchInput.value.toLowerCase() : '';
+    const rows = document.querySelectorAll('#flow_summary_data tbody tr');
+
+    rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
+    });
+}
+
+function filterTableLocal(tabName) {
+    const searchInput = document.getElementById(`search_${tabName}`);
+    const query = searchInput ? searchInput.value.toLowerCase() : '';
+    const rows = document.querySelectorAll(`#${tabName}_data tbody tr`);
+
+    rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(query) ? '' : 'none';
+    });
+}
+
+async function goToPage(tabName, page) {
+    const state = paginationState[tabName];
+    if (!state) return;
+    
+    try {
+        const response = await fetch(`{{ url_for('admin.dashboard_search') }}?table=${state.tableName}&search=${encodeURIComponent(state.searchQuery)}&page=${page}&per_page=50`);
+        const result = await response.json();
+        
+        if (!response.ok) {
+            console.error('Error:', result.error);
+            return;
+        }
+        
+        renderTableData(tabName, result.data);
+        renderPagination(tabName, result);
+        
+        // Update state
+        state.currentPage = page;
+    } catch (error) {
+        console.error('Pagination error:', error);
+    }
+}
+
+function renderTableData(tabName, data) {
+    const dataContainer = document.getElementById(`${tabName}_data`);
+    if (!dataContainer) return;
+    
+    const tableBody = dataContainer.querySelector('tbody');
+    if (!tableBody) return;
+    
+    if (data.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="10" class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-8 text-center text-[#617589] dark:text-[#a0aec0]">No records found</td></tr>`;
+        return;
+    }
+    
+    // Render rows based on table type
+    let rows = '';
+    data.forEach(item => {
+        rows += renderRow(tabName, item);
+    });
+    
+    tableBody.innerHTML = rows;
+}
+
+function renderRow(tabName, item) {
+    const baseClass = 'border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-3 text-sm text-[#111418] dark:text-white';
+    
+    switch(tabName) {
+        case 'enquiries':
+            return `
+                <tr class="table-row hover:bg-[#f9fafb] dark:hover:bg-[#111827]/50">
+                    <td class="${baseClass}">${item.id || ''}</td>
+                    <td class="${baseClass}">${item.student_name || ''}</td>
+                    <td class="${baseClass}">${item.email || ''}</td>
+                    <td class="${baseClass}">${item.phone || 'N/A'}</td>
+                    <td class="${baseClass}"><span class="px-2 py-1 rounded-full text-xs font-bold ${getStatusBadgeClass(item.status || '')}">
+                        ${(item.status || '').toUpperCase()}
+                    </span></td>
+                    <td class="${baseClass}">${item.created_at ? item.created_at.substring(0, 10) : 'N/A'}</td>
+                </tr>
+            `;
+        case 'applications':
+            return `
+                <tr class="table-row hover:bg-[#f9fafb] dark:hover:bg-[#111827]/50">
+                    <td class="${baseClass}">${item.id || ''}</td>
+                    <td class="${baseClass}">${item.student_id || ''}</td>
+                    <td class="${baseClass}"><span class="px-2 py-1 rounded-full text-xs font-bold ${getStatusBadgeClass(item.application_status || '')}">
+                        ${(item.application_status || '').replace('_', ' ').toUpperCase()}
+                    </span></td>
+                    <td class="${baseClass}">${item.created_at ? item.created_at.substring(0, 10) : 'N/A'}</td>
+                    <td class="${baseClass}">${item.updated_at ? item.updated_at.substring(0, 10) : 'N/A'}</td>
+                </tr>
+            `;
+        case 'students':
+            return `
+                <tr class="table-row hover:bg-[#f9fafb] dark:hover:bg-[#111827]/50">
+                    <td class="${baseClass}">${item.id || ''}</td>
+                    <td class="${baseClass}">${item.first_name || ''} ${item.last_name || ''}</td>
+                    <td class="${baseClass}">${item.email || ''}</td>
+                    <td class="${baseClass}">${item.phone || 'N/A'}</td>
+                    <td class="${baseClass}">${item.created_at ? item.created_at.substring(0, 10) : 'N/A'}</td>
+                </tr>
+            `;
+        case 'admissions':
+            return `
+                <tr class="table-row hover:bg-[#f9fafb] dark:hover:bg-[#111827]/50">
+                    <td class="${baseClass}">${item.id || ''}</td>
+                    <td class="${baseClass}">${item.student_id || ''}</td>
+                    <td class="${baseClass}">${item.roll_number || 'N/A'}</td>
+                    <td class="${baseClass}">${item.allotted_department_id || 'N/A'}</td>
+                    <td class="${baseClass}"><span class="px-2 py-1 rounded-full text-xs font-bold ${getStatusBadgeClass(item.status || '')}">
+                        ${(item.status || '').toUpperCase()}
+                    </span></td>
+                    <td class="${baseClass}">${item.created_at ? item.created_at.substring(0, 10) : 'N/A'}</td>
+                </tr>
+            `;
+        case 'counselling':
+            return `
+                <tr class="table-row hover:bg-[#f9fafb] dark:hover:bg-[#111827]/50">
+                    <td class="${baseClass}">${item.id || ''}</td>
+                    <td class="${baseClass}">${item.application_id || ''}</td>
+                    <td class="${baseClass}">${item.student_id || ''}</td>
+                    <td class="${baseClass}">${item.allotted_department_id || 'N/A'}</td>
+                    <td class="${baseClass}">${item.created_at ? item.created_at.substring(0, 10) : 'N/A'}</td>
+                </tr>
+            `;
+        case 'payments':
+            return `
+                <tr class="table-row hover:bg-[#f9fafb] dark:hover:bg-[#111827]/50">
+                    <td class="${baseClass}">${item.id || ''}</td>
+                    <td class="${baseClass}">${item.student_id || ''}</td>
+                    <td class="${baseClass}">₹${item.amount || '0'}</td>
+                    <td class="${baseClass}"><span class="px-2 py-1 rounded-full text-xs font-bold ${getStatusBadgeClass(item.payment_status || '')}">
+                        ${(item.payment_status || '').toUpperCase()}
+                    </span></td>
+                    <td class="${baseClass}">${item.created_at ? item.created_at.substring(0, 10) : 'N/A'}</td>
+                </tr>
+            `;
+        case 'documents':
+            return `
+                <tr class="table-row hover:bg-[#f9fafb] dark:hover:bg-[#111827]/50">
+                    <td class="${baseClass}">${item.id || ''}</td>
+                    <td class="${baseClass}">${item.application_id || ''}</td>
+                    <td class="${baseClass}">${item.document_type || ''}</td>
+                    <td class="${baseClass}"><span class="px-2 py-1 rounded-full text-xs font-bold ${getStatusBadgeClass(item.verification_status || '')}">
+                        ${(item.verification_status || '').toUpperCase()}
+                    </span></td>
+                    <td class="${baseClass}">${item.created_at ? item.created_at.substring(0, 10) : 'N/A'}</td>
+                </tr>
+            `;
+        case 'staff':
+            return `
+                <tr class="table-row hover:bg-[#f9fafb] dark:hover:bg-[#111827]/50">
+                    <td class="${baseClass}">${item.employee_id || 'N/A'}</td>
+                    <td class="${baseClass}">${item.first_name || ''} ${item.last_name || ''}</td>
+                    <td class="${baseClass}">${item.email || ''}</td>
+                    <td class="${baseClass}">${item.phone || 'N/A'}</td>
+                    <td class="${baseClass}"><span class="px-2 py-1 rounded-full text-xs font-bold ${getRoleBadgeClass(item.role_id)}">${getRoleLabel(item.role_id)}</span></td>
+                    <td class="${baseClass}"><span class="px-2 py-1 rounded-full text-xs font-bold ${item.is_active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}">
+                        ${item.is_active ? 'ACTIVE' : 'INACTIVE'}
+                    </span></td>
+                </tr>
+            `;
+        case 'departments':
+            return `
+                <tr class="table-row hover:bg-[#f9fafb] dark:hover:bg-[#111827]/50">
+                    <td class="${baseClass}">${item.id || ''}</td>
+                    <td class="${baseClass}">${item.department_name || ''}</td>
+                    <td class="${baseClass}">${item.department_code || ''}</td>
+                    <td class="${baseClass}">${item.total_seats || '0'}</td>
+                    <td class="${baseClass}"><span class="px-2 py-1 rounded-full text-xs font-bold ${item.is_active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}">
+                        ${item.is_active ? 'ACTIVE' : 'INACTIVE'}
+                    </span></td>
+                </tr>
+            `;
+        case 'audit':
+            return `
+                <tr class="table-row hover:bg-[#f9fafb] dark:hover:bg-[#111827]/50">
+                    <td class="${baseClass}">${item.id || ''}</td>
+                    <td class="${baseClass}">${item.action || ''}</td>
+                    <td class="${baseClass}">${item.user_id || ''}</td>
+                    <td class="${baseClass}" title="${item.description || ''}" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${item.description || 'N/A'}</td>
+                    <td class="${baseClass}">${item.created_at || 'N/A'}</td>
+                </tr>
+            `;
+        default:
+            return '';
+    }
+}
+
+function getStatusBadgeClass(status) {
+    status = (status || '').toLowerCase();
+    if (status === 'open' || status === 'pending') return 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200';
+    if (status === 'converted' || status === 'submitted' || status === 'approved' || status === 'completed') return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200';
+    if (status === 'rejected' || status === 'failed') return 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200';
+    return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+}
+
+function getRoleBadgeClass(roleId) {
+    if (roleId === 1) return 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200';
+    if (roleId === 2) return 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200';
+    if (roleId === 3) return 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200';
+    return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
+}
+
+function getRoleLabel(roleId) {
+    const roles = {1: 'SUPER ADMIN', 2: 'ADMIN', 3: 'FACULTY', 4: 'STAFF'};
+    return roles[roleId] || 'STAFF';
+}
+
+function renderPagination(tabName, result) {
+    const paginationContainer = document.getElementById(`${tabName}_pagination`);
+    if (!paginationContainer) return;
+    
+    const {current_page, total_pages, has_prev, has_next} = result;
+    let html = '';
+    
+    if (total_pages <= 1) {
+        paginationContainer.innerHTML = '';
+        return;
+    }
+    
+    if (has_prev) {
+        html += `<button onclick="goToPage('${tabName}', ${current_page - 1})" class="px-3 py-1 border border-primary text-primary rounded hover:bg-primary hover:text-white transition-colors">← Prev</button>`;
+    }
+    
+    for (let i = Math.max(1, current_page - 2); i <= Math.min(total_pages, current_page + 2); i++) {
+        if (i === current_page) {
+            html += `<button class="px-3 py-1 bg-primary text-white rounded font-bold">${i}</button>`;
+        } else {
+            html += `<button onclick="goToPage('${tabName}', ${i})" class="px-3 py-1 border border-[#e5e7eb] dark:border-[#2d3748] rounded hover:border-primary transition-colors">${i}</button>`;
+        }
+    }
+    
+    if (has_next) {
+        html += `<button onclick="goToPage('${tabName}', ${current_page + 1})" class="px-3 py-1 border border-primary text-primary rounded hover:bg-primary hover:text-white transition-colors">Next →</button>`;
+    }
+    
+    paginationContainer.innerHTML = html;
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Step 2: Branch Selection - PMC Admission</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Google Fonts: Lexend -->
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend"]
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .progress-bar {
+            background: linear-gradient(90deg, #137fec 0%, #137fec 66%, #e5e7eb 66%, #e5e7eb 100%);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display min-h-screen text-[#111418] dark:text-white">
+
+<!-- Header -->
+<div class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <h1 class="text-lg font-bold">PMC Admission Portal</h1>
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="text-sm text-gray-600 hover:text-primary">← Dashboard</a>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-6 py-8">
+    <!-- Page Title -->
+    <div class="mb-8">
+        <h2 class="text-4xl font-bold text-[#111418] dark:text-white mb-2">Step 2: Branch Selection</h2>
+        <p class="text-lg text-gray-600 dark:text-gray-400">Assign primary and secondary department preferences for the student.</p>
+    </div>
+
+    <!-- Progress Indicator -->
+    <div class="mb-8 flex items-center justify-between">
+        <div class="flex-1">
+            <div class="h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+                <div class="h-full w-2/3 bg-primary rounded-full transition-all duration-500"></div>
+            </div>
+        </div>
+        <div class="ml-4 text-right">
+            <p class="text-sm font-bold text-primary text-lg">66%</p>
+            <p class="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1 mt-1">
+                <span class="material-symbols-outlined text-sm text-green-600">check_circle</span>
+                Next: Document Upload
+            </p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Student Summary Card -->
+        <div class="lg:col-span-1">
+            <div class="bg-gradient-to-br from-primary to-blue-600 text-white rounded-2xl overflow-hidden shadow-lg">
+                <!-- Header -->
+                <div class="px-6 py-4 bg-white/10 backdrop-blur-sm border-b border-white/20">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined">badge</span>
+                        <p class="uppercase text-xs font-bold tracking-wider">Student Summary</p>
+                    </div>
+                </div>
+
+                <!-- Content -->
+                <div class="p-6 space-y-6">
+                    <!-- Student Name -->
+                    <div>
+                        <p class="text-2xl font-bold mb-1">{{ student.full_name }}</p>
+                        <p class="text-blue-100 text-sm font-mono">{{ student.unique_id }}</p>
+                    </div>
+
+                    <!-- Avatar -->
+                    <div class="flex justify-center">
+                        <div class="w-20 h-20 rounded-full bg-white/20 border-2 border-white/50 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-5xl">person</span>
+                        </div>
+                    </div>
+
+                    <!-- Accept Student Button (only when not accepted) -->
+                    {% if student.status != 'accepted' %}
+                    <div class="flex justify-center mt-4">
+                        <form method="POST" action="{{ url_for('admin.accept_student', student_id=(student.id or student.student_id)) }}" onsubmit="return confirm('Accept this student and generate unique ID?')">
+                            <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700">Accept Student</button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <div class="flex justify-center mt-4">
+                        <p class="text-sm text-green-100">Accepted by: {{ student.accepted_by or 'Admin' }} on {{ student.accepted_at or '' }}</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Details -->
+                    <div class="space-y-4 border-t border-white/20 pt-4">
+                        <div>
+                            <p class="text-blue-100 text-xs uppercase tracking-wide">Community</p>
+                            <p class="text-lg font-bold">{{ student.community or 'General' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-blue-100 text-xs uppercase tracking-wide flex items-center gap-1">
+                                <span class="material-symbols-outlined text-sm">percent</span>
+                                12th Percentage
+                            </p>
+                            <p class="text-lg font-bold">{{ student.plus2_percentage or 'N/A' }}%</p>
+                        </div>
+                    </div>
+
+                    <!-- Cutoff Score -->
+                    <div class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-4 text-center">
+                        <p class="text-blue-100 text-xs uppercase tracking-wide mb-2 flex items-center justify-center gap-1">
+                            <span class="material-symbols-outlined text-sm">calculate</span>
+                            Calculated Cut-Off Score
+                        </p>
+                        <p class="text-4xl font-bold">{{ "%.1f"|format(academic.cutoff) if academic else '0' }}</p>
+                        <p class="text-blue-100 text-sm mt-1">/ 200</p>
+                    </div>
+
+                    <!-- Info -->
+                    <div class="bg-blue-500/20 backdrop-blur-sm border border-blue-300/30 rounded-lg p-4 text-sm space-y-2">
+                        <div class="flex gap-2">
+                            <span class="material-symbols-outlined text-sm flex-shrink-0 mt-0.5">info</span>
+                            <p>This student is eligible for merit-based scholarships in Engineering and IT departments based on the current cut-off.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if student.status == 'accepted' %}
+        <!-- Department Allocation Form (only visible after acceptance) -->
+        <div class="lg:col-span-2">
+            <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+                <!-- Header -->
+                <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-800">
+                    <h3 class="font-bold text-xl text-[#111418] dark:text-white">Department Allocation</h3>
+                </div>
+
+                <form method="POST" class="p-6 space-y-6">
+                    <!-- Application Number -->
+                    <div>
+                        <label class="block text-base font-bold text-[#111418] dark:text-white mb-3">
+                            Application Number
+                        </label>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Enter the manual application number (e.g., ADM-2026-5)</p>
+                        <input 
+                            type="text" 
+                            name="application_number" 
+                            placeholder="ADM-2026-XXX"
+                            class="w-full h-12 px-4 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-[#111418] dark:text-white focus:border-primary focus:ring-1 focus:ring-primary"
+                        />
+                    </div>
+                    
+                    <!-- Referred Department -->
+                    <div>
+                        <label class="block text-base font-bold text-[#111418] dark:text-white mb-3">
+                            Referred Department <span class="text-red-500">*</span>
+                        </label>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">The primary choice based on the student's initial enquiry and aptitude score.</p>
+                        
+                        <select name="preferred_dept_id" required class="w-full h-12 px-4 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-[#111418] dark:text-white focus:border-primary focus:ring-1 focus:ring-primary appearance-none cursor-pointer">
+                            <option value="">Select Department</option>
+                            {% if departments %}
+                                {% for dept in departments %}
+                                <option value="{{ dept.id }}">{{ dept.dept_name }} ({{ dept.dept_code }})</option>
+                                {% endfor %}
+                            {% endif %}
+                        </select>
+                    </div>
+
+                    <!-- Optional Department -->
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+                        <label class="block text-base font-bold text-[#111418] dark:text-white mb-3">
+                            Optional Department (Secondary)
+                        </label>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Alternative preference if seats are unavailable in the primary branch.</p>
+                        
+                        <div class="space-y-3">
+                            {% if departments %}
+                                {% for dept in departments %}
+                                <label class="flex items-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                                    <input type="checkbox" name="optional_dept_ids" value="{{ dept.id }}" class="w-5 h-5 text-primary rounded focus:ring-2 focus:ring-primary">
+                                    <div class="ml-4 flex-1">
+                                        <p class="font-semibold text-[#111418] dark:text-white">{{ dept.dept_name }}</p>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Code: {{ dept.dept_code }}</p>
+                                    </div>
+                                </label>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Info Message -->
+                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                        <div class="flex gap-3">
+                            <span class="material-symbols-outlined text-blue-600 dark:text-blue-400 flex-shrink-0">shield</span>
+                            <p class="text-sm text-blue-900 dark:text-blue-200">
+                                <span class="font-semibold">Branch availability will be automatically verified upon saving.</span> Selected departments must match the minimum cut-off threshold.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-6 flex gap-4 justify-between">
+                        <div class="flex gap-2">
+                            <a href="{{ url_for('admin.admin_dashboard') }}" class="flex items-center gap-2 px-6 py-3 text-gray-700 dark:text-gray-300 hover:text-primary font-semibold transition-colors">
+                                <span class="material-symbols-outlined">arrow_back</span>
+                                Back
+                            </a>
+                            <button type="button" onclick="discardDraft()" class="px-6 py-3 text-gray-700 dark:text-gray-300 hover:text-red-600 font-semibold transition-colors">
+                                Discard Draft
+                            </button>
+                        </div>
+                        <button type="submit" class="flex items-center gap-2 px-8 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">
+                            Save & Continue
+                            <span class="material-symbols-outlined">arrow_forward</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function discardDraft() {
+        if (confirm('Are you sure you want to discard this draft?')) {
+            window.location.href = "{{ url_for('admin.admin_dashboard') }}";
+        }
+    }
+</script>
+
+</body>
+</html>

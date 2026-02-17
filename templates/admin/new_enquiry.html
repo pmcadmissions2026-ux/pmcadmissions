@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Step 1: Student Enquiry Form</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Improve form layout and prevent overlapping on small screens */
+        form input, form select, form textarea {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .section { margin-bottom: 1.25rem; }
+        /* Ensure action buttons wrap on small screens */
+        .actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+        @media (max-width: 767px) {
+            .header { position: sticky; top: 0; z-index: 50; }
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display min-h-screen text-[#111418] dark:text-white">
+<div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+<!-- Header / Navigation Bar -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#dbe0e6] dark:border-[#2d3748] px-10 py-3 bg-white dark:bg-background-dark sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<div class="size-8 text-primary">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path clip-rule="evenodd" d="M39.475 21.6262C40.358 21.4363 40.6863 21.5589 40.7581 21.5934C40.7876 21.655 40.8547 21.857 40.8082 22.3336C40.7408 23.0255 40.4502 24.0046 39.8572 25.2301C38.6799 27.6631 36.5085 30.6631 33.5858 33.5858C30.6631 36.5085 27.6632 38.6799 25.2301 39.8572C24.0046 40.4502 23.0255 40.7407 22.3336 40.8082C21.8571 40.8547 21.6551 40.7875 21.5934 40.7581C21.5589 40.6863 21.4363 40.358 21.6262 39.475C21.8562 38.4054 22.4689 36.9657 23.5038 35.2817C24.7575 33.2417 26.5497 30.9744 28.7621 28.762C30.9744 26.5497 33.2417 24.7574 35.2817 23.5037C36.9657 22.4689 38.4054 21.8562 39.475 21.6262ZM4.41189 29.2403L18.7597 43.5881C19.8813 44.7097 21.4027 44.9179 22.7217 44.7893C24.0585 44.659 25.5148 44.1631 26.9723 43.4579C29.9052 42.0387 33.2618 39.5667 36.4142 36.4142C39.5667 33.2618 42.0387 29.9052 43.4579 26.9723C44.1631 25.5148 44.659 24.0585 44.7893 22.7217C44.9179 21.4027 44.7097 19.8813 43.5881 18.7597L29.2403 4.41187C27.8527 3.02428 25.8765 3.02573 24.2861 3.36776C22.6081 3.72863 20.7334 4.58419 18.8396 5.74801C16.4978 7.18716 13.9881 9.18353 11.5858 11.5858C9.18354 13.988 7.18717 16.4978 5.74802 18.8396C4.58421 20.7334 3.72865 22.6081 3.36778 24.2861C3.02574 25.8765 3.02429 27.8527 4.41189 29.2403Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-lg font-bold leading-tight tracking-tight">Admission Portal</h2>
+</div>
+<div class="flex flex-1 justify-end gap-4">
+<button class="flex items-center justify-center rounded-lg h-10 bg-primary/10 text-primary px-3">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="flex items-center gap-2">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="Staff profile placeholder" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBAylw7G0AO3PbAaUi4anRbueA0QrPWgiUkWTJExTZFL1NLSK7vNkDh0eWVYmF80arWPe6uf1GPUSeR_49jq_fTWFl4ksuN6Bf-cKwJwlheGjkIRpFAyUAJEBYynKqWvjeJbPNtyv1-xOenjsmtp7mkduZ-yGC1JTVn688S9NusKAkxWB-Hl34LCthFa6XPw1rhe-hFk_yw-jjn_Zg-7ue5IostSMv5E6B4dYMToOrbKMqY8Vg4Ccai1pjWQAQ_RuFmo1UTcfn0Qro");'></div>
+<span class="text-sm font-medium">{{ user.name if user else 'Staff Member' }}</span>
+</div>
+</div>
+</header>
+<main class="flex-1 flex flex-col items-center py-10 px-4">
+<div class="max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+<!-- Headline -->
+<h1 class="text-center text-[32px] font-bold tracking-tight mb-8">Step 1: Student Enquiry Form</h1>
+<!-- Progress Stepper -->
+<div class="mb-10 bg-white dark:bg-background-dark border border-[#dbe0e6] dark:border-[#2d3748] rounded-xl p-6 shadow-sm section">
+<div class="grid grid-cols-3 gap-x-2">
+<!-- Step 1: Active -->
+<div class="flex items-center gap-3">
+<div class="flex flex-col items-center">
+<div class="bg-primary text-white rounded-full size-10 flex items-center justify-center">
+<span class="material-symbols-outlined">description</span>
+</div>
+</div>
+<div class="flex flex-col">
+<p class="text-primary text-base font-bold leading-none">Enquiry</p>
+<p class="text-[#617589] text-sm mt-1">Step 1: Active</p>
+</div>
+</div>
+<!-- Step 2: Pending -->
+<div class="flex items-center gap-3 opacity-50">
+<div class="flex flex-col items-center">
+<div class="bg-[#dbe0e6] text-[#111418] rounded-full size-10 flex items-center justify-center">
+<span class="material-symbols-outlined">account_tree</span>
+</div>
+</div>
+<div class="flex flex-col">
+<p class="text-[#111418] dark:text-white text-base font-medium leading-none">Branch Selection</p>
+<p class="text-[#617589] text-sm mt-1">Pending</p>
+</div>
+</div>
+<!-- Step 3: Pending -->
+<div class="flex items-center gap-3 opacity-50">
+<div class="flex flex-col items-center">
+<div class="bg-[#dbe0e6] text-[#111418] rounded-full size-10 flex items-center justify-center">
+<span class="material-symbols-outlined">how_to_reg</span>
+</div>
+</div>
+<div class="flex flex-col">
+<p class="text-[#111418] dark:text-white text-base font-medium leading-none">Application Filing</p>
+<p class="text-[#617589] text-sm mt-1">Pending</p>
+</div>
+</div>
+</div>
+<!-- Progress Bar Track -->
+<div class="relative mt-4 h-1.5 w-full bg-[#dbe0e6] rounded-full overflow-hidden">
+<div class="absolute left-0 top-0 h-full w-1/3 bg-primary"></div>
+</div>
+</div>
+<!-- Form Container -->
+<form method="POST" action="{{ url_for('admin.new_enquiry') }}">
+<div class="bg-white dark:bg-background-dark border border-[#dbe0e6] dark:border-[#2d3748] rounded-xl shadow-lg overflow-hidden">
+<!-- Personal Details Section -->
+<div class="p-8 border-b border-[#f0f2f4] dark:border-[#2d3748]">
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-primary">person</span>
+<h2 class="text-[22px] font-bold tracking-tight">Personal Details</h2>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-6">
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Full Name <span class="text-red-500">*</span></p>
+<input name="full_name" required class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="Enter full name as per marksheet" type="text"/>
+</label>
+<label class="flex flex-col">
+<div class="flex items-center gap-1 mb-2">
+<p class="text-sm font-semibold">+2 Register Number <span class="text-red-500">*</span></p>
+<span class="material-symbols-outlined text-[16px] text-gray-400 cursor-help" title="+2 Board Registration Number">info</span>
+</div>
+<input name="plus2_register_number" required class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="e.g. 26000127" type="text"/>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Student WhatsApp Number <span class="text-red-500">*</span></p>
+<input name="whatsapp_number" required class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="+91 00000 00000" type="tel"/>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Student Email Address <span class="text-red-500">*</span></p>
+<input name="email" required class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="student@example.com" type="email"/>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">EMIS Number</p>
+<input name="emis_number" class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="Enter EMIS number (optional)" type="text"/>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Father's Name</p>
+<input name="father_name" class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="Father's full name" type="text"/>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Father's Contact Number</p>
+<input name="father_phone" class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="+91 00000 00000" type="tel"/>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Mother's Name</p>
+<input name="mother_name" class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="Mother's full name" type="text"/>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Mother's Contact Number</p>
+<input name="mother_phone" class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="+91 00000 00000" type="tel"/>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Date of Birth</p>
+<input name="date_of_birth" class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" type="date"/>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Gender</p>
+<select name="gender" class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]">
+<option value="">Select Gender</option>
+<option>Male</option>
+<option>Female</option>
+<option>Other</option>
+</select>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Aadhar Number</p>
+<input name="aadhar_number" class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="0000 0000 0000" type="text" maxlength="12"/>
+</label>
+</div>
+</div>
+<!-- Academic Background Section -->
+<div class="p-8 border-b border-[#f0f2f4] dark:border-[#2d3748] bg-primary/5">
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-primary">school</span>
+<h2 class="text-[22px] font-bold tracking-tight">Academic Background</h2>
+</div>
+
+<!-- 10th Standard Details -->
+<h3 class="text-lg font-bold mb-4 text-gray-700 dark:text-gray-300">10th Standard Details</h3>
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-6 mb-8">
+<label class="flex flex-col md:col-span-2">
+<p class="text-sm font-semibold mb-2">10th School Name</p>
+<input name="tenth_school_name" class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="Enter 10th school name" type="text"/>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">10th Board of Examination</p>
+<select id="tenth_board" name="tenth_board" class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]">
+    <option value="">Select Board</option>
+    <option>State Board</option>
+    <option>CBSE</option>
+    <option>ICSE</option>
+    <option>Matriculation</option>
+    <option>Others</option>
+</select>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">10th Study State</p>
+<input id="tenth_study_state" name="tenth_study_state" class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="State (e.g. Tamil Nadu)" type="text"/>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">10th Medium of Study</p>
+<select id="tenth_medium_of_study" name="tenth_medium_of_study" class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]">
+    <option value="">Select Medium</option>
+    <option>English</option>
+    <option>Tamil</option>
+    <option>Hindi</option>
+    <option>Telugu</option>
+    <option>Others</option>
+</select>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">10th Marks Secured</p>
+<div class="flex gap-2">
+    <input id="tenth_marks" name="tenth_marks" class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748] flex-1" placeholder="Marks obtained" type="number" step="0.01" oninput="calculatePercentage('tenth')"/>
+    <input id="tenth_total" name="tenth_total_marks" class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748] w-40" placeholder="Total marks" type="number" step="0.01" oninput="calculatePercentage('tenth')"/>
+    <input id="tenth_percentage" name="tenth_percentage" readonly class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748] w-32" placeholder="%" type="number" step="0.01"/>
+</div>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">10th Passing Year</p>
+<input name="tenth_year" class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="2022" type="number" min="2000" max="2030"/>
+</label>
+</div>
+
+<!-- +2 Standard Details -->
+<h3 class="text-lg font-bold mb-4 text-gray-700 dark:text-gray-300">+2 / 12th Standard Details</h3>
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-6 mb-6">
+<label class="flex flex-col md:col-span-2">
+<p class="text-sm font-semibold mb-2">+2 School Name <span class="text-red-500">*</span></p>
+<input name="plus2_school_name" required class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="Enter +2 school name" type="text"/>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">+2 Marks Secured</p>
+<div class="flex gap-2">
+    <input id="plus2_marks" name="plus2_marks" class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748] flex-1" placeholder="Marks obtained" type="number" step="0.01" oninput="calculatePercentage('plus2')"/>
+    <input id="plus2_total" name="plus2_total_marks" class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748] w-40" placeholder="Total marks" type="number" step="0.01" oninput="calculatePercentage('plus2')"/>
+    <input id="plus2_percentage" name="plus2_percentage" readonly class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748] w-32" placeholder="%" type="number" step="0.01"/>
+</div>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">+2 Passing Year</p>
+<input name="plus2_year" class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="2024" type="number" min="2000" max="2030"/>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Board of Examination <span class="text-red-500">*</span></p>
+<select name="board" required class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]">
+<option value="">Select Board</option>
+<option>State Board</option>
+<option>CBSE</option>
+<option>ICSE</option>
+<option>Matriculation</option>
+<option>Others</option>
+</select>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Study State</p>
+<input name="study_state" class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="Tamil Nadu" type="text"/>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Group Studied <span class="text-red-500">*</span></p>
+<select name="group_studied" required class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]">
+<option value="">Select Group</option>
+<option>MPCB (Maths, Physics, Chemistry, Biology)</option>
+<option>MPCC (Maths, Physics, Chemistry, Computer Science)</option>
+<option>Vocational</option>
+<option>Others</option>
+</select>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Medium of Study</p>
+<select name="medium_of_study" class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]">
+<option value="">Select Medium</option>
+<option>English</option>
+<option>Tamil</option>
+<option>Hindi</option>
+<option>Telugu</option>
+<option>Others</option>
+</select>
+</label>
+</div>
+
+<!-- Subject Marks for Cutoff -->
+<h3 class="text-lg font-bold mb-4 text-gray-700 dark:text-gray-300">Subject-wise Marks (for Cutoff Calculation)</h3>
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Maths Marks <span class="text-red-500">*</span></p>
+<input name="maths_marks" id="maths" required class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="0-100" type="number" step="0.01" oninput="calculateCutoff()"/>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Physics Marks <span class="text-red-500">*</span></p>
+<input name="physics_marks" id="physics" required class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="0-100" type="number" step="0.01" oninput="calculateCutoff()"/>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Chemistry Marks <span class="text-red-500">*</span></p>
+<input name="chemistry_marks" id="chemistry" required class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="0-100" type="number" step="0.01" oninput="calculateCutoff()"/>
+</label>
+<label class="flex flex-col">
+<div class="flex items-center gap-1 mb-2">
+<p class="text-sm font-semibold">Total Cut-off</p>
+<span class="material-symbols-outlined text-[16px] text-primary cursor-help" title="Calculated as (Maths + (Physics + Chemistry)/2)">info</span>
+</div>
+<input id="cutoff" class="rounded-lg border-primary/30 bg-primary/10 text-primary font-bold h-12 px-4" readonly="" type="text" value="0.00"/>
+</label>
+</div>
+</div>
+<!-- Social Details Section -->
+<div class="p-8 section">
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-primary">diversity_3</span>
+<h2 class="text-[22px] font-bold tracking-tight">Social &amp; Categories</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Religion</p>
+<select name="religion" class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]">
+<option>Hindu</option>
+<option>Muslim</option>
+<option>Christian</option>
+<option>Others</option>
+</select>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Community</p>
+<select id="community" name="community" onchange="onCommunityChange()" class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]">
+<option value="">Select Community</option>
+<option value="OC">OC</option>
+<option value="BC">BC</option>
+<option value="SC">SC</option>
+<option value="ST">ST</option>
+<option value="SCA">SCA</option>
+<option value="BCM">BCM</option>
+<option value="Other">Other (specify)</option>
+</select>
+<input id="community_custom" name="community_custom" placeholder="Specify community" class="mt-2 rounded-lg border-[#dbe0e6] h-10 px-3 dark:bg-background-dark dark:border-[#2d3748] hidden" style="display:none;" />
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Caste</p>
+<input name="caste" type="text" placeholder="Enter caste" class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]"/>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Mother Tongue</p>
+<input name="mother_tongue" type="text" placeholder="Enter mother tongue" class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]"/>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">General Quota</p>
+<select name="general_quota" class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]">
+<option>Government Quota (GQ)</option>
+<option>Management Quota (MQ)</option>
+<option>NRI Quota</option>
+<option>Sports Quota</option>
+</select>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Reference Details (Optional)</p>
+<input name="reference_details" type="text" placeholder="Enter reference name or details" class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]"/>
+</label>
+</div>
+<div class="mt-8 flex flex-wrap gap-10">
+<label class="flex items-center gap-3 cursor-pointer">
+<input name="category_7_5" class="rounded text-primary focus:ring-primary size-5" type="checkbox"/>
+<span class="text-sm font-medium">7.5 Reservation Category (Govt School)</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer">
+<input name="first_graduate" class="rounded text-primary focus:ring-primary size-5" type="checkbox"/>
+<span class="text-sm font-medium">First Graduate (FG)</span>
+</label>
+</div>
+</div>
+<!-- TNEA Eligibility Display -->
+<div class="p-6 bg-white dark:bg-background-dark border border-t-0 border-[#dbe0e6] dark:border-[#2d3748] rounded-b-xl">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+        <div>
+            <p class="text-sm font-semibold mb-2">TNEA Average</p>
+            <input id="tnea_average" readonly class="rounded-lg border-primary/30 bg-primary/10 text-primary font-bold h-12 px-4" type="text" value="0.00" />
+        </div>
+        <div>
+            <p class="text-sm font-semibold mb-2">Eligibility</p>
+            <div id="tnea_eligibility" class="text-sm font-bold text-gray-700 dark:text-white">Not calculated</div>
+        </div>
+        <div>
+            <p class="text-sm font-semibold mb-2">Notes</p>
+            <p class="text-xs text-gray-500">Eligibility: OC threshold 45%, Others 40% (calculated from Maths, Physics, Chemistry average).</p>
+        </div>
+    </div>
+</div>
+<!-- Footer / Actions -->
+<div class="bg-[#f8fafc] dark:bg-background-dark/50 border-t border-[#dbe0e6] dark:border-[#2d3748] px-8 py-6">
+    <div class="flex justify-between items-center flex-wrap gap-4">
+        <button type="button" onclick="saveDraft()" class="flex items-center gap-2 text-gray-500 hover:text-gray-700 font-bold transition-colors">
+<span class="material-symbols-outlined">save</span>
+                            Save as Draft
+                        </button>
+        <div class="actions">
+            <button type="reset" onclick="calculateCutoff()" class="px-8 h-12 rounded-lg font-bold border border-[#dbe0e6] hover:bg-gray-50 dark:border-[#2d3748] dark:hover:bg-gray-800 transition-colors">
+                                Reset
+                            </button>
+            <button type="submit" class="px-10 h-12 bg-primary text-white rounded-lg font-bold flex items-center gap-2 hover:bg-primary/90 transition-colors">
+                                Next Step
+                                <span class="material-symbols-outlined">arrow_forward</span>
+            </button>
+        </div>
+    </div>
+</div>
+</div>
+</form>
+<!-- Helper Text -->
+<p class="mt-6 text-center text-sm text-[#617589]">
+                    Need help? Contact Admission Support at <span class="text-primary font-medium">support@college.edu</span> or call 1800-000-000
+                </p>
+</div>
+</main>
+<!-- Footer -->
+<footer class="py-10 text-center text-xs text-[#617589]">
+            © 2024 College Admission System. All rights reserved.
+        </footer>
+</div>
+
+<script>
+        function calculateCutoff() {
+            const maths = parseFloat(document.getElementById('maths').value) || 0;
+            const physics = parseFloat(document.getElementById('physics').value) || 0;
+            const chemistry = parseFloat(document.getElementById('chemistry').value) || 0;
+
+            // Existing cutoff calculation (kept for compatibility)
+            const cutoff = maths + ((physics + chemistry) / 2);
+            document.getElementById('cutoff').value = cutoff.toFixed(2);
+
+            // TNEA average and eligibility calculation
+            const avg = (maths + physics + chemistry) / 3;
+            document.getElementById('tnea_average').value = avg.toFixed(2);
+
+            // Determine community (allow custom when 'Other' selected)
+            let communityEl = document.getElementById('community');
+            let community = communityEl ? communityEl.value : '';
+            if (community === 'Other') {
+                const custom = document.getElementById('community_custom');
+                community = custom && custom.value ? custom.value : 'Other';
+            }
+
+            const threshold = (community && community.toString().trim().toUpperCase() === 'OC') ? 45.0 : 40.0;
+            const eligible = avg >= threshold;
+
+            const el = document.getElementById('tnea_eligibility');
+            if (el) {
+                if (isNaN(avg) || (maths === 0 && physics === 0 && chemistry === 0)) {
+                    el.innerText = 'Not calculated';
+                    el.className = 'text-sm font-bold text-gray-700 dark:text-white';
+                } else if (eligible) {
+                    el.innerText = 'Eligible';
+                    el.className = 'text-sm font-bold text-green-600 dark:text-green-400';
+                } else {
+                    el.innerText = 'Not Eligible';
+                    el.className = 'text-sm font-bold text-red-600 dark:text-red-400';
+                }
+            }
+        }
+
+        // Calculate percentage for 10th and +2 when marks or total change
+        function calculatePercentage(prefix) {
+            try {
+                const marksEl = document.getElementById(prefix + '_marks');
+                const totalEl = document.getElementById(prefix + '_total');
+                const percEl = document.getElementById(prefix + '_percentage');
+                if (!marksEl || !totalEl || !percEl) return;
+                const marks = parseFloat(marksEl.value) || 0;
+                const total = parseFloat(totalEl.value) || 0;
+                if (total > 0) {
+                    const p = (marks / total) * 100;
+                    percEl.value = p.toFixed(2);
+                } else {
+                    percEl.value = '';
+                }
+            } catch (e) {
+                console.error('calculatePercentage error', e);
+            }
+        }
+
+        // Disable First Graduate checkbox if 7.5 category is checked
+        function sync7_5AndFG() {
+            const box7 = document.querySelector('input[name="category_7_5"]');
+            const fg = document.querySelector('input[name="first_graduate"]');
+            if (!box7 || !fg) return;
+            if (box7.checked) {
+                fg.checked = false;
+                fg.disabled = true;
+            } else {
+                fg.disabled = false;
+            }
+        }
+
+        // Wire 7.5 checkbox change to sync function
+        document.addEventListener('DOMContentLoaded', function() {
+            const box7 = document.querySelector('input[name="category_7_5"]');
+            if (box7) {
+                box7.addEventListener('change', sync7_5AndFG);
+                // initial sync
+                sync7_5AndFG();
+            }
+        });
+
+        function onCommunityChange() {
+            const sel = document.getElementById('community');
+            const custom = document.getElementById('community_custom');
+            if (!sel || !custom) return;
+            if (sel.value === 'Other') {
+                custom.style.display = 'block';
+            } else {
+                custom.style.display = 'none';
+                custom.value = '';
+            }
+            calculateCutoff();
+        }
+
+        function saveDraft() {
+            alert('Draft save functionality will be implemented soon!');
+        }
+    </script>
+    <script>
+        // Client-side uniqueness checks for enquiries
+        async function checkFieldUnique(field, value) {
+            if (!field || !value) return {exists: false};
+            try {
+                const resp = await fetch('/admin/enquiries/check-unique?field=' + encodeURIComponent(field) + '&value=' + encodeURIComponent(value), {credentials: 'same-origin'});
+                if (!resp.ok) return {error: 'server'};
+                return await resp.json();
+            } catch (e) {
+                console.error('checkFieldUnique error', e);
+                return {error: e.toString()};
+            }
+        }
+
+        function fieldLabel(name) {
+            if (name === 'plus2_register_number') return '+2 Register Number';
+            if (name === 'aadhar_number') return 'Aadhar Number';
+            if (name === 'email') return 'Email';
+            return name;
+        }
+
+        function showFieldError(el, msg) {
+            clearFieldError(el);
+            el.classList.add('border-red-500');
+            const small = document.createElement('div');
+            small.className = 'error-msg text-sm text-red-600 mt-1';
+            small.innerText = msg;
+            el.parentNode.appendChild(small);
+        }
+
+        function clearFieldError(el) {
+            el.classList.remove('border-red-500');
+            const parent = el.parentNode;
+            if (!parent) return;
+            const existing = parent.querySelector('.error-msg');
+            if (existing) existing.remove();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const fields = ['plus2_register_number','email','aadhar_number'];
+            fields.forEach(function(name) {
+                const el = document.querySelector('[name="' + name + '"]');
+                if (!el) return;
+                el.addEventListener('blur', async function() {
+                    const val = (el.value || '').trim();
+                    if (!val) { clearFieldError(el); return; }
+                    const res = await checkFieldUnique(name, val);
+                    if (res && res.exists) {
+                        const label = fieldLabel(name);
+                        showFieldError(el, `${label} already exists (${res.matched_count})`);
+                    } else {
+                        clearFieldError(el);
+                    }
+                });
+            });
+
+            const form = document.querySelector('form[method="POST"]');
+            if (!form) return;
+            form.addEventListener('submit', async function(e) {
+                const duplicates = [];
+                for (const name of ['plus2_register_number','email','aadhar_number']) {
+                    const el = form.querySelector('[name="' + name + '"]');
+                    if (!el) continue;
+                    const val = (el.value || '').trim();
+                    if (!val) { clearFieldError(el); continue; }
+                    const res = await checkFieldUnique(name, val);
+                    if (res && res.exists) {
+                        duplicates.push({name, el, res});
+                        showFieldError(el, `${fieldLabel(name)} already used by another enquiry`);
+                    } else {
+                        clearFieldError(el);
+                    }
+                }
+                if (duplicates.length > 0) {
+                    e.preventDefault();
+                    alert('Duplicate value found. Please resolve highlighted fields before submitting.');
+                    duplicates[0].el.focus();
+                    return false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
