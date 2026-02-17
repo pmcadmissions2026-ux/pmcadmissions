@@ -6,6 +6,19 @@ def login_required(f):
     """Decorator to require user login"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        # If we have a user_id but the user no longer exists (stale cookie),
+        # clear the session to avoid redirect loops and force a fresh login.
+        if 'user_id' in session:
+            try:
+                user = UserModel.get_user_by_id(session['user_id'])
+                if not user:
+                    session.clear()
+                    return redirect(url_for('auth.login'))
+            except Exception:
+                # On any error, clear session and require login
+                session.clear()
+                return redirect(url_for('auth.login'))
+
         if 'user_id' not in session:
             return redirect(url_for('auth.login'))
         return f(*args, **kwargs)

@@ -65,6 +65,12 @@ def dashboard():
     user_role = session.get('user_role')
     
     if not user or not user_role:
+        # Clear stale session if user record cannot be found to avoid
+        # redirect loops between `/` -> `/admin/dashboard` -> `/auth/login`.
+        try:
+            session.clear()
+        except Exception:
+            pass
         return redirect(url_for('auth.login'))
     
     # Redirect based on role

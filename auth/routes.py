@@ -11,6 +11,15 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     """User login route"""
+    # Protect against stale sessions stored in cookies (e.g., after DB user deleted)
+    if 'user_id' in session:
+        try:
+            user_check = UserModel.get_user_by_id(session['user_id'])
+            if not user_check:
+                session.clear()
+        except Exception:
+            session.clear()
+
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
