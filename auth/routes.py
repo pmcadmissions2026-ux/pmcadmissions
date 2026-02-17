@@ -4,6 +4,7 @@ from database.supabase_config import db
 from datetime import datetime
 import os
 from flask import jsonify
+from config import Config
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -75,6 +76,41 @@ def debug_user_exists():
     user = UserModel.get_user_by_email(email)
     exists = bool(user)
     return jsonify({'email': email, 'exists': exists}), 200
+
+
+@auth_bp.route('/debug/env')
+def debug_env():
+    if os.getenv('ENABLE_DEBUG_ENDPOINT') != '1':
+        return jsonify({'error': 'disabled'}), 403
+
+    # Mask SUPABASE_KEY (only show length)
+    supabase_url = os.getenv('SUPABASE_URL') or Config.SUPABASE_URL
+    supabase_key = os.getenv('SUPABASE_KEY') or Config.SUPABASE_KEY
+
+    url_host = None
+    if supabase_url:
+        try:
+            # extract host for quick validation
+            from urllib.parse import urlparse
+            url_host = urlparse(supabase_url).netloc
+        except Exception:
+            url_host = supabase_url
+
+    key_len = len(supabase_key) if supabase_key else 0
+
+    # Quick lightweight DB check: attempt to select 1 user to verify permissions
+    users_count = None
+    try:
+        users = db.select('users')
+        users_count = len(users) if users is not None else None
+    except Exception as e:
+        users_count = f'error: {str(e)}'
+
+    return jsonify({
+        'supabase_url_host': url_host,
+        'supabase_key_length': key_len,
+        'users_table_count_sample': users_count
+    }), 200
 
 @auth_bp.route('/logout')
 def logout():
