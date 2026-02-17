@@ -37,10 +37,29 @@ class SupabaseDB:
                     masked = None
                 key_type = 'SERVICE' if (Config.SUPABASE_SERVICE_KEY and Config.SUPABASE_SERVICE_KEY.strip()) else ('ANON' if (Config.SUPABASE_KEY and Config.SUPABASE_KEY.strip()) else 'NONE')
                 print(f"Creating Supabase client using {key_type} key: {masked}")
-                self._client = create_client(
-                    Config.SUPABASE_URL,
-                    key_to_use
-                )
+                # Try primary key (service if present else anon). If that fails
+                # (e.g. truncated/invalid service key in the environment),
+                # attempt to fall back to the anon key if available. This makes
+                # server-side reads work when tables are public and the
+                # service key is misconfigured.
+                try:
+                    self._client = create_client(Config.SUPABASE_URL, key_to_use)
+                except Exception as primary_exc:
+                    print(f"Primary Supabase client creation failed: {primary_exc}")
+                    # Only attempt anon fallback if we attempted service key
+                    if key_type == 'SERVICE' and Config.SUPABASE_KEY:
+                        anon_key = Config.SUPABASE_KEY.strip() if Config.SUPABASE_KEY else None
+                        if anon_key:
+                            try:
+                                print("Attempting fallback to ANON key for Supabase client")
+                                self._client = create_client(Config.SUPABASE_URL, anon_key)
+                            except Exception as fallback_exc:
+                                print(f"Fallback anon client creation failed: {fallback_exc}")
+                                # re-raise original exception to surface the root cause
+                                raise primary_exc
+                    else:
+                        # No fallback available; re-raise
+                        raise
             except TypeError as te:
                 # Some vendored/http client incompatibilities may raise
                 # TypeError (unexpected kwargs). Log a helpful message and
