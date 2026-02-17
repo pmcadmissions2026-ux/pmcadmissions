@@ -71,14 +71,49 @@ vercel dev
 
 ## Local Test (Docker)
 ```bash
+# Deploying Flask on Vercel and Render
+
+## Background
+Vercel deprecated the `@vercel/docker` builder (it is not published on npm). If your `vercel.json` references `@vercel/docker` the Vercel build will fail with "The package `@vercel/docker` is not published". Use the serverless approach on Vercel instead, or deploy a Docker image to a provider that supports containers (Render, Fly, Railway).
+
+## Vercel (Serverless - Recommended)
+
+- This repository includes `/api/index.py` which wraps the Flask `app` with `vercel-wsgi` for Vercel serverless functions.
+- Ensure `vercel-wsgi` is present in `requirements.txt` (this repo is pre-configured).
+- `vercel.json` is set to map `api/**/*.py` to the Python runtime. No Docker builder is used.
+
+Deployment steps on Vercel:
+- Connect your GitHub repo in the Vercel dashboard.
+- Ensure Environment variables are set in Project Settings → Environment Variables (e.g. `SUPABASE_URL`, `SUPABASE_KEY`, `SECRET_KEY`, SMTP vars).
+- Deploy — Vercel will build and install `requirements.txt` and expose the `/api` endpoints as serverless functions.
+
+Local test (serverless):
+```bash
+pip install -r requirements.txt
+vercel dev
+```
+
+Serverless considerations:
+- Do not use local filesystem for sessions or uploads (ephemeral). Use Supabase Storage, S3, or a remote session store.
+- Keep static assets in `/static`; for large files use a CDN.
+
+## Docker / Container-hosting (Alternative)
+
+If you specifically need to run Docker images, deploy to a service that supports containers (Render, Fly, Railway, AWS ECS, GCP Cloud Run). This repo includes a `Dockerfile` for local builds and those platforms.
+
+Example Docker local run:
+```bash
 docker build -t pmc-admissions .
 docker run --rm -p 5000:5000 --env-file .env pmc-admissions
 ```
 
+## Render quick notes
+
+- Build command: `pip install -r requirements.txt`
+- Start command: `gunicorn app:app --bind 0.0.0.0:$PORT`
+- Set env vars in Render Dashboard.
+
 ## References
-- https://github.com/juancarlospaco/vercel-wsgi
 - https://vercel.com/docs/concepts/functions/serverless-functions/runtimes/python
-- https://vercel.com/docs/deployments/overview
+- https://github.com/juancarlospaco/vercel-wsgi
 - https://render.com/docs/deploy-flask
-- https://render.com/docs/environment-variables
-- https://render.com/docs/web-services
