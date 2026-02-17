@@ -20,8 +20,17 @@ class UserModel:
     def verify_login(email: str, password: str):
         """Verify user login credentials"""
         user = UserModel.get_user_by_email(email)
-        
-        if user and user['password'] == password and user['is_active']:
+
+        # Debug logs to help diagnose login failures (will appear in server logs).
+        try:
+            user_found = bool(user)
+            password_match = bool(user and user.get('password') == password)
+            is_active = bool(user and user.get('is_active'))
+            print(f"verify_login: email={email}, user_found={user_found}, password_match={password_match}, is_active={is_active}")
+        except Exception as e:
+            print("verify_login: error while logging debug info:", e)
+
+        if user and user.get('password') == password and user.get('is_active'):
             return user
         return None
     
