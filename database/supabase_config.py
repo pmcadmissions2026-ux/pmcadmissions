@@ -24,11 +24,19 @@ class SupabaseDB:
         """Get Supabase client"""
         if self._client is None:
             try:
-                # Create client lazily. Wrap in try/except to surface
-                # errors during runtime instead of import time.
+                # Choose service key when available (server-side) to bypass
+                # RLS restrictions for administrative reads. Fall back to the
+                # public anon key if service key is not provided.
+                key_to_use = Config.SUPABASE_SERVICE_KEY or Config.SUPABASE_KEY
+                masked = None
+                try:
+                    masked = (f"{key_to_use[:4]}...{key_to_use[-4:]}" if key_to_use else None)
+                except Exception:
+                    masked = None
+                print(f"Creating Supabase client using {'SERVICE' if Config.SUPABASE_SERVICE_KEY else 'ANON'} key: {masked}")
                 self._client = create_client(
                     Config.SUPABASE_URL,
-                    Config.SUPABASE_KEY
+                    key_to_use
                 )
             except TypeError as te:
                 # Some vendored/http client incompatibilities may raise
