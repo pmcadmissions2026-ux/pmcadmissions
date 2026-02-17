@@ -101,9 +101,10 @@ if __name__ == '__main__':
             print(f"{rule.rule} -> {rule.endpoint} [{', '.join(rule.methods - {'HEAD', 'OPTIONS'})}]")
     print("="*60 + "\n")
     
-    # Run the application
+    # Run the application (use PORT from environment for hosting platforms)
+    port = int(os.environ.get('PORT', 5000))
     app.run(
         host='0.0.0.0',
-        port=5000,
-        debug=app.config['DEBUG']
+        port=port,
+        debug=app.config.get('DEBUG', False)
     )
