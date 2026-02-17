@@ -232,16 +232,19 @@ class EnquiryModel:
     """Enquiry Management Model"""
     
     @staticmethod
-    def create_enquiry(full_name: str, phone: str, email: str, 
-                      query_subject: str, query_description: str, student_id: int = None):
-        """Create new enquiry"""
+    def create_enquiry(student_id: int = None, student_name: str = None, whatsapp_number: str = None,
+                       email: str = None, subject: str = None, preferred_course: str = None,
+                       source: str = None, created_by: int = None):
+        """Create new enquiry matching `public.enquiries` schema."""
         data = {
             'student_id': student_id,
-            'full_name': full_name,
-            'phone': phone,
+            'student_name': student_name,
+            'whatsapp_number': whatsapp_number,
             'email': email,
-            'query_subject': query_subject,
-            'query_description': query_description,
+            'subject': subject,
+            'preferred_course': preferred_course,
+            'source': source,
+            'created_by': created_by,
             'status': 'open',
             'created_at': datetime.now().isoformat()
         }
@@ -259,18 +262,12 @@ class EnquiryModel:
         return db.select('enquiries', filters=filters)
     
     @staticmethod
-    def update_enquiry_status(enquiry_id: int, status: str, response: str = None, 
-                             assigned_to: int = None):
-        """Update enquiry status"""
+    def update_enquiry_status(enquiry_id: int, status: str):
+        """Update enquiry status (only fields present in schema)."""
         data = {
             'status': status,
-            'assigned_to': assigned_to,
             'updated_at': datetime.now().isoformat()
         }
-        if response:
-            data['response'] = response
-            data['responded_at'] = datetime.now().isoformat()
-        
         return db.update('enquiries', data, {'id': enquiry_id})
 
 

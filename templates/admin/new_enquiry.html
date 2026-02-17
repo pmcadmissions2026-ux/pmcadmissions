@@ -588,6 +588,10 @@
             const form = document.querySelector('form[method="POST"]');
             if (!form) return;
             form.addEventListener('submit', async function(e) {
+                // Allow bypass when user confirmed duplicate warning
+                if (window._duplicateBypass) {
+                    return true;
+                }
                 const duplicates = [];
                 for (const name of ['plus2_register_number','email','aadhar_number']) {
                     const el = form.querySelector('[name="' + name + '"]');
@@ -604,7 +608,14 @@
                 }
                 if (duplicates.length > 0) {
                     e.preventDefault();
-                    alert('Duplicate value found. Please resolve highlighted fields before submitting.');
+                    // Show a confirmation instead of blocking outright. If user confirms,
+                    // set a bypass flag and re-submit the form so server-side dedupe can run.
+                    const proceed = confirm('Duplicate value(s) detected. Click OK to continue and reuse existing records, or Cancel to revise the highlighted fields.');
+                    if (proceed) {
+                        window._duplicateBypass = true;
+                        form.submit();
+                        return true;
+                    }
                     duplicates[0].el.focus();
                     return false;
                 }

@@ -133,13 +133,17 @@ class SupabaseDB:
             print(f"Insert via SDK failed: {e}")
 
         try:
-            if getattr(self, '_use_rest', False) and self._rest_url and getattr(self, '_rest_key', None):
+            # Always attempt REST fallback when SDK insert fails, using available keys.
+            rest_key = (Config.SUPABASE_SERVICE_KEY or Config.SUPABASE_KEY) or None
+            rest_url = Config.SUPABASE_URL.rstrip('/') if Config.SUPABASE_URL else None
+            if rest_key and rest_url:
+                rest_key = rest_key.strip()
                 headers = {
-                    'apikey': self._rest_key,
-                    'Authorization': f'Bearer {self._rest_key}',
+                    'apikey': rest_key,
+                    'Authorization': f'Bearer {rest_key}',
                     'Content-Type': 'application/json',
                 }
-                url = f"{self._rest_url}/rest/v1/{table}"
+                url = f"{rest_url}/rest/v1/{table}"
                 r = requests.post(url, headers=headers, json=data, timeout=10)
                 if r.status_code in (200, 201):
                     try:
@@ -149,6 +153,8 @@ class SupabaseDB:
                 else:
                     print(f"REST insert failed status={r.status_code} body={r.text}")
                     return None
+        except Exception as e:
+            print(f"Insert REST fallback error: {e}")
         except Exception as e:
             print(f"Insert REST fallback error: {e}")
 

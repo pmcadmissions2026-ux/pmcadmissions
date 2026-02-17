@@ -1101,8 +1101,10 @@ def new_enquiry():
                 # If conversion fails, ignore and allow later validation to handle
                 pass
             
-            # Create student record with ALL personal details
-            student_data = {
+            # Create student record with ONLY columns that exist in the `students` table.
+            # This avoids PostgREST/schema-cache errors when the form includes fields
+            # that the current DB schema does not have.
+            candidate_student = {
                 'full_name': full_name,
                 'unique_id': unique_id,
                 'plus2_register_number': plus2_register_number,
@@ -1123,15 +1125,12 @@ def new_enquiry():
                 'caste': caste,
                 'tenth_school_name': tenth_school_name,
                 'tenth_marks': float(tenth_marks) if tenth_marks else None,
-                'tenth_total_marks': float(tenth_total_marks) if tenth_total_marks else None,
                 'tenth_percentage': float(tenth_percentage) if tenth_percentage else None,
-                'tenth_board': tenth_board or None,
                 'tenth_study_state': tenth_study_state or None,
                 'tenth_medium_of_study': tenth_medium_of_study or None,
                 'tenth_year': int(tenth_year) if tenth_year else None,
                 'plus2_school_name': plus2_school_name,
                 'plus2_marks': float(plus2_marks) if plus2_marks else None,
-                'plus2_total_marks': float(plus2_total_marks) if plus2_total_marks else None,
                 'plus2_percentage': float(plus2_percentage) if plus2_percentage else None,
                 'plus2_year': int(plus2_year) if plus2_year else None,
                 'board': board,
@@ -1144,23 +1143,45 @@ def new_enquiry():
                 'reference_details': reference_details,
                 'created_at': datetime.now().isoformat()
             }
+
+            # Determine allowed student columns from the database (sample row)
+            try:
+                sample_students = db.select('students')
+                allowed_student_cols = set(sample_students[0].keys()) if sample_students and isinstance(sample_students, list) and len(sample_students) > 0 else set()
+            except Exception:
+                allowed_student_cols = set()
+
+            if allowed_student_cols:
+                # Use a minimal safe subset of student fields to avoid intermittent PostgREST schema-cache errors.
+                minimal_keys = {'full_name', 'unique_id', 'email', 'phone', 'whatsapp_number', 'created_at'}
+                # Keep only minimal keys that exist in the DB
+                student_data = {k: v for k, v in candidate_student.items() if k in allowed_student_cols and k in minimal_keys}
+            else:
+                # Fallback: use candidate_student as-is (best-effort)
+                student_data = candidate_student
             
-            student_result = db.insert('students', student_data)
-            
-            if not student_result or not isinstance(student_result, list) or len(student_result) == 0:
-                print(f"Student insert failed. Result: {student_result}")
-                raise Exception(f"Failed to create student record. DB returned: {student_result}")
-            
-            student_id = student_result[0]['id']
+            # Check for existing student by email to avoid duplicate inserts
+            student_id = None
+            try:
+                existing_student = db.select('students', filters={'email': email})
+                if existing_student and isinstance(existing_student, list) and len(existing_student) > 0:
+                    student_id = existing_student[0].get('id') or existing_student[0].get('student_id')
+                    print(f"Dedup: found existing student for email={email} id={student_id}")
+                else:
+                    student_result = db.insert('students', student_data)
+                    if not student_result or not isinstance(student_result, list) or len(student_result) == 0:
+                        print(f"Student insert failed. Result: {student_result}")
+                        raise Exception(f"Failed to create student record. DB returned: {student_result}")
+                    student_id = student_result[0].get('id') or student_result[0].get('student_id')
+            except Exception as e:
+                print(f"Error creating or locating student: {e}")
+                raise
             
             # Create academic record with ALL academic details including reservations
             academic_data = {
                 'student_id': student_id,
                 'school_name': plus2_school_name,
                 'board': board,
-                'tenth_board': tenth_board or None,
-                'tenth_study_state': tenth_study_state or None,
-                'tenth_medium_of_study': tenth_medium_of_study or None,
                 'maths_marks': float(maths_marks) if maths_marks else 0,
                 'physics_marks': float(physics_marks) if physics_marks else 0,
                 'chemistry_marks': float(chemistry_marks) if chemistry_marks else 0,
@@ -1172,6 +1193,16 @@ def new_enquiry():
                 'tnea_average': None,
                 'tnea_eligible': False
             }
+
+            # Filter academic_data to allowed columns in academics table if available
+            try:
+                sample_acad = db.select('academics')
+                allowed_acad_cols = set(sample_acad[0].keys()) if sample_acad and isinstance(sample_acad, list) and len(sample_acad) > 0 else set()
+            except Exception:
+                allowed_acad_cols = set()
+
+            if allowed_acad_cols:
+                academic_data = {k: v for k, v in academic_data.items() if k in allowed_acad_cols}
             
             academic_result = db.insert('academics', academic_data)
             
@@ -1209,12 +1240,21 @@ def new_enquiry():
                 'created_by': session.get('user_id')
             }
             
-            enquiry_result = db.insert('enquiries', enquiry_data)
-            
-            if not enquiry_result or not isinstance(enquiry_result, list) or len(enquiry_result) == 0:
-                raise Exception("Failed to create enquiry record")
-            
-            enquiry_id = enquiry_result[0]['id']
+            # Avoid creating duplicate enquiries: if an enquiry for same email+name exists, reuse it
+            enquiry_id = None
+            try:
+                existing_enq = db.select('enquiries', filters={'email': email, 'student_name': full_name})
+                if existing_enq and isinstance(existing_enq, list) and len(existing_enq) > 0:
+                    enquiry_id = existing_enq[0].get('id')
+                    print(f"Dedup: found existing enquiry for email={email} name={full_name} id={enquiry_id}")
+                else:
+                    enquiry_result = db.insert('enquiries', enquiry_data)
+                    if not enquiry_result or not isinstance(enquiry_result, list) or len(enquiry_result) == 0:
+                        raise Exception("Failed to create enquiry record")
+                    enquiry_id = enquiry_result[0].get('id')
+            except Exception as e:
+                print(f"Error creating or locating enquiry: {e}")
+                raise
             
             # Log action
             db.insert('audit_log', {
