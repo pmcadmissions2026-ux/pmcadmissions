@@ -1,32 +1,36 @@
+import requests
 import os
 from supabase import create_client, Client
 from config import Config
 
+
 class SupabaseDB:
-    """Supabase Database Connection Handler"""
-    
+    """Supabase Database Connection Handler with REST fallbacks."""
+
     _instance = None
     _client = None
-    
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(SupabaseDB, cls).__new__(cls)
         return cls._instance
-    
+
     def __init__(self):
         # Delay client creation until first access to avoid import-time
         # side-effects in serverless/read-only environments.
-        # The actual client is created in the `client` property when needed.
         return
-    
+
+    def _ensure_rest_fallback(self, key: str):
+        """Prepare REST fallback settings when client creation is not possible."""
+        self._use_rest = True
+        self._rest_key = key
+        self._rest_url = Config.SUPABASE_URL.rstrip('/') if Config.SUPABASE_URL else None
+
     @property
     def client(self) -> Client:
-        """Get Supabase client"""
+        """Get or create Supabase client (lazy)."""
         if self._client is None:
             try:
-                # Choose service key when available (server-side) to bypass
-                # RLS restrictions for administrative reads. Fall back to the
-                # public anon key if service key is not provided.
                 key_to_use = (Config.SUPABASE_SERVICE_KEY or Config.SUPABASE_KEY) or None
                 if key_to_use:
                     key_to_use = key_to_use.strip()
@@ -35,14 +39,15 @@ class SupabaseDB:
                     masked = (f"{key_to_use[:4]}...{key_to_use[-4:]}" if key_to_use else None)
                 except Exception:
                     masked = None
-                key_type = 'SERVICE' if (Config.SUPABASE_SERVICE_KEY and Config.SUPABASE_SERVICE_KEY.strip()) else ('ANON' if (Config.SUPABASE_KEY and Config.SUPABASE_KEY.strip()) else 'NONE')
+                key_type = (
+                    'SERVICE'
+                    if (Config.SUPABASE_SERVICE_KEY and Config.SUPABASE_SERVICE_KEY.strip())
+                    else ('ANON' if (Config.SUPABASE_KEY and Config.SUPABASE_KEY.strip()) else 'NONE')
+                )
                 print(f"Creating Supabase client using {key_type} key: {masked}")
-                # Try primary key (service if present else anon). If that fails
-                # (e.g. truncated/invalid service key in the environment),
-                # attempt to fall back to the anon key if available. This makes
-                # server-side reads work when tables are public and the
-                # service key is misconfigured.
+
                 try:
+                    # Try primary key (service if present else anon)
                     self._client = create_client(Config.SUPABASE_URL, key_to_use)
                 except Exception as primary_exc:
                     print(f"Primary Supabase client creation failed: {primary_exc}")
@@ -55,100 +60,222 @@ class SupabaseDB:
                                 self._client = create_client(Config.SUPABASE_URL, anon_key)
                             except Exception as fallback_exc:
                                 print(f"Fallback anon client creation failed: {fallback_exc}")
+                                try:
+                                    self._ensure_rest_fallback(anon_key)
+                                except Exception:
+                                    pass
                                 # re-raise original exception to surface the root cause
                                 raise primary_exc
                     else:
-                        # No fallback available; re-raise
                         raise
             except TypeError as te:
-                # Some vendored/http client incompatibilities may raise
-                # TypeError (unexpected kwargs). Log a helpful message and
-                # re-raise so the caller can handle it.
-                print("Error creating Supabase client:", te)
+                print("Error creating Supabase client (TypeError):", te)
                 raise
             except Exception as e:
                 print("Unexpected error creating Supabase client:", e)
                 raise
         return self._client
-    
+
     def execute_query(self, query: str):
-        """Execute raw SQL query"""
+        """Execute raw SQL query via Supabase RPC 'query'."""
         try:
             response = self.client.rpc('query', {'sql': query})
             return response
         except Exception as e:
             print(f"Database Query Error: {str(e)}")
             return None
-    
+
     def select(self, table: str, columns: str = "*", filters: dict = None):
-        """SELECT query"""
+        """SELECT rows from a table. Returns list of rows or [] on failure."""
+        # Try SDK first
         try:
-            query = self.client.table(table).select(columns)
-            
+            q = self.client.table(table).select(columns)
             if filters:
                 for key, value in filters.items():
-                    query = query.eq(key, value)
-            
-            response = query.execute()
-            return response.data if response else []
+                    q = q.eq(key, value)
+            response = q.execute()
+            return response.data if response and getattr(response, 'data', None) is not None else []
         except Exception as e:
-            print(f"Select Error: {str(e)}")
-            return []
-    
+            print(f"Select via SDK failed: {e}")
+
+        # REST fallback
+        try:
+            if getattr(self, '_use_rest', False) and self._rest_url and getattr(self, '_rest_key', None):
+                headers = {
+                    'apikey': self._rest_key,
+                    'Authorization': f'Bearer {self._rest_key}',
+                }
+                params = {'select': columns}
+                if filters:
+                    for k, v in filters.items():
+                        params[k] = f'eq.{v}'
+                url = f"{self._rest_url}/rest/v1/{table}"
+                r = requests.get(url, headers=headers, params=params, timeout=10)
+                if r.status_code == 200:
+                    try:
+                        return r.json()
+                    except Exception:
+                        return []
+                else:
+                    print(f"REST select failed status={r.status_code} body={r.text}")
+                    return []
+        except Exception as e:
+            print(f"Select REST fallback error: {e}")
+
+        return []
+
     def insert(self, table: str, data: dict):
-        """INSERT query"""
+        """INSERT a row. Returns inserted row(s) or None on failure."""
         try:
             response = self.client.table(table).insert(data).execute()
-            return response.data
+            return response.data if response and getattr(response, 'data', None) is not None else None
         except Exception as e:
-            print(f"Insert Error in table '{table}': {str(e)}")
-            print(f"Data attempted: {data}")
-            import traceback
-            traceback.print_exc()
-            return None
-    
-    def update(self, table: str, data: dict, filters: dict):
-        """UPDATE query"""
+            print(f"Insert via SDK failed: {e}")
+
         try:
-            query = self.client.table(table).update(data)
-            
-            for key, value in filters.items():
-                query = query.eq(key, value)
-            
-            response = query.execute()
-            return response.data
+            if getattr(self, '_use_rest', False) and self._rest_url and getattr(self, '_rest_key', None):
+                headers = {
+                    'apikey': self._rest_key,
+                    'Authorization': f'Bearer {self._rest_key}',
+                    'Content-Type': 'application/json',
+                }
+                url = f"{self._rest_url}/rest/v1/{table}"
+                r = requests.post(url, headers=headers, json=data, timeout=10)
+                if r.status_code in (200, 201):
+                    try:
+                        return r.json()
+                    except Exception:
+                        return None
+                else:
+                    print(f"REST insert failed status={r.status_code} body={r.text}")
+                    return None
         except Exception as e:
-            print(f"Update Error: {str(e)}")
-            return None
-    
-    def delete(self, table: str, filters: dict):
-        """DELETE query"""
+            print(f"Insert REST fallback error: {e}")
+
+        print(f"Insert Error in table '{table}': no available client")
+        return None
+
+    def update(self, table: str, filters: dict, data: dict):
+        """UPDATE rows matching filters. Returns updated rows or None."""
         try:
-            query = self.client.table(table)
-            
-            for key, value in filters.items():
-                query = query.eq(key, value)
-            
-            response = query.delete().execute()
-            return response.data
-        except Exception as e:
-            print(f"Delete Error: {str(e)}")
-            return None
-    
-    def count(self, table: str, filters: dict = None):
-        """COUNT rows"""
-        try:
-            query = self.client.table(table).select("*", count="exact")
-            
+            q = self.client.table(table)
             if filters:
                 for key, value in filters.items():
-                    query = query.eq(key, value)
-            
-            response = query.execute()
-            return response.count if response else 0
+                    q = q.eq(key, value)
+            response = q.update(data).execute()
+            return response.data if response and getattr(response, 'data', None) is not None else None
         except Exception as e:
-            print(f"Count Error: {str(e)}")
-            return 0
+            print(f"Update via SDK failed: {e}")
+
+        try:
+            if getattr(self, '_use_rest', False) and self._rest_url and getattr(self, '_rest_key', None):
+                headers = {
+                    'apikey': self._rest_key,
+                    'Authorization': f'Bearer {self._rest_key}',
+                    'Content-Type': 'application/json',
+                }
+                params = {}
+                if filters:
+                    for k, v in filters.items():
+                        params[k] = f'eq.{v}'
+                url = f"{self._rest_url}/rest/v1/{table}"
+                r = requests.patch(url, headers=headers, params=params, json=data, timeout=10)
+                if r.status_code in (200, 204):
+                    try:
+                        return r.json() if r.text else []
+                    except Exception:
+                        return []
+                else:
+                    print(f"REST update failed status={r.status_code} body={r.text}")
+                    return None
+        except Exception as e:
+            print(f"Update REST fallback error: {e}")
+
+        return None
+
+    def delete(self, table: str, filters: dict):
+        """DELETE rows matching filters. Returns deleted rows or None."""
+        try:
+            q = self.client.table(table)
+            if filters:
+                for key, value in filters.items():
+                    q = q.eq(key, value)
+            response = q.delete().execute()
+            return response.data if response and getattr(response, 'data', None) is not None else None
+        except Exception as e:
+            print(f"Delete via SDK failed: {e}")
+
+        try:
+            if getattr(self, '_use_rest', False) and self._rest_url and getattr(self, '_rest_key', None):
+                headers = {
+                    'apikey': self._rest_key,
+                    'Authorization': f'Bearer {self._rest_key}',
+                }
+                params = {}
+                if filters:
+                    for k, v in filters.items():
+                        params[k] = f'eq.{v}'
+                url = f"{self._rest_url}/rest/v1/{table}"
+                r = requests.delete(url, headers=headers, params=params, timeout=10)
+                if r.status_code in (200, 204):
+                    try:
+                        return r.json() if r.text else []
+                    except Exception:
+                        return []
+                else:
+                    print(f"REST delete failed status={r.status_code} body={r.text}")
+                    return None
+        except Exception as e:
+            print(f"Delete REST fallback error: {e}")
+
+        return None
+
+    def count(self, table: str, filters: dict = None) -> int:
+        """Return count of rows in a table, using SDK or REST fallback."""
+        try:
+            q = self.client.table(table).select("*", count="exact")
+            if filters:
+                for key, value in filters.items():
+                    q = q.eq(key, value)
+            response = q.execute()
+            return response.count if response and getattr(response, 'count', None) is not None else 0
+        except Exception as e:
+            print(f"Count via SDK failed: {e}")
+
+        try:
+            if getattr(self, '_use_rest', False) and self._rest_url and getattr(self, '_rest_key', None):
+                headers = {
+                    'apikey': self._rest_key,
+                    'Authorization': f'Bearer {self._rest_key}',
+                    'Prefer': 'count=exact',
+                }
+                params = {'select': 'id'}
+                if filters:
+                    for k, v in filters.items():
+                        params[k] = f'eq.{v}'
+                url = f"{self._rest_url}/rest/v1/{table}"
+                r = requests.get(url, headers=headers, params=params, timeout=10)
+                if r.status_code == 200:
+                    # Supabase returns Content-Range header like: 0-9/123
+                    cr = r.headers.get('Content-Range') or r.headers.get('content-range')
+                    if cr and '/' in cr:
+                        try:
+                            return int(cr.split('/')[-1])
+                        except Exception:
+                            pass
+                    try:
+                        data = r.json()
+                        return len(data) if isinstance(data, list) else 0
+                    except Exception:
+                        return 0
+                else:
+                    print(f"REST count failed status={r.status_code} body={r.text}")
+                    return 0
+        except Exception as e:
+            print(f"Count REST fallback error: {e}")
+
+        return 0
+
 
 # Singleton instance
 db = SupabaseDB()
