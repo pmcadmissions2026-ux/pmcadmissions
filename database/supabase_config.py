@@ -14,20 +14,31 @@ class SupabaseDB:
         return cls._instance
     
     def __init__(self):
-        if self._client is None:
-            self._client = create_client(
-                Config.SUPABASE_URL,
-                Config.SUPABASE_KEY
-            )
+        # Delay client creation until first access to avoid import-time
+        # side-effects in serverless/read-only environments.
+        # The actual client is created in the `client` property when needed.
+        return
     
     @property
     def client(self) -> Client:
         """Get Supabase client"""
         if self._client is None:
-            self._client = create_client(
-                Config.SUPABASE_URL,
-                Config.SUPABASE_KEY
-            )
+            try:
+                # Create client lazily. Wrap in try/except to surface
+                # errors during runtime instead of import time.
+                self._client = create_client(
+                    Config.SUPABASE_URL,
+                    Config.SUPABASE_KEY
+                )
+            except TypeError as te:
+                # Some vendored/http client incompatibilities may raise
+                # TypeError (unexpected kwargs). Log a helpful message and
+                # re-raise so the caller can handle it.
+                print("Error creating Supabase client:", te)
+                raise
+            except Exception as e:
+                print("Unexpected error creating Supabase client:", e)
+                raise
         return self._client
     
     def execute_query(self, query: str):

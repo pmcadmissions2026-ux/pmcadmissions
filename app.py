@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, session, redirect, url_for
 from flask_session import Session
+import tempfile
 from config import config
 import os
 
@@ -87,10 +88,23 @@ def inject_user():
 # ============================================
 
 if __name__ == '__main__':
-    # Create necessary directories
-    os.makedirs('flask_session', exist_ok=True)
-    os.makedirs('templates', exist_ok=True)
-    os.makedirs('static', exist_ok=True)
+    # Create necessary directories. Use the system temp dir for session
+    # storage in serverless (read-only) environments like Vercel.
+    session_dir = os.environ.get('SESSION_FILE_DIR') or os.path.join(tempfile.gettempdir(), 'flask_session')
+    try:
+        os.makedirs(session_dir, exist_ok=True)
+    except Exception:
+        # If the runtime filesystem is read-only, fall back to not creating
+        # the directory (Flask-Session will error if it cannot write). In
+        # production it's preferable to use Redis or signed-cookie sessions.
+        session_dir = None
+
+    # Ensure templates/static folders exist locally (no-op on Vercel)
+    try:
+        os.makedirs('templates', exist_ok=True)
+        os.makedirs('static', exist_ok=True)
+    except Exception:
+        pass
     
     # Print all registered routes
     print("\n" + "="*60)
@@ -101,6 +115,10 @@ if __name__ == '__main__':
             print(f"{rule.rule} -> {rule.endpoint} [{', '.join(rule.methods - {'HEAD', 'OPTIONS'})}]")
     print("="*60 + "\n")
     
+    # Configure filesystem session directory if available
+    if session_dir:
+        app.config['SESSION_FILE_DIR'] = session_dir
+
     # Run the application (use PORT from environment for hosting platforms)
     port = int(os.environ.get('PORT', 5000))
     app.run(
