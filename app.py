@@ -12,7 +12,28 @@ env = os.getenv('FLASK_ENV', 'development')
 app.config.from_object(config[env])
 
 # Initialize session
-Session(app)
+# Configure session storage. Prefer filesystem in a writable temp dir; if
+# that's not possible (serverless/read-only), fall back to Flask's
+# signed-cookie sessions by skipping Flask-Session initialization.
+session_dir = os.environ.get('SESSION_FILE_DIR') or os.path.join(tempfile.gettempdir(), 'flask_session')
+session_writable = False
+try:
+    os.makedirs(session_dir, exist_ok=True)
+    testfile = os.path.join(session_dir, '.write_test')
+    with open(testfile, 'w') as f:
+        f.write('test')
+    os.remove(testfile)
+    session_writable = True
+except Exception:
+    session_writable = False
+
+if session_writable:
+    app.config['SESSION_TYPE'] = 'filesystem'
+    app.config['SESSION_FILE_DIR'] = session_dir
+    Session(app)
+else:
+    # Use default client-side sessions (signed cookies). Log for visibility.
+    print('Warning: session filesystem not writable; using client-side sessions')
 
 # Register blueprints
 from auth.routes import auth_bp
