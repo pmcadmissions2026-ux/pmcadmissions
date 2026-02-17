@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, jsonify, current_app
+from flask import Blueprint, render_template, jsonify, current_app, session, make_response
 from database.supabase_config import db
 from config import Config
 import os
@@ -123,3 +123,20 @@ def diagnostics():
     out['timestamp'] = __import__('datetime').datetime.utcnow().isoformat() + 'Z'
 
     return jsonify(out)
+
+
+@test_bp.route('/clear_session')
+def clear_session():
+    """Clear server session and unset the session cookie to help break redirect loops."""
+    try:
+        session.clear()
+    except Exception:
+        pass
+    resp = make_response(jsonify({'cleared': True, 'note': 'Session cleared; please clear cookies in browser if problem persists.'}))
+    # Explicitly unset the Flask session cookie
+    try:
+        cookie_name = current_app.session_cookie_name
+        resp.set_cookie(cookie_name, value='', expires=0, path='/')
+    except Exception:
+        pass
+    return resp
