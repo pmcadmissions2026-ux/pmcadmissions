@@ -1421,6 +1421,56 @@ def debug_supabase_test():
     return render_template('admin/debug_supabase.html', debug_error=debug_error, result=result, payload=payload, rest_response=rest_response)
 
 
+# Safe debug route (no decorators) to avoid decorator-side DB calls crashing serverless functions.
+# This route verifies a minimal session presence and performs a direct REST POST to Supabase
+# using the environment keys. It does NOT use `db` (Supabase SDK) to avoid client initialization.
+@admin_bp.route('/debug/safe-supabase-test', methods=['GET', 'POST'])
+def debug_safe_supabase_test():
+    # Require that a session role be present to reduce accidental public access.
+    role = session.get('user_role')
+    if not role or role not in ('admin', 'super_admin'):
+        return render_template('auth/unauthorized.html'), 403
+
+    rest_response = None
+    payload = None
+    debug_error = None
+    masked_config = {
+        'supabase_url': Config.SUPABASE_URL,
+        'service_key_len': len(Config.SUPABASE_SERVICE_KEY) if Config.SUPABASE_SERVICE_KEY else 0,
+        'anon_key_len': len(Config.SUPABASE_KEY) if Config.SUPABASE_KEY else 0,
+    }
+
+    if request.method == 'POST':
+        try:
+            full_name = request.form.get('full_name') or f"SafeDebug {datetime.now().isoformat()}"
+            email = request.form.get('email') or f"safe+{int(datetime.now().timestamp())}@example.com"
+            phone = request.form.get('phone') or None
+            payload = {'full_name': full_name, 'email': email, 'phone': phone, 'created_at': datetime.now().isoformat()}
+
+            rest_key = (Config.SUPABASE_SERVICE_KEY or Config.SUPABASE_KEY) or None
+            rest_url = Config.SUPABASE_URL.rstrip('/') if Config.SUPABASE_URL else None
+            if not rest_key or not rest_url:
+                rest_response = {'error': 'missing SUPABASE_URL or key in config'}
+            else:
+                headers = {'apikey': rest_key.strip(), 'Authorization': f"Bearer {rest_key.strip()}", 'Content-Type': 'application/json'}
+                r = requests.post(f"{rest_url}/rest/v1/students", headers=headers, json=payload, timeout=10)
+                try:
+                    headers_dict = dict(r.headers)
+                except Exception:
+                    headers_dict = {}
+                # Try to parse JSON body if any
+                body = None
+                try:
+                    body = r.json()
+                except Exception:
+                    body = r.text
+                rest_response = {'status_code': r.status_code, 'body': body, 'headers': headers_dict}
+        except Exception:
+            debug_error = traceback.format_exc()
+
+    return render_template('admin/debug_supabase_safe.html', debug_error=debug_error, payload=payload, rest_response=rest_response, masked_config=masked_config)
+
+
 @admin_bp.route('/enquiry/<int:enquiry_id>')
 @check_module_access('enquiries')
 @role_required(['super_admin', 'admin'])

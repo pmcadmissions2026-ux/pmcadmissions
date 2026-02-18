@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Safe Supabase Debug</title>
+  <link href="https://cdn.tailwindcss.com" rel="stylesheet">
+</head>
+<body class="bg-gray-50 text-gray-800 p-6">
+  <div class="max-w-3xl mx-auto bg-white p-6 rounded shadow">
+    <h1 class="text-xl font-bold mb-4">Safe Supabase Debug (no SDK)</h1>
+    <p class="text-sm text-gray-600 mb-4">This route uses direct REST calls and avoids the Supabase SDK to reduce crash surface in serverless environments.</p>
+
+    <div class="mb-4">
+      <h2 class="font-semibold">Masked Config</h2>
+      <pre class="bg-gray-100 p-3 rounded text-sm">{{ masked_config | tojson(indent=2) }}</pre>
+    </div>
+
+    <form method="POST" class="space-y-4 mb-6">
+      <label class="block">
+        <div class="text-sm font-medium">Full name</div>
+        <input name="full_name" class="mt-1 p-2 border rounded w-full" placeholder="Debug User" />
+      </label>
+      <label class="block">
+        <div class="text-sm font-medium">Email</div>
+        <input name="email" class="mt-1 p-2 border rounded w-full" placeholder="debug@example.com" />
+      </label>
+      <label class="block">
+        <div class="text-sm font-medium">Phone</div>
+        <input name="phone" class="mt-1 p-2 border rounded w-full" placeholder="+91 90000 00000" />
+      </label>
+      <div>
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Run Safe Insert</button>
+      </div>
+    </form>
+
+    {% if payload %}
+      <div class="mb-4">
+        <h2 class="font-semibold">Payload</h2>
+        <pre class="bg-gray-100 p-3 rounded text-sm">{{ payload | tojson(indent=2) }}</pre>
+      </div>
+    {% endif %}
+
+    {% if rest_response %}
+      <div class="mb-4">
+        <h2 class="font-semibold">REST Response</h2>
+        <pre class="bg-gray-100 p-3 rounded text-sm">{{ rest_response | tojson(indent=2) }}</pre>
+      </div>
+    {% endif %}
+
+    {% if debug_error %}
+      <div class="mb-4">
+        <h2 class="font-semibold text-red-700">Exception Traceback</h2>
+        <pre class="bg-red-50 text-red-800 p-3 rounded text-sm whitespace-pre-wrap">{{ debug_error }}</pre>
+      </div>
+    {% endif %}
+
+    <p class="text-xs text-gray-500">Note: Only accessible when your session contains `user_role` set to `admin` or `super_admin`.</p>
+  </div>
+</body>
+</html>
