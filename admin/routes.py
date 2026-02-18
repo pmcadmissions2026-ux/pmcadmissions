@@ -1172,9 +1172,21 @@ def new_enquiry():
                 else:
                     student_result = db.insert('students', student_data)
                     if not student_result or not isinstance(student_result, list) or len(student_result) == 0:
-                        print(f"Student insert failed. Result: {student_result}")
-                        raise Exception(f"Failed to create student record. DB returned: {student_result}")
-                    student_id = student_result[0].get('id') or student_result[0].get('student_id')
+                        # Insert returned no body (e.g., REST returned 204). Try to locate the row by unique key (email).
+                        print(f"Student insert returned no result. Trying fallback select by email: {email}")
+                        try:
+                            fallback = db.select('students', filters={'email': email})
+                            if fallback and isinstance(fallback, list) and len(fallback) > 0:
+                                student_id = fallback[0].get('id') or fallback[0].get('student_id')
+                                print(f"Student fallback select found existing row id={student_id}")
+                            else:
+                                print(f"Student fallback select returned nothing for email={email}")
+                                raise Exception(f"Failed to create student record. DB returned: {student_result}")
+                        except Exception as fe:
+                            print(f"Student fallback select error: {fe}")
+                            raise Exception(f"Failed to create student record. DB returned: {student_result}")
+                    else:
+                        student_id = student_result[0].get('id') or student_result[0].get('student_id')
             except Exception as e:
                 print(f"Error creating or locating student: {e}")
                 raise
@@ -1207,9 +1219,20 @@ def new_enquiry():
                 academic_data = {k: v for k, v in academic_data.items() if k in allowed_acad_cols}
             
             academic_result = db.insert('academics', academic_data)
-            
+
             if not academic_result:
-                raise Exception("Failed to create academic record")
+                # REST may return 204 No Content; try selecting academic record by student_id
+                try:
+                    acad_fallback = db.select('academics', filters={'student_id': student_id})
+                    if acad_fallback and isinstance(acad_fallback, list) and len(acad_fallback) > 0:
+                        print(f"Academic fallback select found record for student_id={student_id}")
+                        # treat as success
+                        academic_result = acad_fallback
+                    else:
+                        raise Exception("Failed to create academic record")
+                except Exception as fe:
+                    print(f"Academic fallback select error: {fe}")
+                    raise Exception("Failed to create academic record")
 
             # Calculate TNEA eligibility (average of maths, physics, chemistry)
             try:
@@ -1252,8 +1275,21 @@ def new_enquiry():
                 else:
                     enquiry_result = db.insert('enquiries', enquiry_data)
                     if not enquiry_result or not isinstance(enquiry_result, list) or len(enquiry_result) == 0:
-                        raise Exception("Failed to create enquiry record")
-                    enquiry_id = enquiry_result[0].get('id')
+                        # Try fallback select (PostgREST may return 204)
+                        print(f"Enquiry insert returned no result. Trying fallback select by email+name: {email}, {full_name}")
+                        try:
+                            enq_fallback = db.select('enquiries', filters={'email': email, 'student_name': full_name})
+                            if enq_fallback and isinstance(enq_fallback, list) and len(enq_fallback) > 0:
+                                enquiry_id = enq_fallback[0].get('id')
+                                print(f"Enquiry fallback select found existing id={enquiry_id}")
+                            else:
+                                print(f"Enquiry fallback select returned nothing for email/name")
+                                raise Exception("Failed to create enquiry record")
+                        except Exception as fe:
+                            print(f"Enquiry fallback select error: {fe}")
+                            raise Exception("Failed to create enquiry record")
+                    else:
+                        enquiry_id = enquiry_result[0].get('id')
             except Exception as e:
                 print(f"Error creating or locating enquiry: {e}")
                 raise
