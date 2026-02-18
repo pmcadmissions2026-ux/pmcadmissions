@@ -1432,7 +1432,8 @@ def debug_supabase_test():
                         headers = {
                             'apikey': rest_key.strip(),
                             'Authorization': f"Bearer {rest_key.strip()}",
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'Prefer': 'return=representation'
                         }
                         r = requests.post(f"{rest_url}/rest/v1/students", headers=headers, json=payload, timeout=10)
                         # Capture status, body and headers for debugging (headers may include Content-Range or Location)
@@ -1488,7 +1489,7 @@ def debug_safe_supabase_test():
             if not rest_key or not rest_url:
                 rest_response = {'error': 'missing SUPABASE_URL or key in config'}
             else:
-                headers = {'apikey': rest_key.strip(), 'Authorization': f"Bearer {rest_key.strip()}", 'Content-Type': 'application/json'}
+                headers = {'apikey': rest_key.strip(), 'Authorization': f"Bearer {rest_key.strip()}", 'Content-Type': 'application/json', 'Prefer': 'return=representation'}
                 r = requests.post(f"{rest_url}/rest/v1/students", headers=headers, json=payload, timeout=10)
                 try:
                     headers_dict = dict(r.headers)

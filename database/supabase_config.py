@@ -142,6 +142,7 @@ class SupabaseDB:
                     'apikey': rest_key,
                     'Authorization': f'Bearer {rest_key}',
                     'Content-Type': 'application/json',
+                    'Prefer': 'return=representation',
                 }
                 url = f"{rest_url}/rest/v1/{table}"
                 r = requests.post(url, headers=headers, json=data, timeout=10)
