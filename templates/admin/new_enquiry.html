@@ -69,6 +69,23 @@
 <div class="max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8">
 <!-- Headline -->
 <h1 class="text-center text-[32px] font-bold tracking-tight mb-8">Step 1: Student Enquiry Form</h1>
+                        <!-- Flash messages and debug output -->
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                <div class="max-w-5xl mx-auto mb-4 px-4">
+                                    {% for category, msg in messages %}
+                                        <div class="p-3 rounded {{ 'bg-red-50 text-red-800' if category == 'error' else 'bg-green-50 text-green-800' }}">{{ msg }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+
+                        {% if debug_error %}
+                            <div class="max-w-5xl mx-auto mb-4 px-4">
+                                <label class="text-sm font-semibold mb-2 text-red-700">Debug Traceback (showing full exception):</label>
+                                <pre class="whitespace-pre-wrap text-sm text-red-700 bg-red-50 p-4 rounded">{{ debug_error }}</pre>
+                            </div>
+                        {% endif %}
 <!-- Progress Stepper -->
 <div class="mb-10 bg-white dark:bg-background-dark border border-[#dbe0e6] dark:border-[#2d3748] rounded-xl p-6 shadow-sm section">
 <div class="grid grid-cols-3 gap-x-2">

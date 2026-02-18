@@ -8,6 +8,7 @@ from database.supabase_config import db
 from datetime import datetime, date, timedelta
 from config import Config
 import json as json_lib
+import traceback
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -1305,9 +1306,14 @@ def new_enquiry():
             return redirect(url_for('admin.admin_dashboard'))
                 
         except Exception as e:
+            # Capture full traceback for debugging and show on page
+            tb = traceback.format_exc()
+            current_app.logger.error(tb)
+            # Keep the flash for quick notices and also render the page with full debug info
             flash(f'Error creating enquiry: {str(e)}', 'error')
             print(f"Error in new_enquiry: {str(e)}")
-    
+            return render_template('admin/new_enquiry.html', debug_error=tb, form_data=request.form)
+
     return render_template('admin/new_enquiry.html')
 
 
