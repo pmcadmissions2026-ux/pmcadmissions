@@ -1398,8 +1398,17 @@ def debug_supabase_test():
                             'Authorization': f"Bearer {rest_key.strip()}",
                             'Content-Type': 'application/json'
                         }
-                        r = requests.post(f"{rest_url}/rest/v1/students", headers=headers, json=payload, timeout=10)
-                        rest_response = {'status_code': r.status_code, 'text': r.text}
+                            r = requests.post(f"{rest_url}/rest/v1/students", headers=headers, json=payload, timeout=10)
+                            # Capture status, body and headers for debugging (headers may include Content-Range or Location)
+                            try:
+                                headers_dict = dict(r.headers)
+                            except Exception:
+                                headers_dict = {}
+                            rest_response = {
+                                'status_code': r.status_code,
+                                'text': r.text,
+                                'headers': headers_dict
+                            }
                 except Exception as e:
                     # capture rest attempt failure
                     rest_response = {'error': str(e)}

@@ -49,6 +49,12 @@
         <pre class="bg-gray-100 p-3 rounded text-sm">{{ rest_response | tojson(indent=2) }}</pre>
       </div>
     {% endif %}
+    {% if rest_response and rest_response.headers %}
+      <div class="mb-4">
+        <h2 class="font-semibold">REST Response Headers</h2>
+        <pre class="bg-gray-100 p-3 rounded text-sm">{{ rest_response.headers | tojson(indent=2) }}</pre>
+      </div>
+    {% endif %}
 
     {% if debug_error %}
       <div class="mb-4">
