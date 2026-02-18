@@ -1310,7 +1310,12 @@ def new_enquiry():
             })
             
             flash(f'Enquiry created successfully for {full_name}!', 'success')
-            
+
+            # Instead of redirecting immediately, render the same page with a success_redirect
+            # so the UI can show a popup and then navigate. This keeps behavior consistent
+            # across serverless environments where immediate redirects may confuse the client.
+            success_redirect = url_for('admin.admin_dashboard')
+
             # Send notification email to student via server-side SMTP/SendGrid (EmailJS removed)
             try:
                 from utils.email_helper import send_email_smtp
@@ -1339,8 +1344,8 @@ def new_enquiry():
                 current_app.logger.exception('Failed to send enquiry email from admin.new_enquiry')
                 flash('Student saved but confirmation email failed to send. We will retry.', 'error')
 
-            # Redirect to admin branch management dashboard
-            return redirect(url_for('admin.admin_dashboard'))
+            # Render the form page with a redirect instruction so client shows popup then redirects
+            return render_template('admin/new_enquiry.html', success_redirect=success_redirect)
                 
         except Exception as e:
             # Capture full traceback for debugging and show on page

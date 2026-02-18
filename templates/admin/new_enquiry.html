@@ -86,6 +86,28 @@
                                 <pre class="whitespace-pre-wrap text-sm text-red-700 bg-red-50 p-4 rounded">{{ debug_error }}</pre>
                             </div>
                         {% endif %}
+                                                {% if success_redirect %}
+                                                    <script>
+                                                        // Show a brief success popup then redirect to the provided URL
+                                                        (function(){
+                                                            // Use a non-blocking toast-like dialog
+                                                            const wrap = document.createElement('div');
+                                                            wrap.style.position = 'fixed';
+                                                            wrap.style.left = '50%';
+                                                            wrap.style.top = '20px';
+                                                            wrap.style.transform = 'translateX(-50%)';
+                                                            wrap.style.zIndex = 9999;
+                                                            wrap.innerHTML = '<div style="background:#ecfdf5;border:1px solid #bbf7d0;color:#065f46;padding:12px 18px;border-radius:8px;font-weight:600;box-shadow:0 6px 18px rgba(2,6,23,0.08)">Enquiry created successfully — redirecting...</div>';
+                                                            document.addEventListener('DOMContentLoaded', function(){
+                                                                document.body.appendChild(wrap);
+                                                                // Remove after 2.5s and redirect
+                                                                setTimeout(function(){
+                                                                    try { window.location.href = '{{ success_redirect }}'; } catch(e) { window.location = '{{ success_redirect }}'; }
+                                                                }, 2500);
+                                                            });
+                                                        })();
+                                                    </script>
+                                                {% endif %}
 <!-- Progress Stepper -->
 <div class="mb-10 bg-white dark:bg-background-dark border border-[#dbe0e6] dark:border-[#2d3748] rounded-xl p-6 shadow-sm section">
 <div class="grid grid-cols-3 gap-x-2">
