@@ -146,12 +146,14 @@ class AcademicModel:
             'percentage': percentage,
             'created_at': datetime.now().isoformat()
         }
-        return db.insert('academic_details', data)
+        # Insert into the project's academics table (consistent with other code)
+        return db.insert('academics', data)
     
     @staticmethod
     def get_academic_details(student_id: int):
         """Get academic details for student"""
-        details = db.select('academic_details', filters={'student_id': student_id})
+        # Use the `academics` table name to match the rest of the codebase
+        details = db.select('academics', filters={'student_id': student_id})
         return details[0] if details else None
 
 
