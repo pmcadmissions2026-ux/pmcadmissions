@@ -9,6 +9,7 @@ from datetime import datetime, date, timedelta
 from config import Config
 import json as json_lib
 import traceback
+import requests
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -1385,11 +1386,30 @@ def debug_supabase_test():
 
             # Attempt insert and capture the raw response
             result = db.insert('students', payload)
+            # If db.insert returned None (no result, no exception), attempt a direct REST POST
+            rest_response = None
+            if result is None:
+                try:
+                    rest_key = (Config.SUPABASE_SERVICE_KEY or Config.SUPABASE_KEY) or None
+                    rest_url = Config.SUPABASE_URL.rstrip('/') if Config.SUPABASE_URL else None
+                    if rest_key and rest_url:
+                        headers = {
+                            'apikey': rest_key.strip(),
+                            'Authorization': f"Bearer {rest_key.strip()}",
+                            'Content-Type': 'application/json'
+                        }
+                        r = requests.post(f"{rest_url}/rest/v1/students", headers=headers, json=payload, timeout=10)
+                        rest_response = {'status_code': r.status_code, 'text': r.text}
+                except Exception as e:
+                    # capture rest attempt failure
+                    rest_response = {'error': str(e)}
+            else:
+                rest_response = None
         except Exception as e:
             debug_error = traceback.format_exc()
             current_app.logger.error(debug_error)
 
-    return render_template('admin/debug_supabase.html', debug_error=debug_error, result=result, payload=payload)
+    return render_template('admin/debug_supabase.html', debug_error=debug_error, result=result, payload=payload, rest_response=rest_response)
 
 
 @admin_bp.route('/enquiry/<int:enquiry_id>')

@@ -43,6 +43,13 @@
       </div>
     {% endif %}
 
+    {% if rest_response is not none %}
+      <div class="mb-4">
+        <h2 class="font-semibold">REST Fallback Response</h2>
+        <pre class="bg-gray-100 p-3 rounded text-sm">{{ rest_response | tojson(indent=2) }}</pre>
+      </div>
+    {% endif %}
+
     {% if debug_error %}
       <div class="mb-4">
         <h2 class="font-semibold text-red-700">Exception Traceback</h2>
