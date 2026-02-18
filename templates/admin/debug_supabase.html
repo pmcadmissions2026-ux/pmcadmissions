@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Supabase Debug Insert</title>
+  <link href="https://cdn.tailwindcss.com" rel="stylesheet">
+</head>
+<body class="bg-gray-50 text-gray-800 p-6">
+  <div class="max-w-3xl mx-auto bg-white p-6 rounded shadow">
+    <h1 class="text-xl font-bold mb-4">Supabase Debug Insert</h1>
+    <p class="text-sm text-gray-600 mb-4">This page attempts a minimal insert into <strong>students</strong> and shows the raw result or full traceback.</p>
+
+    <form method="POST" class="space-y-4 mb-6">
+      <label class="block">
+        <div class="text-sm font-medium">Full name</div>
+        <input name="full_name" class="mt-1 p-2 border rounded w-full" placeholder="Debug User" />
+      </label>
+      <label class="block">
+        <div class="text-sm font-medium">Email</div>
+        <input name="email" class="mt-1 p-2 border rounded w-full" placeholder="debug@example.com" />
+      </label>
+      <label class="block">
+        <div class="text-sm font-medium">Phone</div>
+        <input name="phone" class="mt-1 p-2 border rounded w-full" placeholder="+91 90000 00000" />
+      </label>
+      <div>
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Run Insert</button>
+      </div>
+    </form>
+
+    {% if payload %}
+      <div class="mb-4">
+        <h2 class="font-semibold">Payload sent</h2>
+        <pre class="bg-gray-100 p-3 rounded text-sm">{{ payload | tojson(indent=2) }}</pre>
+      </div>
+    {% endif %}
+
+    {% if result is not none %}
+      <div class="mb-4">
+        <h2 class="font-semibold">DB Result</h2>
+        <pre class="bg-gray-100 p-3 rounded text-sm">{{ result | tojson(indent=2) }}</pre>
+      </div>
+    {% endif %}
+
+    {% if debug_error %}
+      <div class="mb-4">
+        <h2 class="font-semibold text-red-700">Exception Traceback</h2>
+        <pre class="bg-red-50 text-red-800 p-3 rounded text-sm whitespace-pre-wrap">{{ debug_error }}</pre>
+      </div>
+    {% endif %}
+
+    <p class="text-xs text-gray-500">Note: this route is access-controlled; login required.</p>
+  </div>
+</body>
+</html>

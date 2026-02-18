@@ -1361,6 +1361,37 @@ def check_enquiry_unique():
         return jsonify({'error': str(e)}), 500
 
 
+@admin_bp.route('/debug/supabase-test', methods=['GET', 'POST'])
+@check_module_access('enquiries')
+@role_required(['super_admin', 'admin'])
+def debug_supabase_test():
+    """Debug route: try a minimal insert into `students` and show the full response/traceback."""
+    debug_error = None
+    result = None
+    payload = None
+    if request.method == 'POST':
+        try:
+            # Build a minimal payload from form
+            full_name = request.form.get('full_name') or f"Debug User {datetime.now().isoformat()}"
+            email = request.form.get('email') or f"debug+{int(datetime.now().timestamp())}@example.com"
+            phone = request.form.get('phone') or None
+
+            payload = {
+                'full_name': full_name,
+                'email': email,
+                'phone': phone,
+                'created_at': datetime.now().isoformat()
+            }
+
+            # Attempt insert and capture the raw response
+            result = db.insert('students', payload)
+        except Exception as e:
+            debug_error = traceback.format_exc()
+            current_app.logger.error(debug_error)
+
+    return render_template('admin/debug_supabase.html', debug_error=debug_error, result=result, payload=payload)
+
+
 @admin_bp.route('/enquiry/<int:enquiry_id>')
 @check_module_access('enquiries')
 @role_required(['super_admin', 'admin'])
