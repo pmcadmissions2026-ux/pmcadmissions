@@ -1548,6 +1548,52 @@ def debug_safe_supabase_test():
     return render_template('admin/debug_supabase_safe.html', debug_error=debug_error, payload=payload, rest_response=rest_response, masked_config=masked_config)
 
 
+# Production-safe debug status endpoint
+# Usage: /admin/debug-status?token=<SECRET_KEY>
+# Returns masked env info and simple counts for students/admissions/accepted
+@admin_bp.route('/debug-status')
+def debug_status():
+    token = request.args.get('token') or request.headers.get('Authorization')
+    if not token or token != Config.SECRET_KEY:
+        return jsonify({'error': 'unauthorized'}), 403
+
+    def mask(s):
+        try:
+            if not s:
+                return None
+            return f"{s[:6]}...{s[-6:]}"
+        except Exception:
+            return None
+
+    info = {
+        'supabase_url': mask(Config.SUPABASE_URL),
+        'supabase_key_len': len(Config.SUPABASE_KEY) if Config.SUPABASE_KEY else 0,
+        'supabase_service_key_len': len(Config.SUPABASE_SERVICE_KEY) if Config.SUPABASE_SERVICE_KEY else 0,
+        'secret_key_len': len(Config.SECRET_KEY) if Config.SECRET_KEY else 0,
+    }
+
+    results = {}
+    try:
+        students = db.select('students') or []
+        results['students_count_sample'] = len(students)
+    except Exception as e:
+        results['students_count_sample'] = f'error: {str(e)}'
+
+    try:
+        admissions = db.select('admissions') or []
+        results['admissions_count_sample'] = len(admissions)
+    except Exception as e:
+        results['admissions_count_sample'] = f'error: {str(e)}'
+
+    try:
+        accepted = db.select('students', filters={'status': 'accepted'}) or []
+        results['accepted_students_count_sample'] = len(accepted)
+    except Exception as e:
+        results['accepted_students_count_sample'] = f'error: {str(e)}'
+
+    return jsonify({'info': info, 'results': results})
+
+
 # Development-only, localhost-accessible debug route: direct REST insert without auth.
 # This helps reproduce insert/permission problems from the development machine.
 @admin_bp.route('/debug/local-supabase-test', methods=['POST'])
