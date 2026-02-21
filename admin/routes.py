@@ -768,7 +768,17 @@ def admin_dashboard():
                           user=user,
                           pending_students=pending_students,
                           assigned_students=assigned_students,
-                          accepted_students=accepted_students)
+                          accepted_students=accepted_students,
+                          server_debug={
+                              'students_sample': None,
+                              'admissions_sample': None,
+                              'accepted_sample': None,
+                              'counts': {
+                                  'students_count': db.count('students'),
+                                  'admissions_count': db.count('admissions'),
+                                  'accepted_count': db.count('students', filters={'status': 'accepted'})
+                              }
+                          })
 
 
 @admin_bp.route('/old-dashboard')
