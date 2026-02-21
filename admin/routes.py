@@ -13,6 +13,75 @@ import requests
 
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
+
+@admin_bp.route('/debug/sdk-rest-admin')
+@role_required(['admin', 'super_admin'])
+def debug_sdk_rest_admin():
+    """Admin-only debug: compare SDK selects vs REST selects and return JSON.
+    Use while logged-in to inspect differences between SDK and REST results.
+    """
+    info = {
+        'env': {
+            'supabase_url': (Config.SUPABASE_URL[:60] + '...') if Config.SUPABASE_URL else None,
+            'supabase_key_len': len(Config.SUPABASE_KEY) if Config.SUPABASE_KEY else 0,
+            'supabase_service_key_len': len(Config.SUPABASE_SERVICE_KEY) if Config.SUPABASE_SERVICE_KEY else 0,
+            'secret_key_len': len(Config.SECRET_KEY) if Config.SECRET_KEY else 0,
+        }
+    }
+
+    sdk_results = {}
+    try:
+        sdk_results['client_present'] = True if getattr(db, 'client', None) else False
+    except Exception:
+        sdk_results['client_present'] = False
+
+    try:
+        if getattr(db, 'client', None):
+            r = db.client.table('students').select('*').limit(5).execute()
+            sdk_results['students'] = r.data if r and getattr(r, 'data', None) is not None else []
+        else:
+            sdk_results['students'] = []
+    except Exception as e:
+        sdk_results['students_error'] = str(e)
+        sdk_results['students'] = []
+
+    try:
+        if getattr(db, 'client', None):
+            r = db.client.table('admissions').select('*').limit(5).execute()
+            sdk_results['admissions'] = r.data if r and getattr(r, 'data', None) is not None else []
+        else:
+            sdk_results['admissions'] = []
+    except Exception as e:
+        sdk_results['admissions_error'] = str(e)
+        sdk_results['admissions'] = []
+
+    rest_results = {}
+    try:
+        rest_base = Config.SUPABASE_URL.rstrip('/') if Config.SUPABASE_URL else None
+        rest_key = (Config.SUPABASE_SERVICE_KEY or Config.SUPABASE_KEY) or None
+        headers = {'apikey': rest_key, 'Authorization': f'Bearer {rest_key}'} if rest_key else {}
+        if rest_base and rest_key:
+            s_url = f"{rest_base}/rest/v1/students"
+            a_url = f"{rest_base}/rest/v1/admissions"
+            s_r = requests.get(s_url, headers=headers, params={'select': '*', 'limit': 5}, timeout=10)
+            a_r = requests.get(a_url, headers=headers, params={'select': '*', 'limit': 5}, timeout=10)
+            rest_results['students_status'] = s_r.status_code
+            try:
+                rest_results['students'] = s_r.json() if s_r.status_code == 200 else {'status': s_r.status_code, 'body': s_r.text}
+            except Exception:
+                rest_results['students'] = {'status': s_r.status_code, 'body': s_r.text}
+            rest_results['admissions_status'] = a_r.status_code
+            try:
+                rest_results['admissions'] = a_r.json() if a_r.status_code == 200 else {'status': a_r.status_code, 'body': a_r.text}
+            except Exception:
+                rest_results['admissions'] = {'status': a_r.status_code, 'body': a_r.text}
+        else:
+            rest_results['error'] = 'missing rest_base or rest_key'
+    except Exception as e:
+        rest_results['error'] = str(e)
+
+    return jsonify({'info': info, 'sdk': sdk_results, 'rest': rest_results})
+
 # Define all admin modules
 ADMIN_MODULES = {
     'enquiries': 'Enquiry Management',
