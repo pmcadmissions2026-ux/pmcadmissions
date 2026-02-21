@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: pmc-admissions-web
+    env: python
+    plan: free
+    branch: main
+    pythonVersion: "3.11"
+    buildCommand: |
+      pip install --upgrade pip setuptools wheel
+      pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 3 --timeout 120 --log-file -
+    autoDeploy: true
+    healthCheckPath: "/"
+    envVars:
+      - key: FLASK_ENV
+        value: production
+        sync: false
