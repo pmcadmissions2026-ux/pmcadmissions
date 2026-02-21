@@ -211,6 +211,19 @@
 <p class="text-[#617589] dark:text-[#a0aec0] text-base font-normal leading-normal">Manage and assign departments to enquired students.</p>
 </div>
 </div>
+<!-- DEBUG: Server-rendered data (visible for troubleshooting) -->
+<div id="server-render-debug" class="mt-3 p-3 rounded border border-yellow-200 bg-yellow-50 text-sm text-yellow-900">
+    <strong>Server data:</strong>
+    <div>Pending: {{ pending_students|length if pending_students else 0 }}, Assigned: {{ assigned_students|length if assigned_students else 0 }}, Accepted: {{ accepted_students|length if accepted_students else 0 }}</div>
+    <pre id="server-data-json" class="mt-2 text-xs overflow-auto" style="max-height:160px;">{{ {'pending': pending_students, 'assigned': assigned_students, 'accepted': accepted_students}|tojson }}</pre>
+    <script>
+        try{
+            window.__SERVER_DATA = {{ {'pending': pending_students, 'assigned': assigned_students, 'accepted': accepted_students}|tojson }};
+            console.log('SERVER_DATA', window.__SERVER_DATA);
+        }catch(e){ console.log('Server debug JSON not available', e); }
+    </script>
+</div>
+
 <!-- Filters/Chips -->
 <div class="flex flex-wrap items-center gap-3 bg-white dark:bg-[#1a202c] p-4 rounded-xl border border-[#e5e7eb] dark:border-[#2d3748]">
 <span class="text-sm font-semibold text-[#111418] dark:text-white mr-2">Filters:</span>
@@ -456,6 +469,111 @@
 </div>
 {% endif %}
 </main>
+<!-- Client-side injector: populate tables from server JSON if placeholders present -->
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    try{
+        const data = window.__SERVER_DATA;
+        if(!data) return;
+
+        function findTableByFirstThText(text){
+            const tables = document.querySelectorAll('main table');
+            for(const t of tables){
+                const th = t.querySelector('thead th');
+                if(th && th.textContent.trim().startsWith(text)) return t;
+            }
+            return null;
+        }
+
+        // Pending students table (first table with 'Student Name' header)
+        const pendingTable = findTableByFirstThText('Student Name');
+        if(pendingTable && data.pending && data.pending.length>0){
+            const tbody = pendingTable.querySelector('tbody');
+            const placeholder = tbody.querySelector('td[colspan]');
+            if(placeholder){
+                tbody.innerHTML = '';
+                data.pending.forEach(s => {
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors group';
+                    const cutoffHtml = s.cutoff ? (`<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${s.cutoff>=190? 'bg-green-100 text-green-800' : (s.cutoff>=180? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800')}">${Number(s.cutoff).toFixed(2)}</span>`) : '<span class="text-xs text-slate-400">Pending</span>';
+                    row.innerHTML = `
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-semibold text-[#111418] dark:text-white">${s.name || 'N/A'}</div>
+                            <div class="text-xs text-[#617589]">Enquired ${s.time_ago || 'Recently'}</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${s.unique_id || 'N/A'}</td>
+                        <td class="px-6 py-4">${cutoffHtml}</td>
+                        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">${s.community || 'General'}</td>
+                        <td class="px-6 py-4 text-right">
+                            <a href="${window.location.origin}/admin/assign-branch/${s.student_id}" class="inline-flex items-center gap-2 bg-primary text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-primary/90 shadow-sm transition-all active:scale-95">
+                                <span class="material-symbols-outlined text-sm">assignment</span>
+                                Assign Branch
+                            </a>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+        }
+
+        // Assigned branches table (header 'App #')
+        const assignedTable = findTableByFirstThText('App #');
+        if(assignedTable && data.assigned && data.assigned.length>0){
+            const tbody = assignedTable.querySelector('tbody');
+            const placeholder = tbody.querySelector('td[colspan]');
+            if(placeholder){
+                tbody.innerHTML = '';
+                data.assigned.forEach(st => {
+                    const optional = (st.optional_depts || []).map(d => `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">${d.dept_code||''}</span>`).join('');
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors';
+                    row.innerHTML = `
+                        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono font-bold">${st.app_id?('#'+st.app_id):'<span class="text-xs text-slate-400">N/A</span>'}</td>
+                        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">${st.name}</td>
+                        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${st.unique_id || 'N/A'}</td>
+                        <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">${st.preferred_dept_code||''}</span></td>
+                        <td class="px-6 py-4">${optional || '<span class="text-xs text-[#617589] dark:text-gray-500">-</span>'}</td>
+                        <td class="px-6 py-4">${st.allotted_dept_code?('<div class="flex items-center gap-2"><span class="material-symbols-outlined text-green-600 text-sm">check</span><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">'+st.allotted_dept_code+'</span></div>'):'<span class="text-xs text-[#617589] dark:text-gray-500">Pending</span>'}</td>
+                        <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${st.cutoff>=190? 'bg-green-100 text-green-800' : (st.cutoff>=180? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800')}">${Number(st.cutoff||0).toFixed(2)}</span></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+        }
+
+        // Accepted students table: find by nearby heading containing 'Accepted Students'
+        const acceptedTable = Array.from(document.querySelectorAll('main table')).find(t => {
+            const wrapper = t.closest('div');
+            if(!wrapper) return false;
+            const header = wrapper.previousElementSibling;
+            return header && header.textContent && header.textContent.includes('Accepted Students');
+        });
+        if(acceptedTable && data.accepted && data.accepted.length>0){
+            const tbody = acceptedTable.querySelector('tbody');
+            const placeholderRow = Array.from(tbody.querySelectorAll('tr')).find(r => r.querySelector('td[colspan]'));
+            if(placeholderRow){
+                tbody.innerHTML = '';
+                data.accepted.forEach(s => {
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors';
+                    row.innerHTML = `
+                        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">${s.name}</td>
+                        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${s.unique_id||'N/A'}</td>
+                        <td class="px-6 py-4 text-sm text-[#617589]">${s.accepted_at||'-'}</td>
+                        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white">${s.cutoff?Number(s.cutoff).toFixed(2):'-'}</td>
+                        <td class="px-6 py-4 text-sm text-right">${s.has_admission?'<span class="inline-flex items-center gap-2 bg-green-600 text-white text-xs font-bold py-2 px-3 rounded-lg animate-pulse opacity-95"><span class="material-symbols-outlined text-sm">check_circle</span>Branch Assigned</span>':'<a href="'+window.location.origin+'/admin/assign-branch/'+(s.student_id||'')+'" class="inline-flex items-center gap-2 bg-primary text-white text-xs font-bold py-2 px-3 rounded-lg hover:bg-primary/90">Department Allocation</a>'}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+        }
+
+        console.log('Client-side injector ran');
+    }catch(e){
+        console.log('Injector error', e);
+    }
+});
+</script>
 </div>
 </body>
 </html>
