@@ -800,6 +800,59 @@ def admin_dashboard():
         'admissions_count': db.count('admissions'),
         'accepted_count': db.count('students', filters={'status': 'accepted'})
     }
+    # Fallback: if our normal assembled lists are empty on deployed env,
+    # try to populate them from REST debug samples (service-key results).
+    try:
+        # Populate accepted_students from accepted_sample
+        if (not accepted_students or len(accepted_students) == 0) and server_debug.get('accepted_sample'):
+            for st in server_debug.get('accepted_sample'):
+                student_id = st.get('id') or st.get('student_id')
+                accepted_students.append({
+                    'student_id': student_id,
+                    'name': st.get('full_name') or st.get('name') or 'N/A',
+                    'unique_id': st.get('unique_id'),
+                    'accepted_by': st.get('accepted_by'),
+                    'accepted_at': st.get('accepted_at'),
+                    'cutoff': None,
+                    'enquiry_id': None,
+                    'has_admission': True if (db.select('admissions', filters={'student_id': student_id}) or []) else False
+                })
+
+        # Populate assigned_students from admissions_sample + students_sample
+        if (not assigned_students or len(assigned_students) == 0) and server_debug.get('admissions_sample'):
+            students_by_id = {s.get('id') or s.get('student_id'): s for s in (server_debug.get('students_sample') or [])}
+            for adm in server_debug.get('admissions_sample'):
+                sid = adm.get('student_id')
+                st = students_by_id.get(sid) or {}
+                # Optional departments may be ids; leave as empty list if not provided
+                optional_depts = []
+                try:
+                    if adm.get('optional_dept_ids'):
+                        # keep as-is (IDs) — template handles missing names
+                        optional_depts = adm.get('optional_dept_ids')
+                except Exception:
+                    optional_depts = []
+
+                assigned_students.append({
+                    'student_id': sid,
+                    'app_id': adm.get('id') or adm.get('app_id'),
+                    'name': st.get('full_name') or st.get('name') or 'N/A',
+                    'unique_id': st.get('unique_id'),
+                    'community': st.get('community'),
+                    'cutoff': None,
+                    'preferred_dept': '',
+                    'preferred_dept_code': '',
+                    'optional_depts': optional_depts,
+                    'allotted_dept': '-' if not adm.get('allotted_dept_id') else '',
+                    'allotted_dept_code': '',
+                    'status': adm.get('status'),
+                    'assignment_date': adm.get('created_at'),
+                    'documents_uploaded': adm.get('documents_uploaded', False),
+                    'documents_count': adm.get('documents_count', 0),
+                    'documents_submitted_at': adm.get('documents_submitted_at')
+                })
+    except Exception as e:
+        print(f"Error applying REST-sample fallbacks: {e}")
 
     return render_template('admin/admin_dashboard.html',
                           user=user,
