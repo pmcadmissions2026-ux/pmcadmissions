@@ -769,16 +769,16 @@ def admin_dashboard():
                           pending_students=pending_students,
                           assigned_students=assigned_students,
                           accepted_students=accepted_students,
-                          server_debug={
-                              'students_sample': None,
-                              'admissions_sample': None,
-                              'accepted_sample': None,
+                          server_debug=(lambda: {
+                              'students_sample': (lambda: (lambda r: r.data if r and getattr(r, 'data', None) is not None else [])( (lambda: (db.client.table('students').select('*').limit(5).execute() if getattr(db, 'client', None) else None)() ) ) )(),
+                              'admissions_sample': (lambda: (lambda r: r.data if r and getattr(r, 'data', None) is not None else [])( (lambda: (db.client.table('admissions').select('*').limit(5).execute() if getattr(db, 'client', None) else None)() ) ) )(),
+                              'accepted_sample': (lambda: (lambda r: r.data if r and getattr(r, 'data', None) is not None else [])( (lambda: (db.client.table('students').select('*').eq('status','accepted').limit(5).execute() if getattr(db, 'client', None) else None)() ) ) )(),
                               'counts': {
                                   'students_count': db.count('students'),
                                   'admissions_count': db.count('admissions'),
                                   'accepted_count': db.count('students', filters={'status': 'accepted'})
                               }
-                          })
+                          })())
 
 
 @admin_bp.route('/old-dashboard')
