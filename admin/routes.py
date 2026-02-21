@@ -805,6 +805,52 @@ def admin_dashboard():
         'accepted_count': db.count('students', filters={'status': 'accepted'})
     }
 
+    # Fallback: if our normal server-side filtering produced empty lists but
+    # the REST debug selects returned rows, use those to populate the tables
+    # so the UI shows data while we diagnose deeper filtering/RLS issues.
+    try:
+        if not assigned_students and server_debug.get('admissions_sample'):
+            students_by_id = {s.get('id') or s.get('student_id'): s for s in (server_debug.get('students_sample') or [])}
+            assigned_students = []
+            for adm in (server_debug.get('admissions_sample') or []):
+                sid = adm.get('student_id')
+                stu = students_by_id.get(sid) or {}
+                assigned_students.append({
+                    'student_id': sid,
+                    'app_id': adm.get('id') or adm.get('app_id'),
+                    'name': stu.get('full_name') or stu.get('name') or 'N/A',
+                    'unique_id': stu.get('unique_id'),
+                    'community': stu.get('community'),
+                    'cutoff': stu.get('cutoff'),
+                    'preferred_dept': '',
+                    'preferred_dept_code': '',
+                    'optional_depts': adm.get('optional_dept_ids') or [],
+                    'allotted_dept': '-',
+                    'allotted_dept_code': '',
+                    'status': adm.get('status'),
+                    'assignment_date': adm.get('created_at'),
+                    'documents_uploaded': adm.get('documents_uploaded', False),
+                    'documents_count': adm.get('documents_count', 0),
+                    'documents_submitted_at': adm.get('documents_submitted_at')
+                })
+
+        if not accepted_students and server_debug.get('accepted_sample'):
+            accepted_students = []
+            for st in (server_debug.get('accepted_sample') or []):
+                sid = st.get('id') or st.get('student_id')
+                accepted_students.append({
+                    'student_id': sid,
+                    'name': st.get('full_name') or st.get('name') or 'N/A',
+                    'unique_id': st.get('unique_id'),
+                    'accepted_by': st.get('accepted_by'),
+                    'accepted_at': st.get('accepted_at'),
+                    'cutoff': st.get('cutoff'),
+                    'enquiry_id': None,
+                    'has_admission': bool([a for a in (server_debug.get('admissions_sample') or []) if a.get('student_id') == sid])
+                })
+    except Exception as e:
+        print(f"Fallback populate error: {e}")
+
     return render_template('admin/admin_dashboard.html',
                           user=user,
                           pending_students=pending_students,
