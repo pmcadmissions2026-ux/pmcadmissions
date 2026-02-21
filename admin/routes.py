@@ -764,21 +764,53 @@ def admin_dashboard():
         print(f"Error fetching accepted students: {e}")
         accepted_students = []
 
+    # Build server_debug using direct REST selects with the service key so we can
+    # observe what the service-role access returns from the deployed environment.
+    server_debug = {}
+    try:
+        rest_base = Config.SUPABASE_URL.rstrip('/') if Config.SUPABASE_URL else None
+        rest_key = (Config.SUPABASE_SERVICE_KEY or Config.SUPABASE_KEY) or None
+        def rest_get(table, extra_params=None):
+            if not rest_base or not rest_key:
+                return []
+            headers = {'apikey': rest_key, 'Authorization': f'Bearer {rest_key}'}
+            params = {'select': '*', 'limit': '5'}
+            if extra_params:
+                params.update(extra_params)
+            try:
+                url = f"{rest_base}/rest/v1/{table}"
+                r = requests.get(url, headers=headers, params=params, timeout=10)
+                if r.status_code == 200:
+                    try:
+                        return r.json()
+                    except Exception:
+                        return []
+                else:
+                    print(f"REST debug select failed {table}: status={r.status_code} body={r.text}")
+                    return []
+            except Exception as e:
+                print(f"REST debug select error for {table}: {e}")
+                return []
+
+        server_debug['students_sample'] = rest_get('students')
+        server_debug['admissions_sample'] = rest_get('admissions')
+        server_debug['accepted_sample'] = rest_get('students', {'status': 'eq.accepted'})
+    except Exception as e:
+        print(f"Error building server_debug REST samples: {e}")
+        server_debug = {'students_sample': [], 'admissions_sample': [], 'accepted_sample': []}
+
+    server_debug['counts'] = {
+        'students_count': db.count('students'),
+        'admissions_count': db.count('admissions'),
+        'accepted_count': db.count('students', filters={'status': 'accepted'})
+    }
+
     return render_template('admin/admin_dashboard.html',
                           user=user,
                           pending_students=pending_students,
                           assigned_students=assigned_students,
                           accepted_students=accepted_students,
-                          server_debug=(lambda: {
-                              'students_sample': (lambda: (lambda r: r.data if r and getattr(r, 'data', None) is not None else [])( (lambda: (db.client.table('students').select('*').limit(5).execute() if getattr(db, 'client', None) else None)() ) ) )(),
-                              'admissions_sample': (lambda: (lambda r: r.data if r and getattr(r, 'data', None) is not None else [])( (lambda: (db.client.table('admissions').select('*').limit(5).execute() if getattr(db, 'client', None) else None)() ) ) )(),
-                              'accepted_sample': (lambda: (lambda r: r.data if r and getattr(r, 'data', None) is not None else [])( (lambda: (db.client.table('students').select('*').eq('status','accepted').limit(5).execute() if getattr(db, 'client', None) else None)() ) ) )(),
-                              'counts': {
-                                  'students_count': db.count('students'),
-                                  'admissions_count': db.count('admissions'),
-                                  'accepted_count': db.count('students', filters={'status': 'accepted'})
-                              }
-                          })())
+                          server_debug=server_debug)
 
 
 @admin_bp.route('/old-dashboard')
