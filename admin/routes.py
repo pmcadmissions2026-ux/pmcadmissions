@@ -534,16 +534,28 @@ def admin_dashboard():
     try:
         students_response = db.client.table('students').select('*').order('created_at', desc=True).limit(100).execute()
         all_students = students_response.data if students_response else []
+        try:
+            sd = getattr(students_response, 'data', None)
+            print(f"DEBUG: students_response present type={type(students_response)} data_present={bool(sd)} count={len(sd) if sd else 0}")
+        except Exception:
+            print("DEBUG: students_response logging failed")
     except:
         all_students = db.select('students')
+        print(f"DEBUG: students_response SDK failed, fallback students count={len(all_students) if all_students else 0}")
     
     # Get all students who already have branch assignments (from admissions table)
     try:
         admissions_response = db.client.table('admissions').select('student_id').execute()
         assigned_student_ids = [adm['student_id'] for adm in admissions_response.data] if admissions_response.data else []
+        try:
+            ad = getattr(admissions_response, 'data', None)
+            print(f"DEBUG: admissions_response present type={type(admissions_response)} data_present={bool(ad)} count={len(ad) if ad else 0}")
+        except Exception:
+            print("DEBUG: admissions_response logging failed")
     except:
         admissions = db.select('admissions', columns='student_id')
         assigned_student_ids = [adm['student_id'] for adm in admissions] if admissions else []
+        print(f"DEBUG: admissions_response SDK failed, fallback admissions count={len(assigned_student_ids) if assigned_student_ids else 0}")
     
     pending_students = []
     if all_students:
@@ -722,6 +734,11 @@ def admin_dashboard():
         # Query students with status 'accepted'
         accepted_resp = db.client.table('students').select('*').eq('status', 'accepted').order('accepted_at', desc=True).limit(100).execute()
         accepted_list = accepted_resp.data if accepted_resp and accepted_resp.data else []
+        try:
+            ar = getattr(accepted_resp, 'data', None)
+            print(f"DEBUG: accepted_resp present type={type(accepted_resp)} data_present={bool(ar)} count={len(ar) if ar else 0}")
+        except Exception:
+            print("DEBUG: accepted_resp logging failed")
 
         for st in accepted_list:
             # Filter to those accepted by current user only
@@ -1161,6 +1178,15 @@ def new_enquiry():
             else:
                 # Fallback: use candidate_student as-is (best-effort)
                 student_data = candidate_student
+
+            # If filtering produced an empty payload (schema mismatch), ensure we at least send
+            # a minimal payload containing name/email/phone/created_at where available.
+            if not student_data:
+                minimal_for_insert = {k: candidate_student.get(k) for k in ('full_name', 'email', 'phone', 'whatsapp_number', 'created_at') if candidate_student.get(k) is not None}
+                if minimal_for_insert:
+                    student_data = minimal_for_insert
+                else:
+                    raise Exception('Insufficient student data to create record (need at least name, email or phone)')
             
             # Check for existing student by email to avoid duplicate inserts
             student_id = None
@@ -1172,15 +1198,24 @@ def new_enquiry():
                 else:
                     student_result = db.insert('students', student_data)
                     if not student_result or not isinstance(student_result, list) or len(student_result) == 0:
-                        # Insert returned no body (e.g., REST returned 204). Try to locate the row by unique key (email).
-                        print(f"Student insert returned no result. Trying fallback select by email: {email}")
+                        # Insert returned no body (e.g., REST returned 204) or failed. Try to locate the row
+                        # by available unique keys (email, phone, unique_id) in that order.
+                        print(f"Student insert returned no result. Trying fallback selects for email/phone/unique_id")
                         try:
-                            fallback = db.select('students', filters={'email': email})
+                            fallback = None
+                            if email:
+                                fallback = db.select('students', filters={'email': email})
+                            if (not fallback or len(fallback) == 0) and (whatsapp_number or candidate_student.get('phone')):
+                                phone_to_check = whatsapp_number or candidate_student.get('phone')
+                                fallback = db.select('students', filters={'phone': phone_to_check})
+                            if (not fallback or len(fallback) == 0) and candidate_student.get('unique_id'):
+                                fallback = db.select('students', filters={'unique_id': candidate_student.get('unique_id')})
+
                             if fallback and isinstance(fallback, list) and len(fallback) > 0:
                                 student_id = fallback[0].get('id') or fallback[0].get('student_id')
                                 print(f"Student fallback select found existing row id={student_id}")
                             else:
-                                print(f"Student fallback select returned nothing for email={email}")
+                                print(f"Student fallback select returned nothing for keys email={email} phone={whatsapp_number} unique_id={candidate_student.get('unique_id')}")
                                 raise Exception(f"Failed to create student record. DB returned: {student_result}")
                         except Exception as fe:
                             print(f"Student fallback select error: {fe}")
@@ -1511,6 +1546,41 @@ def debug_safe_supabase_test():
             debug_error = traceback.format_exc()
 
     return render_template('admin/debug_supabase_safe.html', debug_error=debug_error, payload=payload, rest_response=rest_response, masked_config=masked_config)
+
+
+# Development-only, localhost-accessible debug route: direct REST insert without auth.
+# This helps reproduce insert/permission problems from the development machine.
+@admin_bp.route('/debug/local-supabase-test', methods=['POST'])
+def debug_local_supabase_test():
+    # Only allow when running in development and from localhost
+    if Config.FLASK_ENV != 'development':
+        return jsonify({'error': 'local debug only'}), 403
+    if request.remote_addr not in ('127.0.0.1', '::1'):
+        return jsonify({'error': 'local access only'}), 403
+
+    try:
+        full_name = request.form.get('full_name') or f"LocalDebug {datetime.now().isoformat()}"
+        email = request.form.get('email') or f"local+{int(datetime.now().timestamp())}@example.com"
+        phone = request.form.get('phone') or None
+        payload = {'full_name': full_name, 'email': email, 'phone': phone, 'created_at': datetime.now().isoformat()}
+
+        rest_key = (Config.SUPABASE_SERVICE_KEY or Config.SUPABASE_KEY) or None
+        rest_url = Config.SUPABASE_URL.rstrip('/') if Config.SUPABASE_URL else None
+        if not rest_key or not rest_url:
+            return jsonify({'error': 'missing SUPABASE_URL or key in config'}), 500
+
+        import requests
+        headers = {'apikey': rest_key.strip(), 'Authorization': f"Bearer {rest_key.strip()}", 'Content-Type': 'application/json', 'Prefer': 'return=representation'}
+        r = requests.post(f"{rest_url}/rest/v1/students", headers=headers, json=payload, timeout=15)
+
+        try:
+            body = r.json()
+        except Exception:
+            body = r.text
+
+        return jsonify({'status_code': r.status_code, 'body': body, 'headers': dict(r.headers)})
+    except Exception as e:
+        return jsonify({'error': str(e), 'trace': traceback.format_exc()}), 500
 
 
 @admin_bp.route('/enquiry/<int:enquiry_id>')
