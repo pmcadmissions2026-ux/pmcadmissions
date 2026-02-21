@@ -504,7 +504,6 @@ def admission_controller_dashboard():
 def admin_dashboard():
     """Admin Dashboard - Branch Assignment Only"""
     user = get_current_user()
-    try:
     
     # Add role to user object for template
     if user:
@@ -728,26 +727,23 @@ def admin_dashboard():
         print(f"Error fetching assigned students: {e}")
         assigned_students = []
 
-    # Get students accepted by current admin (for 'Accepted Students' table)
+    # Get all students with status 'accepted' (no admin-based filtering)
     accepted_students = []
     try:
-        current_user_name = user.get('name') if user else None
-        # Query students with status 'accepted'
-        accepted_resp = db.client.table('students').select('*').eq('status', 'accepted').order('accepted_at', desc=True).limit(100).execute()
-        accepted_list = accepted_resp.data if accepted_resp and accepted_resp.data else []
+        accepted_rows = []
+        # Prefer SDK client; fallback to db.select
         try:
-            ar = getattr(accepted_resp, 'data', None)
-            print(f"DEBUG: accepted_resp present type={type(accepted_resp)} data_present={bool(ar)} count={len(ar) if ar else 0}")
+            if getattr(db, 'client', None):
+                resp = db.client.table('students').select('*').eq('status', 'accepted').order('accepted_at', desc=True).limit(200).execute()
+                accepted_rows = resp.data if resp and getattr(resp, 'data', None) is not None else []
         except Exception:
-            print("DEBUG: accepted_resp logging failed")
+            accepted_rows = db.select('students', filters={'status': 'accepted'}) or []
 
-        for st in accepted_list:
-            # Show all accepted students (do not filter by current admin name)
-
+        for st in accepted_rows:
             student_id = st.get('id') or st.get('student_id')
-            academic = db.select('academics', filters={'student_id': student_id})
+            academic = (db.select('academics', filters={'student_id': student_id}) or [])
             academic = academic[0] if academic else None
-            enquiry = db.select('enquiries', filters={'student_id': student_id})
+            enquiry = (db.select('enquiries', filters={'student_id': student_id}) or [])
             enquiry = enquiry[0] if enquiry else None
 
             accepted_students.append({
@@ -758,11 +754,10 @@ def admin_dashboard():
                 'accepted_at': st.get('accepted_at'),
                 'cutoff': academic.get('cutoff') if academic else None,
                 'enquiry_id': enquiry.get('enquiry_id') if enquiry else None,
-                # Flag indicating whether this student already has an admission record
-                'has_admission': True if db.select('admissions', filters={'student_id': student_id}) else False
+                'has_admission': True if (db.select('admissions', filters={'student_id': student_id}) or []) else False
             })
     except Exception as e:
-        print(f"Error fetching accepted students: {e}")
+        print(f"Error fetching accepted students (simplified): {e}")
         accepted_students = []
 
     # Build server_debug using direct REST selects with the service key so we can
@@ -806,70 +801,12 @@ def admin_dashboard():
         'accepted_count': db.count('students', filters={'status': 'accepted'})
     }
 
-    # Fallback: if our normal server-side filtering produced empty lists but
-    # the REST debug selects returned rows, use those to populate the tables
-    # so the UI shows data while we diagnose deeper filtering/RLS issues.
-    try:
-        if not assigned_students and server_debug.get('admissions_sample'):
-            students_by_id = {s.get('id') or s.get('student_id'): s for s in (server_debug.get('students_sample') or [])}
-            assigned_students = []
-            for adm in (server_debug.get('admissions_sample') or []):
-                sid = adm.get('student_id')
-                stu = students_by_id.get(sid) or {}
-                assigned_students.append({
-                    'student_id': sid,
-                    'app_id': adm.get('id') or adm.get('app_id'),
-                    'name': stu.get('full_name') or stu.get('name') or 'N/A',
-                    'unique_id': stu.get('unique_id'),
-                    'community': stu.get('community'),
-                    'cutoff': stu.get('cutoff'),
-                    'preferred_dept': '',
-                    'preferred_dept_code': '',
-                    'optional_depts': adm.get('optional_dept_ids') or [],
-                    'allotted_dept': '-',
-                    'allotted_dept_code': '',
-                    'status': adm.get('status'),
-                    'assignment_date': adm.get('created_at'),
-                    'documents_uploaded': adm.get('documents_uploaded', False),
-                    'documents_count': adm.get('documents_count', 0),
-                    'documents_submitted_at': adm.get('documents_submitted_at')
-                })
-
-        if not accepted_students and server_debug.get('accepted_sample'):
-            accepted_students = []
-            for st in (server_debug.get('accepted_sample') or []):
-                sid = st.get('id') or st.get('student_id')
-                accepted_students.append({
-                    'student_id': sid,
-                    'name': st.get('full_name') or st.get('name') or 'N/A',
-                    'unique_id': st.get('unique_id'),
-                    'accepted_by': st.get('accepted_by'),
-                    'accepted_at': st.get('accepted_at'),
-                    'cutoff': st.get('cutoff'),
-                    'enquiry_id': None,
-                    'has_admission': bool([a for a in (server_debug.get('admissions_sample') or []) if a.get('student_id') == sid])
-                })
-    except Exception as e:
-        print(f"Fallback populate error: {e}")
-
     return render_template('admin/admin_dashboard.html',
                           user=user,
                           pending_students=pending_students,
                           assigned_students=assigned_students,
                           accepted_students=accepted_students,
                           server_debug=server_debug)
-    except Exception as e:
-        import traceback as _tb
-        tb = _tb.format_exc()
-        print(f"Unhandled error in admin_dashboard: {e}\n{tb}")
-        # Render dashboard with error info to avoid 500 crash
-        server_debug_err = {'error': str(e), 'traceback': tb}
-        return render_template('admin/admin_dashboard.html',
-                               user=user,
-                               pending_students=[],
-                               assigned_students=[],
-                               accepted_students=[],
-                               server_debug=server_debug_err), 200
 
 
 @admin_bp.route('/old-dashboard')
