@@ -69,11 +69,23 @@ class SupabaseDB:
                     else:
                         raise
             except TypeError as te:
-                print("Error creating Supabase client (TypeError):", te)
-                raise
+                # Some installed supabase Client versions do not accept certain
+                # kwargs (for example 'proxy'). Instead of crashing the app,
+                # fall back to REST-only mode so server-side operations continue.
+                print("TypeError creating Supabase client; enabling REST fallback:", te)
+                try:
+                    self._ensure_rest_fallback(key_to_use)
+                except Exception:
+                    pass
+                # leave _client as None so callers will hit SDK exception handlers
+                return None
             except Exception as e:
                 print("Unexpected error creating Supabase client:", e)
-                raise
+                try:
+                    self._ensure_rest_fallback(key_to_use)
+                except Exception:
+                    pass
+                return None
         return self._client
 
     def execute_query(self, query: str):
