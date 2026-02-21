@@ -639,8 +639,14 @@ def admin_dashboard():
                 accepted_by = (student.get('accepted_by') or '').strip().lower()
             except Exception:
                 accepted_by = ''
-            if current_user_name and current_user_name.strip().lower() not in accepted_by:
-                continue
+            # Include admission if any of:
+            # - current user is super_admin (see all)
+            # - accepted_by is empty (legacy records)
+            # - accepted_by contains current user's name
+            role_is_super = session.get('user_role') == 'super_admin'
+            if not role_is_super and current_user_name:
+                if accepted_by and current_user_name.strip().lower() not in accepted_by:
+                    continue
             # Only include assigned admissions for students who have been accepted
             try:
                 student_status = (student.get('status') or '').strip().lower()
@@ -741,9 +747,15 @@ def admin_dashboard():
             print("DEBUG: accepted_resp logging failed")
 
         for st in accepted_list:
-            # Filter to those accepted by current user only
-            if current_user_name and st.get('accepted_by') and current_user_name.strip().lower() not in st.get('accepted_by','').strip().lower():
-                continue
+            # Filter to those accepted by current user only, but include legacy/empty accepted_by
+            role_is_super = session.get('user_role') == 'super_admin'
+            try:
+                st_accepted_by = (st.get('accepted_by') or '').strip().lower()
+            except Exception:
+                st_accepted_by = ''
+            if not role_is_super and current_user_name:
+                if st_accepted_by and current_user_name.strip().lower() not in st_accepted_by:
+                    continue
 
             student_id = st.get('id') or st.get('student_id')
             academic = db.select('academics', filters={'student_id': student_id})
