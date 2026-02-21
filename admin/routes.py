@@ -504,6 +504,7 @@ def admission_controller_dashboard():
 def admin_dashboard():
     """Admin Dashboard - Branch Assignment Only"""
     user = get_current_user()
+    try:
     
     # Add role to user object for template
     if user:
@@ -857,6 +858,18 @@ def admin_dashboard():
                           assigned_students=assigned_students,
                           accepted_students=accepted_students,
                           server_debug=server_debug)
+    except Exception as e:
+        import traceback as _tb
+        tb = _tb.format_exc()
+        print(f"Unhandled error in admin_dashboard: {e}\n{tb}")
+        # Render dashboard with error info to avoid 500 crash
+        server_debug_err = {'error': str(e), 'traceback': tb}
+        return render_template('admin/admin_dashboard.html',
+                               user=user,
+                               pending_students=[],
+                               assigned_students=[],
+                               accepted_students=[],
+                               server_debug=server_debug_err), 200
 
 
 @admin_bp.route('/old-dashboard')
