@@ -215,28 +215,28 @@
 <div id="server-render-debug" class="mt-3 p-3 rounded border border-yellow-200 bg-yellow-50 text-sm text-yellow-900">
     <strong>Server data:</strong>
     <div>Pending: {{ pending_students|length if pending_students else 0 }}, Assigned: {{ assigned_students|length if assigned_students else 0 }}, Accepted: {{ accepted_students|length if accepted_students else 0 }}</div>
-    <pre id="server-data-json" class="mt-2 text-xs overflow-auto" style="max-height:160px;">{{ {'pending': pending_students, 'assigned': assigned_students, 'accepted': accepted_students}|tojson }}</pre>
+    <pre id="server-data-json" class="mt-2 text-xs overflow-auto" style="max-height:160px;">{{ server_data_json }}</pre>
         {% if server_debug %}
-        <details class="mt-2 text-xs">
+                <details class="mt-2 text-xs">
             <summary class="font-medium">Raw DB debug</summary>
             <div class="mt-2 text-xs text-slate-700 dark:text-slate-300">
                 <div><strong>Counts:</strong> {{ server_debug.counts|tojson }}</div>
                 <div class="mt-1"><strong>Students sample:</strong>
-                    <pre class="max-h-40 overflow-auto">{{ server_debug.students_sample|tojson }}</pre>
+                      <pre class="max-h-40 overflow-auto">{{ server_debug_json }}</pre>
                 </div>
                 <div class="mt-1"><strong>Admissions sample:</strong>
-                    <pre class="max-h-40 overflow-auto">{{ server_debug.admissions_sample|tojson }}</pre>
                 </div>
                 <div class="mt-1"><strong>Accepted sample:</strong>
-                    <pre class="max-h-40 overflow-auto">{{ server_debug.accepted_sample|tojson }}</pre>
+                    <!-- server_debug_json contains all samples; shown above -->
+                    <pre class="max-h-40 overflow-auto">&nbsp;</pre>
                 </div>
             </div>
         </details>
         {% endif %}
     <script>
         try{
-            window.__SERVER_DATA = {{ {'pending': pending_students, 'assigned': assigned_students, 'accepted': accepted_students}|tojson }};
-            console.log('SERVER_DATA', window.__SERVER_DATA);
+                        window.__SERVER_DATA = {{ server_data_json|safe }};
+                        console.log('SERVER_DATA', window.__SERVER_DATA);
         }catch(e){ console.log('Server debug JSON not available', e); }
     </script>
 </div>

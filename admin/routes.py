@@ -854,12 +854,30 @@ def admin_dashboard():
     except Exception as e:
         print(f"Error applying REST-sample fallbacks: {e}")
 
+    # Prepare JSON-safe payloads to avoid Jinja tojson issues with datetimes
+    try:
+        server_data = {
+            'pending': pending_students,
+            'assigned': assigned_students,
+            'accepted': accepted_students
+        }
+        server_data_json = json_lib.dumps(server_data, default=str)
+    except Exception:
+        server_data_json = json_lib.dumps({'pending': [], 'assigned': [], 'accepted': []})
+
+    try:
+        server_debug_json = json_lib.dumps(server_debug, default=str)
+    except Exception:
+        server_debug_json = json_lib.dumps({'counts': server_debug.get('counts', {})})
+
     return render_template('admin/admin_dashboard.html',
                           user=user,
                           pending_students=pending_students,
                           assigned_students=assigned_students,
                           accepted_students=accepted_students,
-                          server_debug=server_debug)
+                          server_debug=server_debug,
+                          server_data_json=server_data_json,
+                          server_debug_json=server_debug_json)
 
 
 @admin_bp.route('/old-dashboard')
