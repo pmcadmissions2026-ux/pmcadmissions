@@ -19,9 +19,10 @@ RUN pip install -r requirements.txt
 # Create session directory used by Flask-Session
 RUN mkdir -p /app/flask_session
 
-# Ensure a `.venv` Python path exists for hosting platforms that set start commands
-# to `./.venv/bin/python` (e.g., Railway); symlink system python into that path.
-RUN mkdir -p /.venv/bin && ln -s $(which python) /.venv/bin/python || true
+# Ensure a `.venv` Python path exists inside the app directory for hosting
+# platforms that set start commands to `./.venv/bin/python` (e.g., Railway);
+# symlink the system python into `/app/.venv/bin/python` so relative paths work.
+RUN mkdir -p /app/.venv/bin && ln -s "$(which python)" /app/.venv/bin/python || true
 
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
