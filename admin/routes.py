@@ -503,7 +503,8 @@ def admission_controller_dashboard():
 @check_module_access('branch_selection')
 def admin_dashboard():
     """Admin Dashboard - Branch Assignment Only"""
-    user = get_current_user()
+    try:
+        user = get_current_user()
     
     # Add role to user object for template
     if user:
@@ -870,12 +871,25 @@ def admin_dashboard():
     except Exception:
         server_debug_json = json_lib.dumps({'counts': server_debug.get('counts', {})})
 
-    return render_template('admin/admin_dashboard.html',
-                          user=user,
-                          pending_students=pending_students,
-                          assigned_students=assigned_students,
-                          accepted_students=accepted_students,
-                          server_debug=server_debug,
+        return render_template('admin/admin_dashboard.html',
+                              user=user,
+                              pending_students=pending_students,
+                              assigned_students=assigned_students,
+                              accepted_students=accepted_students,
+                              server_debug=server_debug,
+                              server_data_json=server_data_json,
+                              server_debug_json=server_debug_json)
+    except Exception as e:
+        import traceback as _tb
+        tb = _tb.format_exc()
+        print(f"Unhandled error in admin_dashboard: {e}\n{tb}")
+        # Return a minimal error page so the serverless function doesn't crash
+        try:
+            return render_template('errors/500.html', error_message=str(e)), 500
+        except Exception:
+            # As a last resort, return plain text
+            from flask import Response
+            return Response('Internal Server Error', status=500)
                           server_data_json=server_data_json,
                           server_debug_json=server_debug_json)
 
