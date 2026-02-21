@@ -25,4 +25,8 @@ ENV PYTHONUNBUFFERED=1
 
 EXPOSE 5000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app", "--workers", "3", "--timeout", "120"]
+# Use the lightweight Waitress start script so we avoid gunicorn/pkg_resources issues
+CMD ["python", "start.py"]
+
+# Simple healthcheck to ensure the app is responding
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s CMD curl -f http://localhost:5000/ || exit 1
