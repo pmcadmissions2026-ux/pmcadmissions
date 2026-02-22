@@ -995,7 +995,7 @@ def admin_dashboard():
                 departments_sample = rest_get('departments')
             except Exception:
                 departments_sample = []
-        dept_map = {d.get('id'): d for d in (departments_sample or [])}
+        dept_map = {str(d.get('id')): d for d in (departments_sample or [])}
 
         academics_sample = server_debug.get('academics_sample') if server_debug.get('academics_sample') is not None else None
         if academics_sample is None:
@@ -1003,7 +1003,7 @@ def admin_dashboard():
                 academics_sample = rest_get('academics')
             except Exception:
                 academics_sample = []
-        acad_map = {a.get('student_id'): a for a in (academics_sample or [])}
+        acad_map = {str(a.get('student_id')): a for a in (academics_sample or [])}
 
         if (not assigned_students or len(assigned_students) == 0) and admissions_sample:
             assigned_students = []
@@ -1013,11 +1013,8 @@ def admin_dashboard():
                 stu = students_by_id.get(sid_key) or {}
                 # Determine preferred/optional department names
                 pref_id = adm.get('preferred_dept_id') or adm.get('primary_dept_id')
-                try:
-                    pref_id_int = int(pref_id) if pref_id is not None else None
-                except Exception:
-                    pref_id_int = pref_id
-                pref_dept = dept_map.get(pref_id_int) if pref_id_int is not None else None
+                pref_id_key = str(pref_id) if pref_id is not None else None
+                pref_dept = dept_map.get(pref_id_key) if pref_id_key is not None else None
 
                 optional_depts_list = []
                 optional_dept_ids = adm.get('optional_dept_ids')
@@ -1031,15 +1028,12 @@ def admin_dashboard():
                         opt_ids = optional_dept_ids if isinstance(optional_dept_ids, list) else [optional_dept_ids]
 
                     for od in opt_ids:
-                        try:
-                            od_int = int(od)
-                        except Exception:
-                            od_int = od
-                        d = dept_map.get(od_int)
+                        od_key = str(od)
+                        d = dept_map.get(od_key)
                         if d:
                             optional_depts_list.append(d)
 
-                cutoff_val = acad_map.get(sid, {}).get('cutoff') if sid is not None else None
+                cutoff_val = acad_map.get(str(sid), {}).get('cutoff') if sid is not None else None
 
                 assigned_students.append({
                     'student_id': sid,
@@ -1066,7 +1060,7 @@ def admin_dashboard():
                     sid = st.get('id')
                     sid_key = str(sid) if sid is not None else None
                     has_adm = any(str(a.get('student_id')) == sid_key for a in admissions_sample)
-                    cutoff_val = acad_map.get(sid, {}).get('cutoff') if sid is not None else None
+                    cutoff_val = acad_map.get(str(sid), {}).get('cutoff') if sid is not None else None
                     accepted_students.append({
                         'student_id': sid,
                         'name': st.get('full_name') or st.get('name') or 'N/A',
@@ -1086,7 +1080,7 @@ def admin_dashboard():
                     continue
                 if (s.get('status') or '').strip().lower() == 'accepted':
                     continue
-                cutoff_val = acad_map.get(sid, {}).get('cutoff') if sid is not None else None
+                cutoff_val = acad_map.get(str(sid), {}).get('cutoff') if sid is not None else None
                 pending_students.append({
                     'student_id': sid,
                     'name': s.get('full_name') or s.get('name') or 'N/A',
