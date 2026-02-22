@@ -36,21 +36,16 @@ def debug_sdk_rest_admin():
         sdk_results['client_present'] = False
 
     try:
-        if getattr(db, 'client', None):
-            r = db.client.table('students').select('*').limit(5).execute()
-            sdk_results['students'] = r.data if r and getattr(r, 'data', None) is not None else []
-        else:
-            sdk_results['students'] = []
+        # Use wrapper select (SDK may be unavailable in serverless)
+        students_rows = db.select('students') or []
+        sdk_results['students'] = students_rows[:5]
     except Exception as e:
         sdk_results['students_error'] = str(e)
         sdk_results['students'] = []
 
     try:
-        if getattr(db, 'client', None):
-            r = db.client.table('admissions').select('*').limit(5).execute()
-            sdk_results['admissions'] = r.data if r and getattr(r, 'data', None) is not None else []
-        else:
-            sdk_results['admissions'] = []
+        admissions_rows = db.select('admissions') or []
+        sdk_results['admissions'] = admissions_rows[:5]
     except Exception as e:
         sdk_results['admissions_error'] = str(e)
         sdk_results['admissions'] = []
@@ -544,11 +539,10 @@ def admission_controller_dashboard():
     
     # Get recent enquiries with academic details
     try:
-        enquiries_response = db.client.table('enquiries').select('*').order('created_at', desc=True).limit(10).execute()
-        recent_enquiries_data = enquiries_response.data if enquiries_response else []
+        recent_enquiries_data = db.select('enquiries') or []
+        recent_enquiries_data = sorted(recent_enquiries_data, key=lambda x: x.get('created_at') or '', reverse=True)[:10]
     except:
-        recent_enquiries_data = db.select('enquiries')
-        recent_enquiries_data = recent_enquiries_data[:10] if recent_enquiries_data else []
+        recent_enquiries_data = db.select('enquiries') or []
     
     # Enhance with student cutoff data
     recent_enquiries = []
@@ -645,13 +639,14 @@ def admin_dashboard():
             admissions_sample = rest_get('admissions')
             accepted_sample = rest_get('students', {'status': 'eq.accepted'})
 
-            # Build lists from samples (simple mapping)
-            students_by_id = {s.get('id'): s for s in students_sample}
+            # Build lists from samples (use string keys to avoid int/str mismatches)
+            students_by_id = {str(s.get('id')): s for s in students_sample}
 
             pending_students = []
             for s in students_sample:
                 sid = s.get('id')
-                if any(a.get('student_id') == sid for a in admissions_sample):
+                sid_key = str(sid) if sid is not None else None
+                if any(str(a.get('student_id')) == sid_key for a in admissions_sample):
                     continue
                 if (s.get('status') or '').strip().lower() == 'accepted':
                     continue
@@ -668,7 +663,8 @@ def admin_dashboard():
             assigned_students = []
             for adm in admissions_sample:
                 sid = adm.get('student_id')
-                stu = students_by_id.get(sid) or {}
+                sid_key = str(sid) if sid is not None else None
+                stu = students_by_id.get(sid_key) or {}
                 assigned_students.append({
                     'student_id': sid,
                     'app_id': adm.get('id') or adm.get('app_id'),
@@ -691,7 +687,8 @@ def admin_dashboard():
             accepted_students = []
             for st in accepted_sample:
                 sid = st.get('id')
-                has_adm = any(a.get('student_id') == sid for a in admissions_sample)
+                sid_key = str(sid) if sid is not None else None
+                has_adm = any(str(a.get('student_id')) == sid_key for a in admissions_sample)
                 accepted_students.append({
                     'student_id': sid,
                     'name': st.get('full_name') or st.get('name') or 'N/A',
@@ -726,29 +723,22 @@ def admin_dashboard():
 
     # First, get all students using Supabase client directly for ordering and limit
     try:
-        students_response = db.client.table('students').select('*').order('created_at', desc=True).limit(100).execute()
-        all_students = students_response.data if students_response else []
+        all_students = db.select('students') or []
         try:
-            sd = getattr(students_response, 'data', None)
-            print(f"DEBUG: students_response present type={type(students_response)} data_present={bool(sd)} count={len(sd) if sd else 0}")
+            all_students = sorted(all_students, key=lambda x: x.get('created_at') or '', reverse=True)[:100]
         except Exception:
-            print("DEBUG: students_response logging failed")
+            pass
     except:
-        all_students = db.select('students')
+        all_students = db.select('students') or []
         print(f"DEBUG: students_response SDK failed, fallback students count={len(all_students) if all_students else 0}")
     
     # Get all students who already have branch assignments (from admissions table)
     try:
-        admissions_response = db.client.table('admissions').select('student_id').execute()
-        assigned_student_ids = [adm['student_id'] for adm in admissions_response.data] if admissions_response.data else []
-        try:
-            ad = getattr(admissions_response, 'data', None)
-            print(f"DEBUG: admissions_response present type={type(admissions_response)} data_present={bool(ad)} count={len(ad) if ad else 0}")
-        except Exception:
-            print("DEBUG: admissions_response logging failed")
+        admissions_rows = db.select('admissions', columns='student_id') or []
+        assigned_student_ids = [adm.get('student_id') for adm in admissions_rows if adm.get('student_id') is not None]
     except:
-        admissions = db.select('admissions', columns='student_id')
-        assigned_student_ids = [adm['student_id'] for adm in admissions] if admissions else []
+        admissions = db.select('admissions', columns='student_id') or []
+        assigned_student_ids = [adm.get('student_id') for adm in admissions if adm.get('student_id') is not None]
         print(f"DEBUG: admissions_response SDK failed, fallback admissions count={len(assigned_student_ids) if assigned_student_ids else 0}")
     
     pending_students = []
@@ -817,9 +807,7 @@ def admin_dashboard():
     # current user name for filtering admissions to only those accepted by this admin
     current_user_name = user.get('name') if user else None
     try:
-        admissions_response = db.client.table('admissions').select('*').execute()
-        admissions_list = admissions_response.data if admissions_response.data else []
-        
+        admissions_list = db.select('admissions') or []
         for admission in admissions_list:
             student_id = admission.get('student_id')
             
@@ -924,14 +912,7 @@ def admin_dashboard():
     # Get all students with status 'accepted' (no admin-based filtering)
     accepted_students = []
     try:
-        accepted_rows = []
-        # Prefer SDK client; fallback to db.select
-        try:
-            if getattr(db, 'client', None):
-                resp = db.client.table('students').select('*').eq('status', 'accepted').order('accepted_at', desc=True).limit(200).execute()
-                accepted_rows = resp.data if resp and getattr(resp, 'data', None) is not None else []
-        except Exception:
-            accepted_rows = db.select('students', filters={'status': 'accepted'}) or []
+        accepted_rows = db.select('students', filters={'status': 'accepted'}) or []
 
         for st in accepted_rows:
             student_id = st.get('id') or st.get('student_id')
@@ -1001,7 +982,8 @@ def admin_dashboard():
     # rows, populate the lists from those samples so the deployed UI reflects
     # actual DB contents even when the SDK client initialization failed.
     try:
-        students_by_id = {s.get('id'): s for s in server_debug.get('students_sample', [])}
+        # Use string keys to avoid int/str mismatches between REST and SDK
+        students_by_id = {str(s.get('id')): s for s in server_debug.get('students_sample', [])}
         admissions_sample = server_debug.get('admissions_sample') or []
         accepted_sample = server_debug.get('accepted_sample') or []
 
@@ -1023,11 +1005,12 @@ def admin_dashboard():
                 academics_sample = []
         acad_map = {a.get('student_id'): a for a in (academics_sample or [])}
 
-        if (not assigned_students or len(assigned_students) == 0) and admissions_sample:
+            if (not assigned_students or len(assigned_students) == 0) and admissions_sample:
             assigned_students = []
             for adm in admissions_sample:
                 sid = adm.get('student_id')
-                stu = students_by_id.get(sid) or {}
+                sid_key = str(sid) if sid is not None else None
+                stu = students_by_id.get(sid_key) or {}
                 # Determine preferred/optional department names
                 pref_id = adm.get('preferred_dept_id') or adm.get('primary_dept_id')
                 try:
@@ -1077,11 +1060,12 @@ def admin_dashboard():
                     'documents_submitted_at': adm.get('documents_submitted_at')
                 })
 
-        if (not accepted_students or len(accepted_students) == 0) and accepted_sample:
+            if (not accepted_students or len(accepted_students) == 0) and accepted_sample:
             accepted_students = []
             for st in accepted_sample:
                 sid = st.get('id')
-                has_adm = any(a.get('student_id') == sid for a in admissions_sample)
+                sid_key = str(sid) if sid is not None else None
+                has_adm = any(str(a.get('student_id')) == sid_key for a in admissions_sample)
                 cutoff_val = acad_map.get(sid, {}).get('cutoff') if sid is not None else None
                 accepted_students.append({
                     'student_id': sid,
@@ -1698,22 +1682,16 @@ def new_enquiry():
                         student_id = student_result[0].get('id') or student_result[0].get('student_id')
             except Exception as e:
                 print(f"Error creating or locating student: {e}")
-                raise
-            
-            # Create academic record with ALL academic details including reservations
-            academic_data = {
-                'student_id': student_id,
-                'school_name': plus2_school_name,
-                'board': board,
-                'maths_marks': float(maths_marks) if maths_marks else 0,
-                'physics_marks': float(physics_marks) if physics_marks else 0,
-                'chemistry_marks': float(chemistry_marks) if chemistry_marks else 0,
-                'cutoff': cutoff,
-                'quota_type': general_quota,
-                'govt_school': category_7_5,
-                'first_graduate': first_graduate,
-                # TNEA eligibility calculation: average of Maths, Physics, Chemistry
-                'tnea_average': None,
+                try:
+                    # Get all active departments using wrapper
+                    try:
+                        departments = db.select('departments', filters={'is_active': True}) or []
+                        print(f"DEBUG: Departments fetched successfully: {len(departments)} departments")
+                        if departments:
+                            print(f"DEBUG: First department structure: {departments[0]}")
+                    except Exception as e:
+                        print(f"DEBUG: Error fetching departments via db.select: {e}")
+                        departments = []
                 'tnea_eligible': False
             }
 
@@ -2981,21 +2959,15 @@ def assign_branch(student_id):
     academic = db.select('academics', filters={'student_id': student_id})
     academic = academic[0] if academic else None
     
-    # Get all active departments
+    # Get all active departments via wrapper
     try:
-        departments_response = db.client.table('departments').select('*').eq('is_active', True).execute()
-        departments = departments_response.data if departments_response.data else []
+        departments = db.select('departments', filters={'is_active': True}) or []
         print(f"DEBUG: Departments fetched successfully: {len(departments)} departments")
         if departments:
             print(f"DEBUG: First department structure: {departments[0]}")
     except Exception as e:
-        print(f"DEBUG: Error fetching departments via Supabase client: {e}")
-        try:
-            departments = db.select('departments', filters={'is_active': True})
-            print(f"DEBUG: Departments fetched via db.select: {len(departments)} departments")
-        except Exception as e2:
-            print(f"DEBUG: Error with db.select: {e2}")
-            departments = []
+        print(f"DEBUG: Error fetching departments via db.select: {e}")
+        departments = []
     
     if request.method == 'POST':
         # Block POST if student not yet accepted by admin
@@ -3609,10 +3581,8 @@ def documents_management():
         user['name'] = f"{user.get('first_name', '')} {user.get('last_name', '')}".strip() or 'Admin'
     
     try:
-        # Get all documents with student and application details
-        documents_response = db.client.table('documents').select('*').execute()
-        all_documents = documents_response.data if documents_response.data else []
-        
+        # Get all documents with student and application details (use wrapper)
+        all_documents = db.select('documents') or []
         print(f"DEBUG: Found {len(all_documents)} total documents")
         
         # Group documents by app_id
@@ -3814,10 +3784,12 @@ def counselling_list():
     completed_students = []
     
     try:
-        apps_response = db.client.table('admission_applications')\
-            .select('app_id,student_id,documents_count,step3_completed,created_at')\
-            .gt('documents_count', 0).order('created_at', desc=True).execute()
-        apps = apps_response.data if apps_response and apps_response.data else []
+        apps = db.select('admission_applications', columns='app_id,student_id,documents_count,step3_completed,created_at') or []
+        try:
+            apps = [a for a in apps if (a.get('documents_count') or 0) > 0]
+            apps = sorted(apps, key=lambda x: x.get('created_at') or '', reverse=True)
+        except Exception:
+            pass
     except Exception as e:
         print(f"Error fetching admission applications: {e}")
         apps = []
@@ -4054,10 +4026,13 @@ def payments_list():
     
     try:
         # Get all applications with uploaded documents (eligible for payment)
-        apps_response = db.client.table('admission_applications')\
-            .select('app_id,student_id,documents_count,registration_id,created_at')\
-            .gt('documents_count', 0).order('created_at', desc=True).execute()
-        apps = apps_response.data if apps_response and apps_response.data else []
+        apps = db.select('admission_applications', columns='app_id,student_id,documents_count,registration_id,created_at') or []
+        try:
+            # Keep only those with documents_count > 0 and sort by created_at desc
+            apps = [a for a in apps if (a.get('documents_count') or 0) > 0]
+            apps = sorted(apps, key=lambda x: x.get('created_at') or '', reverse=True)
+        except Exception:
+            pass
     except Exception as e:
         print(f"Error fetching admission applications for payments: {e}")
         apps = []
