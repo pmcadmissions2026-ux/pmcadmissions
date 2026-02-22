@@ -870,6 +870,74 @@ def admin_dashboard():
         'accepted_count': db.count('students', filters={'status': 'accepted'})
     }
 
+    # If server-side computed lists are empty but our REST debug samples contain
+    # rows, populate the lists from those samples so the deployed UI reflects
+    # actual DB contents even when the SDK client initialization failed.
+    try:
+        students_by_id = {s.get('id'): s for s in server_debug.get('students_sample', [])}
+        admissions_sample = server_debug.get('admissions_sample') or []
+        accepted_sample = server_debug.get('accepted_sample') or []
+
+        if (not assigned_students or len(assigned_students) == 0) and admissions_sample:
+            assigned_students = []
+            for adm in admissions_sample:
+                sid = adm.get('student_id')
+                stu = students_by_id.get(sid) or {}
+                assigned_students.append({
+                    'student_id': sid,
+                    'app_id': adm.get('id') or adm.get('app_id'),
+                    'name': stu.get('full_name') or stu.get('name') or 'N/A',
+                    'unique_id': stu.get('unique_id'),
+                    'community': stu.get('community'),
+                    'cutoff': None,
+                    'preferred_dept': None,
+                    'preferred_dept_code': '',
+                    'optional_depts': [],
+                    'allotted_dept': adm.get('allotted_dept_id') and '-' or '-',
+                    'allotted_dept_code': '',
+                    'status': adm.get('status'),
+                    'assignment_date': adm.get('created_at'),
+                    'documents_uploaded': adm.get('documents_uploaded', False),
+                    'documents_count': len(adm.get('documents', {})) if isinstance(adm.get('documents', {}), dict) else 0,
+                    'documents_submitted_at': adm.get('documents_submitted_at')
+                })
+
+        if (not accepted_students or len(accepted_students) == 0) and accepted_sample:
+            accepted_students = []
+            for st in accepted_sample:
+                sid = st.get('id')
+                has_adm = any(a.get('student_id') == sid for a in admissions_sample)
+                accepted_students.append({
+                    'student_id': sid,
+                    'name': st.get('full_name') or st.get('name') or 'N/A',
+                    'unique_id': st.get('unique_id'),
+                    'accepted_by': st.get('accepted_by'),
+                    'accepted_at': st.get('accepted_at'),
+                    'cutoff': None,
+                    'enquiry_id': None,
+                    'has_admission': has_adm
+                })
+
+        if (not pending_students or len(pending_students) == 0) and server_debug.get('students_sample'):
+            pending_students = []
+            for s in server_debug.get('students_sample', []):
+                sid = s.get('id')
+                if any(a.get('student_id') == sid for a in admissions_sample):
+                    continue
+                if (s.get('status') or '').strip().lower() == 'accepted':
+                    continue
+                pending_students.append({
+                    'student_id': sid,
+                    'name': s.get('full_name') or s.get('name') or 'N/A',
+                    'unique_id': s.get('unique_id'),
+                    'community': s.get('community'),
+                    'cutoff': None,
+                    'enquiry_id': None,
+                    'time_ago': 'Unknown'
+                })
+    except Exception as e:
+        print(f"REST-sample fallback mapping failed: {e}")
+
     return render_template('admin/admin_dashboard.html',
                           user=user,
                           pending_students=pending_students,
