@@ -1181,6 +1181,130 @@ def view_application(app_id):
                           history=history)
 
 
+@admin_bp.errorhandler(Exception)
+def admin_unhandled_exception(e):
+    """Catch unhandled exceptions in admin routes, log traceback, and
+    attempt to render the admin dashboard using REST samples so the UI
+    remains usable and we capture the error for debugging."""
+    try:
+        print("Unhandled exception in admin blueprint:")
+        traceback.print_exc()
+    except Exception:
+        pass
+
+    # Attempt to build a safe fallback using REST samples
+    try:
+        rest_base = Config.SUPABASE_URL.rstrip('/') if Config.SUPABASE_URL else None
+        rest_key = (Config.SUPABASE_SERVICE_KEY or Config.SUPABASE_KEY) or None
+
+        def rest_get(table, extra_params=None):
+            if not rest_base or not rest_key:
+                return []
+            headers = {'apikey': rest_key, 'Authorization': f'Bearer {rest_key}'}
+            params = {'select': '*', 'limit': '200'}
+            if extra_params:
+                params.update(extra_params)
+            try:
+                url = f"{rest_base}/rest/v1/{table}"
+                r = requests.get(url, headers=headers, params=params, timeout=10)
+                if r.status_code == 200:
+                    try:
+                        return r.json()
+                    except Exception:
+                        return []
+                else:
+                    print(f"REST fallback select failed {table}: status={r.status_code} body={r.text}")
+                    return []
+            except Exception as ex:
+                print(f"REST fallback select error for {table}: {ex}")
+                return []
+
+        students_sample = rest_get('students')
+        admissions_sample = rest_get('admissions')
+        accepted_sample = rest_get('students', {'status': 'eq.accepted'})
+
+        students_by_id = {s.get('id'): s for s in students_sample}
+
+        pending_students = []
+        for s in students_sample:
+            sid = s.get('id')
+            if any(a.get('student_id') == sid for a in admissions_sample):
+                continue
+            if (s.get('status') or '').strip().lower() == 'accepted':
+                continue
+            pending_students.append({
+                'student_id': sid,
+                'name': s.get('full_name') or s.get('name') or 'N/A',
+                'unique_id': s.get('unique_id'),
+                'community': s.get('community'),
+                'cutoff': None,
+                'enquiry_id': None,
+                'time_ago': 'Unknown'
+            })
+
+        assigned_students = []
+        for adm in admissions_sample:
+            sid = adm.get('student_id')
+            stu = students_by_id.get(sid) or {}
+            assigned_students.append({
+                'student_id': sid,
+                'app_id': adm.get('id') or adm.get('app_id'),
+                'name': stu.get('full_name') or stu.get('name') or 'N/A',
+                'unique_id': stu.get('unique_id'),
+                'community': stu.get('community'),
+                'cutoff': None,
+                'preferred_dept': None,
+                'preferred_dept_code': '',
+                'optional_depts': [],
+                'allotted_dept': adm.get('allotted_dept_id') and '-' or '-',
+                'allotted_dept_code': '',
+                'status': adm.get('status'),
+                'assignment_date': adm.get('created_at'),
+                'documents_uploaded': adm.get('documents_uploaded', False),
+                'documents_count': len(adm.get('documents', {})) if isinstance(adm.get('documents', {}), dict) else 0,
+                'documents_submitted_at': adm.get('documents_submitted_at')
+            })
+
+        accepted_students = []
+        for st in accepted_sample:
+            sid = st.get('id')
+            has_adm = any(a.get('student_id') == sid for a in admissions_sample)
+            accepted_students.append({
+                'student_id': sid,
+                'name': st.get('full_name') or st.get('name') or 'N/A',
+                'unique_id': st.get('unique_id'),
+                'accepted_by': st.get('accepted_by'),
+                'accepted_at': st.get('accepted_at'),
+                'cutoff': None,
+                'enquiry_id': None,
+                'has_admission': has_adm
+            })
+
+        server_debug = {
+            'students_sample': students_sample,
+            'admissions_sample': admissions_sample,
+            'accepted_sample': accepted_sample,
+            'counts': {
+                'students_count': len(students_sample),
+                'admissions_count': len(admissions_sample),
+                'accepted_count': len(accepted_sample)
+            }
+        }
+
+        # Render the admin dashboard with the REST-based data as a safe fallback
+        return render_template('admin/admin_dashboard.html',
+                               user=get_current_user(),
+                               pending_students=pending_students,
+                               assigned_students=assigned_students,
+                               accepted_students=accepted_students,
+                               server_debug=server_debug), 500
+    except Exception as render_exc:
+        print(f"Admin error handler also failed: {render_exc}")
+        traceback.print_exc()
+        # As a last resort, return a simple text response with 500
+        return ("Admin dashboard temporarily unavailable. Check server logs.", 500)
+
+
 @admin_bp.route('/enquiry/<int:enquiry_id>/details')
 @check_module_access('enquiries')
 @role_required(['super_admin', 'admin'])
