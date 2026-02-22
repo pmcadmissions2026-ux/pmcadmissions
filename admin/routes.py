@@ -989,21 +989,69 @@ def admin_dashboard():
         admissions_sample = server_debug.get('admissions_sample') or []
         accepted_sample = server_debug.get('accepted_sample') or []
 
+        # Fetch departments and academics via REST debug samples so we can
+        # display dept names and cutoff values similar to local server.
+        departments_sample = server_debug.get('departments_sample') if server_debug.get('departments_sample') is not None else None
+        if departments_sample is None:
+            try:
+                departments_sample = rest_get('departments')
+            except Exception:
+                departments_sample = []
+        dept_map = {d.get('id'): d for d in (departments_sample or [])}
+
+        academics_sample = server_debug.get('academics_sample') if server_debug.get('academics_sample') is not None else None
+        if academics_sample is None:
+            try:
+                academics_sample = rest_get('academics')
+            except Exception:
+                academics_sample = []
+        acad_map = {a.get('student_id'): a for a in (academics_sample or [])}
+
         if (not assigned_students or len(assigned_students) == 0) and admissions_sample:
             assigned_students = []
             for adm in admissions_sample:
                 sid = adm.get('student_id')
                 stu = students_by_id.get(sid) or {}
+                # Determine preferred/optional department names
+                pref_id = adm.get('preferred_dept_id') or adm.get('primary_dept_id')
+                try:
+                    pref_id_int = int(pref_id) if pref_id is not None else None
+                except Exception:
+                    pref_id_int = pref_id
+                pref_dept = dept_map.get(pref_id_int) if pref_id_int is not None else None
+
+                optional_depts_list = []
+                optional_dept_ids = adm.get('optional_dept_ids')
+                if optional_dept_ids:
+                    try:
+                        if isinstance(optional_dept_ids, str):
+                            opt_ids = json_lib.loads(optional_dept_ids)
+                        else:
+                            opt_ids = optional_dept_ids
+                    except Exception:
+                        opt_ids = optional_dept_ids if isinstance(optional_dept_ids, list) else [optional_dept_ids]
+
+                    for od in opt_ids:
+                        try:
+                            od_int = int(od)
+                        except Exception:
+                            od_int = od
+                        d = dept_map.get(od_int)
+                        if d:
+                            optional_depts_list.append(d)
+
+                cutoff_val = acad_map.get(sid, {}).get('cutoff') if sid is not None else None
+
                 assigned_students.append({
                     'student_id': sid,
                     'app_id': adm.get('id') or adm.get('app_id'),
                     'name': stu.get('full_name') or stu.get('name') or 'N/A',
                     'unique_id': stu.get('unique_id'),
                     'community': stu.get('community'),
-                    'cutoff': None,
-                    'preferred_dept': None,
-                    'preferred_dept_code': '',
-                    'optional_depts': [],
+                    'cutoff': cutoff_val,
+                    'preferred_dept': pref_dept.get('dept_name') if pref_dept else None,
+                    'preferred_dept_code': pref_dept.get('dept_code') if pref_dept else '',
+                    'optional_depts': optional_depts_list,
                     'allotted_dept': adm.get('allotted_dept_id') and '-' or '-',
                     'allotted_dept_code': '',
                     'status': adm.get('status'),
@@ -1018,13 +1066,14 @@ def admin_dashboard():
             for st in accepted_sample:
                 sid = st.get('id')
                 has_adm = any(a.get('student_id') == sid for a in admissions_sample)
+                cutoff_val = acad_map.get(sid, {}).get('cutoff') if sid is not None else None
                 accepted_students.append({
                     'student_id': sid,
                     'name': st.get('full_name') or st.get('name') or 'N/A',
                     'unique_id': st.get('unique_id'),
                     'accepted_by': st.get('accepted_by'),
                     'accepted_at': st.get('accepted_at'),
-                    'cutoff': None,
+                    'cutoff': cutoff_val,
                     'enquiry_id': None,
                     'has_admission': has_adm
                 })
@@ -1037,12 +1086,13 @@ def admin_dashboard():
                     continue
                 if (s.get('status') or '').strip().lower() == 'accepted':
                     continue
+                cutoff_val = acad_map.get(sid, {}).get('cutoff') if sid is not None else None
                 pending_students.append({
                     'student_id': sid,
                     'name': s.get('full_name') or s.get('name') or 'N/A',
                     'unique_id': s.get('unique_id'),
                     'community': s.get('community'),
-                    'cutoff': None,
+                    'cutoff': cutoff_val,
                     'enquiry_id': None,
                     'time_ago': 'Unknown'
                 })
