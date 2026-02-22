@@ -1005,7 +1005,7 @@ def admin_dashboard():
                 academics_sample = []
         acad_map = {a.get('student_id'): a for a in (academics_sample or [])}
 
-            if (not assigned_students or len(assigned_students) == 0) and admissions_sample:
+        if (not assigned_students or len(assigned_students) == 0) and admissions_sample:
             assigned_students = []
             for adm in admissions_sample:
                 sid = adm.get('student_id')
@@ -1061,22 +1061,22 @@ def admin_dashboard():
                 })
 
             if (not accepted_students or len(accepted_students) == 0) and accepted_sample:
-            accepted_students = []
-            for st in accepted_sample:
-                sid = st.get('id')
-                sid_key = str(sid) if sid is not None else None
-                has_adm = any(str(a.get('student_id')) == sid_key for a in admissions_sample)
-                cutoff_val = acad_map.get(sid, {}).get('cutoff') if sid is not None else None
-                accepted_students.append({
-                    'student_id': sid,
-                    'name': st.get('full_name') or st.get('name') or 'N/A',
-                    'unique_id': st.get('unique_id'),
-                    'accepted_by': st.get('accepted_by'),
-                    'accepted_at': st.get('accepted_at'),
-                    'cutoff': cutoff_val,
-                    'enquiry_id': None,
-                    'has_admission': has_adm
-                })
+                accepted_students = []
+                for st in accepted_sample:
+                    sid = st.get('id')
+                    sid_key = str(sid) if sid is not None else None
+                    has_adm = any(str(a.get('student_id')) == sid_key for a in admissions_sample)
+                    cutoff_val = acad_map.get(sid, {}).get('cutoff') if sid is not None else None
+                    accepted_students.append({
+                        'student_id': sid,
+                        'name': st.get('full_name') or st.get('name') or 'N/A',
+                        'unique_id': st.get('unique_id'),
+                        'accepted_by': st.get('accepted_by'),
+                        'accepted_at': st.get('accepted_at'),
+                        'cutoff': cutoff_val,
+                        'enquiry_id': None,
+                        'has_admission': has_adm
+                    })
 
         if (not pending_students or len(pending_students) == 0) and server_debug.get('students_sample'):
             pending_students = []
@@ -1682,18 +1682,15 @@ def new_enquiry():
                         student_id = student_result[0].get('id') or student_result[0].get('student_id')
             except Exception as e:
                 print(f"Error creating or locating student: {e}")
+                # Get all active departments using wrapper
                 try:
-                    # Get all active departments using wrapper
-                    try:
-                        departments = db.select('departments', filters={'is_active': True}) or []
-                        print(f"DEBUG: Departments fetched successfully: {len(departments)} departments")
-                        if departments:
-                            print(f"DEBUG: First department structure: {departments[0]}")
-                    except Exception as e:
-                        print(f"DEBUG: Error fetching departments via db.select: {e}")
-                        departments = []
-                'tnea_eligible': False
-            }
+                    departments = db.select('departments', filters={'is_active': True}) or []
+                    print(f"DEBUG: Departments fetched successfully: {len(departments)} departments")
+                    if departments:
+                        print(f"DEBUG: First department structure: {departments[0]}")
+                except Exception as e:
+                    print(f"DEBUG: Error fetching departments via db.select: {e}")
+                    departments = []
 
             # Filter academic_data to allowed columns in academics table if available
             try:
