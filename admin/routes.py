@@ -63,8 +63,12 @@ def debug_sdk_rest_admin():
         if rest_base and rest_key:
             s_url = f"{rest_base}/rest/v1/students"
             a_url = f"{rest_base}/rest/v1/admissions"
+            d_url = f"{rest_base}/rest/v1/departments"
+            acad_url = f"{rest_base}/rest/v1/academics"
             s_r = requests.get(s_url, headers=headers, params={'select': '*', 'limit': 5}, timeout=10)
             a_r = requests.get(a_url, headers=headers, params={'select': '*', 'limit': 5}, timeout=10)
+            d_r = requests.get(d_url, headers=headers, params={'select': '*', 'limit': 200}, timeout=10)
+            acad_r = requests.get(acad_url, headers=headers, params={'select': '*', 'limit': 200}, timeout=10)
             rest_results['students_status'] = s_r.status_code
             try:
                 rest_results['students'] = s_r.json() if s_r.status_code == 200 else {'status': s_r.status_code, 'body': s_r.text}
@@ -75,6 +79,16 @@ def debug_sdk_rest_admin():
                 rest_results['admissions'] = a_r.json() if a_r.status_code == 200 else {'status': a_r.status_code, 'body': a_r.text}
             except Exception:
                 rest_results['admissions'] = {'status': a_r.status_code, 'body': a_r.text}
+            rest_results['departments_status'] = d_r.status_code
+            try:
+                rest_results['departments'] = d_r.json() if d_r.status_code == 200 else {'status': d_r.status_code, 'body': d_r.text}
+            except Exception:
+                rest_results['departments'] = {'status': d_r.status_code, 'body': d_r.text}
+            rest_results['academics_status'] = acad_r.status_code
+            try:
+                rest_results['academics'] = acad_r.json() if acad_r.status_code == 200 else {'status': acad_r.status_code, 'body': acad_r.text}
+            except Exception:
+                rest_results['academics'] = {'status': acad_r.status_code, 'body': acad_r.text}
         else:
             rest_results['error'] = 'missing rest_base or rest_key'
     except Exception as e:
@@ -970,6 +984,8 @@ def admin_dashboard():
 
         server_debug['students_sample'] = rest_get('students')
         server_debug['admissions_sample'] = rest_get('admissions')
+        server_debug['departments_sample'] = rest_get('departments')
+        server_debug['academics_sample'] = rest_get('academics')
         server_debug['accepted_sample'] = rest_get('students', {'status': 'eq.accepted'})
     except Exception as e:
         print(f"Error building server_debug REST samples: {e}")
