@@ -176,6 +176,13 @@ app.get('/admin/super_admin_dashboard', (req, res) => {
   return res.status(404).send('super_admin_dashboard not found');
 });
 
+// Serve student profile view (client-driven template)
+app.get('/admin/student_profile_view', (req, res) => {
+  const p = path.join(__dirname, 'templates', 'admin', 'student_profile_view.html');
+  if(require('fs').existsSync(p)) return res.sendFile(p);
+  return res.status(404).send('student_profile_view not found');
+});
+
 // Serve a small client config JS so frontend can access safe env (anon) values
 app.get('/config.js', (req, res) => {
   const clientConfig = {

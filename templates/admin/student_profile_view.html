@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Student Profile - {{ profile.student.full_name or profile.student.name }}</title>
+<title>Student Profile</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -11,10 +11,7 @@
 <style>
 body{font-family:'Lexend',sans-serif}
 .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24}
-@media print{
-.no-print{display:none!important}
-body{background:#fff!important}
-}
+@media print{ .no-print{display:none!important} body{background:#fff!important} }
 </style>
 </head>
 <body class="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 text-[#111418] dark:text-white min-h-screen">
@@ -23,399 +20,394 @@ body{background:#fff!important}
 <header class="bg-white dark:bg-[#1a202c] border-b border-[#e5e7eb] dark:border-[#2d3748] sticky top-0 z-50 shadow-sm no-print">
 <div class="max-w-[1400px] mx-auto px-6 py-4 flex items-center justify-between">
 <div class="flex items-center gap-3">
-<div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
-{{ (profile.student.full_name or profile.student.name or 'S')[0]|upper }}
-</div>
+<div id="student-avatar" class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm">S</div>
 <div>
-<h2 class="text-xl font-bold">{{ profile.student.full_name or profile.student.name or 'Student Profile' }}</h2>
-<p class="text-xs text-slate-500 dark:text-slate-400">ID: {{ profile.student.unique_id or 'N/A' }}</p>
+<h2 id="student-name" class="text-xl font-bold">Student Profile</h2>
+<p id="student-unique" class="text-xs text-slate-500 dark:text-slate-400">ID: N/A</p>
 </div>
 </div>
 <div class="flex items-center gap-2">
-<button onclick="downloadPDF()" class="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-md">
+<button id="downloadPdfBtn" class="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-md no-print">
 <span class="material-symbols-outlined text-sm">download</span>
 Download PDF
 </button>
-<a href="#" data-route="student_profiles" class="inline-flex items-center gap-2 bg-slate-500 hover:bg-slate-600 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-md">
+<a href="/admin/student_profiles" id="backToList" class="inline-flex items-center gap-2 bg-slate-500 hover:bg-slate-600 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-md no-print">
 <span class="material-symbols-outlined text-sm">arrow_back</span>
 Back
 </a>
 </div>
+</div>
 </header>
 
-<main class="max-w-[1400px] mx-auto p-6">
+<main id="profile-main" class="max-w-[1400px] mx-auto p-6">
 
 <!-- Personal Information -->
-<div class="bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden shadow-md mb-6">
+<div id="personal-section" class="bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden shadow-md mb-6">
 <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4">
-<h3 class="text-white text-lg font-bold flex items-center gap-2">
-<span class="material-symbols-outlined">person</span>
-Personal Information
-</h3>
+<h3 class="text-white text-lg font-bold flex items-center gap-2"><span class="material-symbols-outlined">person</span>Personal Information</h3>
 </div>
-<div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-<div>
-<p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Full Name</p>
-<p class="text-base font-semibold text-[#111418] dark:text-white">{{ profile.student.full_name or profile.student.name or 'N/A' }}</p>
-</div>
-<div>
-<p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Email</p>
-<p class="text-base font-semibold text-[#111418] dark:text-white break-all">{{ profile.student.email or 'N/A' }}</p>
-</div>
-<div>
-<p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Phone</p>
-<p class="text-base font-semibold text-[#111418] dark:text-white">{{ profile.student.phone or 'N/A' }}</p>
-</div>
-<div>
-<p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Gender</p>
-<p class="text-base font-semibold text-[#111418] dark:text-white capitalize">{{ profile.student.gender or 'N/A' }}</p>
-</div>
-<div>
-<p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Date of Birth</p>
-<p class="text-base font-semibold text-[#111418] dark:text-white">{{ profile.student.dob or 'N/A' }}</p>
-</div>
-<div>
-<p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Status</p>
-<span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">{{ profile.student.status or 'N/A' }}</span>
-</div>
-<div>
-<p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Community</p>
-<p class="text-base font-semibold text-[#111418] dark:text-white">{{ profile.student.community or 'N/A' }}</p>
-</div>
-<div>
-<p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Religion</p>
-<p class="text-base font-semibold text-[#111418] dark:text-white">{{ profile.student.religion or 'N/A' }}</p>
-</div>
+<div id="personal-body" class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Filled by JS -->
 </div>
 </div>
 
 <!-- Academic Details -->
-{% if profile.academic %}
-<div class="bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden shadow-md mb-6">
+<div id="academic-section" class="hidden bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden shadow-md mb-6">
 <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 px-6 py-4">
-<h3 class="text-white text-lg font-bold flex items-center gap-2">
-<span class="material-symbols-outlined">school</span>
-Academic Information
-</h3>
+<h3 class="text-white text-lg font-bold flex items-center gap-2"><span class="material-symbols-outlined">school</span>Academic Information</h3>
 </div>
-<div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-<div>
-<p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">School Name</p>
-<p class="text-base font-semibold text-[#111418] dark:text-white">{{ profile.academic.school_name or 'N/A' }}</p>
-</div>
-<div>
-<p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">HSC Percentage</p>
-<p class="text-base font-bold text-amber-600 dark:text-amber-400">{{ profile.student.plus2_percentage or 'N/A' }}%</p>
-</div>
-<div>
-<p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Cutoff Score</p>
-<p class="text-base font-bold text-orange-600 dark:text-orange-400">{{ profile.academic.cutoff or 'N/A' }}</p>
-</div>
-<div>
-<p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">TNEA Eligible</p>
-<p class="text-base font-semibold text-[#111418] dark:text-white">{{ profile.academic.tnea_eligible or 'N/A' }}</p>
-</div>
-<div>
-<p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">TNEA Average</p>
-<p class="text-base font-semibold text-[#111418] dark:text-white">{{ profile.academic.tnea_average or 'N/A' }}</p>
+<div id="academic-body" class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Filled by JS -->
 </div>
 </div>
-</div>
-{% endif %}
 
 <!-- Admissions & Branch Assignments -->
-{% if profile.admissions %}
-<div class="bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden shadow-md mb-6">
+<div id="admissions-section" class="hidden bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden shadow-md mb-6">
 <div class="bg-gradient-to-r from-purple-500 to-purple-600 px-6 py-4">
-<h3 class="text-white text-lg font-bold flex items-center gap-2">
-<span class="material-symbols-outlined">assignment</span>
-Branch Assignment
-</h3>
+<h3 class="text-white text-lg font-bold flex items-center gap-2"><span class="material-symbols-outlined">assignment</span>Branch Assignment</h3>
 </div>
-<div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-{% for adm in profile.admissions %}
-<div class="p-4 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-[#2d3748] dark:to-[#1a202c] rounded-lg border border-[#e5e7eb] dark:border-[#4a5568]">
-<div class="space-y-3">
-<div>
-<p class="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Preferred Branch</p>
-<p class="text-base font-bold text-blue-600 dark:text-blue-400">{{ adm.preferred_dept_name or 'N/A' }}</p>
-</div>
-<div>
-<p class="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Optional Branches</p>
-<p class="text-base font-semibold text-[#111418] dark:text-white">{{ adm.optional_dept_name or 'N/A' }}</p>
+<div id="admissions-body" class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Filled by JS -->
 </div>
 </div>
-</div>
-{% endfor %}
-</div>
-</div>
-{% endif %}
 
 <!-- Applications & Documents -->
-{% if profile.applications %}
-<div class="bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden shadow-md mb-6">
+<div id="applications-section" class="hidden bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden shadow-md mb-6">
 <div class="bg-gradient-to-r from-green-500 to-green-600 px-6 py-4">
-<h3 class="text-white text-lg font-bold flex items-center gap-2">
-<span class="material-symbols-outlined">description</span>
-Applications & Documents
-</h3>
+<h3 class="text-white text-lg font-bold flex items-center gap-2"><span class="material-symbols-outlined">description</span>Applications & Documents</h3>
 </div>
-<div class="p-6 space-y-6">
-{% for app in profile.applications %}
-<div class="p-4 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-[#2d3748] dark:to-[#1a202c] rounded-lg border border-[#e5e7eb] dark:border-[#4a5568]">
-<p class="text-sm font-bold text-[#111418] dark:text-white mb-4">Application {{ app.app_id }}</p>
-
-<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-    <div>
-        <p class="text-xs text-gray-600">Applied GQ</p>
-        <p class="font-semibold text-green-700">{% if app.applied_gq %}Yes{% else %}No{% endif %}</p>
-    </div>
-    <div>
-        <p class="text-xs text-gray-600">GQ Application #</p>
-        <p class="font-semibold">{{ app.gq_application_number or app.counselling_application_number or 'N/A' }}</p>
-    </div>
-    <div>
-        <p class="text-xs text-gray-600">GQ Applied Date</p>
-        <p class="font-semibold">{{ app.gq_applied_at or app.counselling_applied_at or 'N/A' }}</p>
-    </div>
-    <div>
-        <p class="text-xs text-gray-600">Applied MQ</p>
-        <p class="font-semibold text-indigo-700">{% if app.applied_mq %}Yes{% else %}No{% endif %}</p>
-    </div>
-    <div>
-        <p class="text-xs text-gray-600">MQ Consortium #</p>
-        <p class="font-semibold">{{ app.mq_consortium_number or 'N/A' }}</p>
-    </div>
-    <div>
-        <p class="text-xs text-gray-600">MQ Applied Date</p>
-        <p class="font-semibold">{{ app.mq_applied_at or 'N/A' }}</p>
-    </div>
-</div>
-
-<!-- Documents Section for this Application -->
-{% if profile.documents_by_app and profile.documents_by_app.get(app.app_id) %}
-<div class="mt-4">
-<p class="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-3">Documents</p>
-<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-3">
-{% set docs = profile.documents_by_app.get(app.app_id, {}) %}
-
-<!-- 10th Mark Sheet -->
-<div class="flex flex-col items-center gap-1">
-{% if docs.get('10th_Mark_Sheet') %}
-<a href="{{ docs['10th_Mark_Sheet'].document_url }}" target="_blank" rel="noopener noreferrer" title="View 10th Mark Sheet" class="flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded transition-all shadow-sm w-full">
-<span class="material-symbols-outlined text-sm">visibility</span>
-</a>
-{% else %}
-<span class="flex items-center justify-center text-xs text-slate-400 bg-slate-200 dark:bg-slate-700 px-3 py-2 rounded w-full">-</span>
-{% endif %}
-<span class="text-xs font-semibold text-slate-600 dark:text-slate-400">10th</span>
-</div>
-
-<!-- 12th Mark Sheet -->
-<div class="flex flex-col items-center gap-1">
-{% if docs.get('12th_Mark_Sheet') %}
-<a href="{{ docs['12th_Mark_Sheet'].document_url }}" target="_blank" rel="noopener noreferrer" title="View 12th Mark Sheet" class="flex items-center justify-center bg-cyan-500 hover:bg-cyan-600 text-white text-xs font-bold py-2 px-3 rounded transition-all shadow-sm w-full">
-<span class="material-symbols-outlined text-sm">visibility</span>
-</a>
-{% else %}
-<span class="flex items-center justify-center text-xs text-slate-400 bg-slate-200 dark:bg-slate-700 px-3 py-2 rounded w-full">-</span>
-{% endif %}
-<span class="text-xs font-semibold text-slate-600 dark:text-slate-400">12th</span>
-</div>
-
-<!-- Community Certificate -->
-<div class="flex flex-col items-center gap-1">
-{% if docs.get('Community_Certificate') %}
-<a href="{{ docs['Community_Certificate'].document_url }}" target="_blank" rel="noopener noreferrer" title="View Community Certificate" class="flex items-center justify-center bg-teal-500 hover:bg-teal-600 text-white text-xs font-bold py-2 px-3 rounded transition-all shadow-sm w-full">
-<span class="material-symbols-outlined text-sm">visibility</span>
-</a>
-{% else %}
-<span class="flex items-center justify-center text-xs text-slate-400 bg-slate-200 dark:bg-slate-700 px-3 py-2 rounded w-full">-</span>
-{% endif %}
-<span class="text-xs font-semibold text-slate-600 dark:text-slate-400">CC</span>
-</div>
-
-<!-- Transfer Certificate -->
-<div class="flex flex-col items-center gap-1">
-{% if docs.get('Transfer_Certificate') %}
-<a href="{{ docs['Transfer_Certificate'].document_url }}" target="_blank" rel="noopener noreferrer" title="View Transfer Certificate" class="flex items-center justify-center bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-bold py-2 px-3 rounded transition-all shadow-sm w-full">
-<span class="material-symbols-outlined text-sm">visibility</span>
-</a>
-{% else %}
-<span class="flex items-center justify-center text-xs text-slate-400 bg-slate-200 dark:bg-slate-700 px-3 py-2 rounded w-full">-</span>
-{% endif %}
-<span class="text-xs font-semibold text-slate-600 dark:text-slate-400">TC</span>
-</div>
-
-<!-- FG Certificate -->
-<div class="flex flex-col items-center gap-1">
-{% if docs.get('FG_Certificate') %}
-<a href="{{ docs['FG_Certificate'].document_url }}" target="_blank" rel="noopener noreferrer" title="View FG Certificate" class="flex items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold py-2 px-3 rounded transition-all shadow-sm w-full">
-<span class="material-symbols-outlined text-sm">visibility</span>
-</a>
-{% else %}
-<span class="flex items-center justify-center text-xs text-slate-400 bg-slate-200 dark:bg-slate-700 px-3 py-2 rounded w-full">-</span>
-{% endif %}
-<span class="text-xs font-semibold text-slate-600 dark:text-slate-400">FG</span>
-</div>
-
-<!-- Passport Photo -->
-<div class="flex flex-col items-center gap-1">
-{% if docs.get('Passport_Photo') %}
-<a href="{{ docs['Passport_Photo'].document_url }}" target="_blank" rel="noopener noreferrer" title="View Passport Photo" class="flex items-center justify-center bg-purple-500 hover:bg-purple-600 text-white text-xs font-bold py-2 px-3 rounded transition-all shadow-sm w-full">
-<span class="material-symbols-outlined text-sm">visibility</span>
-</a>
-{% else %}
-<span class="flex items-center justify-center text-xs text-slate-400 bg-slate-200 dark:bg-slate-700 px-3 py-2 rounded w-full">-</span>
-{% endif %}
-<span class="text-xs font-semibold text-slate-600 dark:text-slate-400">Photo</span>
-</div>
-
-<!-- Allotment Order -->
-<div class="flex flex-col items-center gap-1">
-{% set allotment = profile.counselling | selectattr('app_id', 'equalto', app.app_id) | first if profile.counselling else None %}
-{% if allotment and allotment.allotment_order_url %}
-<a href="{{ allotment.allotment_order_url }}" target="_blank" rel="noopener noreferrer" title="View Allotment Order" class="flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold py-2 px-3 rounded transition-all shadow-sm w-full">
-<span class="material-symbols-outlined text-sm">visibility</span>
-</a>
-{% else %}
-<span class="flex items-center justify-center text-xs text-slate-400 bg-slate-200 dark:bg-slate-700 px-3 py-2 rounded w-full">-</span>
-{% endif %}
-<span class="text-xs font-semibold text-slate-600 dark:text-slate-400">Allotment</span>
+<div id="applications-body" class="p-6 space-y-6">
+<!-- Filled by JS -->
 </div>
 </div>
-</div>
-{% endif %}
-</div>
-{% endfor %}
-</div>
-</div>
-{% endif %}
 
 <!-- Counselling Information -->
-{% if profile.counselling %}
-<div class="bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden shadow-md mb-6">
+<div id="counselling-section" class="hidden bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden shadow-md mb-6">
 <div class="bg-gradient-to-r from-rose-500 to-rose-600 px-6 py-4">
-<h3 class="text-white text-lg font-bold flex items-center gap-2">
-<span class="material-symbols-outlined">how_to_vote</span>
-Counselling
-</h3>
+<h3 class="text-white text-lg font-bold flex items-center gap-2"><span class="material-symbols-outlined">how_to_vote</span>Counselling</h3>
 </div>
-<div class="overflow-x-auto">
-<table class="w-full text-left border-collapse">
-<thead>
-<tr class="bg-slate-50 dark:bg-[#2d3748] border-b border-[#e5e7eb] dark:border-[#4a5568]">
-<th class="px-6 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase">App #</th>
-<th class="px-6 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase">Quota</th>
-<th class="px-6 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase">Allotted Dept</th>
-<th class="px-6 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase">Order #</th>
-<th class="px-6 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase">Consortium #</th>
-<th class="px-6 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase">Status</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
-{% for c in profile.counselling %}
-<tr class="hover:bg-slate-50 dark:hover:bg-[#2d3748] transition-colors">
-<td class="px-6 py-3 text-sm font-semibold">{{ c.app_id }}</td>
-<td class="px-6 py-3 text-sm">
-{% if c.quota_type == 'GQ' %}
-<span class="inline-flex px-2 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">General</span>
-{% elif c.quota_type == 'MQ' %}
-<span class="inline-flex px-2 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300">Management</span>
-{% else %}
-{{ c.quota_type or 'N/A' }}
-{% endif %}
-</td>
-<td class="px-6 py-3 text-sm font-bold text-green-600 dark:text-green-400">{{ c.dept_name or 'N/A' }}</td>
-<td class="px-6 py-3 text-sm font-mono">{{ c.allotment_order_number or 'N/A' }}</td>
-<td class="px-6 py-3 text-sm font-mono">{{ c.consortium_number or 'N/A' }}</td>
-<td class="px-6 py-3 text-sm">
-<span class="inline-flex px-2 py-1 rounded-full text-xs font-bold {% if c.status == 'Registered' %}bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300{% elif c.status == 'Allotted' %}bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300{% else %}bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300{% endif %}">
-{{ c.status or 'N/A' }}
-</span>
-</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
+<div id="counselling-body" class="overflow-x-auto p-4">
+<!-- Filled by JS -->
 </div>
 </div>
-{% endif %}
 
 <!-- Payment Records -->
-{% if profile.payments %}
-<div class="bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden shadow-md mb-6">
+<div id="payments-section" class="hidden bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden shadow-md mb-6">
 <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-4">
-<h3 class="text-white text-lg font-bold flex items-center gap-2">
-<span class="material-symbols-outlined">payments</span>
-Payments
-</h3>
+<h3 class="text-white text-lg font-bold flex items-center gap-2"><span class="material-symbols-outlined">payments</span>Payments</h3>
 </div>
-<div class="overflow-x-auto">
-<table class="w-full text-left border-collapse">
-<thead>
-<tr class="bg-slate-50 dark:bg-[#2d3748] border-b border-[#e5e7eb] dark:border-[#4a5568]">
-<th class="px-6 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase">App #</th>
-<th class="px-6 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase">Bill No</th>
-<th class="px-6 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase">Payment Mode</th>
-<th class="px-6 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase">Amount</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
-{% for p in profile.payments %}
-<tr class="hover:bg-slate-50 dark:hover:bg-[#2d3748] transition-colors">
-<td class="px-6 py-3 text-sm font-semibold">{{ p.app_id }}</td>
-<td class="px-6 py-3 text-sm font-bold">{{ p.bill_no or 'N/A' }}</td>
-<td class="px-6 py-3 text-sm">
-<span class="inline-flex px-2 py-1 rounded-full text-xs font-bold {% if p.mode_of_payment == 'Cash' %}bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300{% elif p.mode_of_payment == 'Card' %}bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300{% else %}bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300{% endif %}">
-{{ p.mode_of_payment or 'N/A' }}
-</span>
-</td>
-<td class="px-6 py-3 text-sm font-bold text-lg text-green-600 dark:text-green-400">₹ {{ "%.2f"|format(p.amount or 0) }}</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
+<div id="payments-body" class="overflow-x-auto p-4">
+<!-- Filled by JS -->
 </div>
 </div>
-{% endif %}
 
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
 <script>
-function downloadPDF() {
-    const button = event.target.closest('button');
-    const originalText = button.innerHTML;
-    button.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">refresh</span> Generating...';
-    button.disabled = true;
-    
-    const element = document.querySelector('main');
-    const studentName = '{{ profile.student.unique_id or "student" }}';
-    
-    const opt = {
-        margin: 10,
-        filename: `student_profile_${studentName}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            letterRendering: true
-        },
-        jsPDF: { 
-            unit: 'mm', 
-            format: 'a4', 
-            orientation: 'portrait' 
-        },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-    };
-    
-    html2pdf().set(opt).from(element).save().then(() => {
-        button.innerHTML = originalText;
-        button.disabled = false;
-    });
-}
-</script>
+// Injected from .env
+const SUPABASE_URL = 'https://izxxhnrkcsnnabdhvixh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6eHhobnJrY3NubmFiZGh2aXhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NzkzMDYsImV4cCI6MjA4NTE1NTMwNn0.mVPXk2XF9DzGsZo_SJuTHcXPArdWywxLWJZw3DD9gkE';
 
+// create a client from the global UMD `supabase` object without redeclaring the global
+const supabaseClient = SUPABASE_URL.startsWith('http') && window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+function getQueryParam(name) { return new URLSearchParams(window.location.search).get(name); }
+
+function safeText(value) { return value === null || value === undefined ? 'N/A' : String(value); }
+
+// department lookup populated during profile load
+let deptMap = {};
+
+function firstDefined(...vals){ for(const v of vals){ if(v!==undefined && v!==null) return v;} return null; }
+
+async function loadProfile() {
+  if (!supabaseClient) return showError('Supabase is not configured.');
+
+  const q = getQueryParam('student_id') || getQueryParam('id') || null;
+  if (!q) return showError('Missing student_id in URL.');
+
+  // Try numeric id first, then unique_id, then email
+  let student = null;
+  try {
+    if (/^\d+$/.test(q)) {
+      const { data, error } = await supabaseClient.from('students').select('*').eq('id', q).maybeSingle();
+      if (!error && data) student = data;
+    }
+    if (!student) {
+      const { data, error } = await supabaseClient.from('students').select('*').eq('unique_id', q).maybeSingle();
+      if (!error && data) student = data;
+    }
+    if (!student) {
+      const { data, error } = await supabaseClient.from('students').select('*').eq('email', q).maybeSingle();
+      if (!error && data) student = data;
+    }
+  } catch (err) {
+    return showError('Error fetching student: ' + err.message);
+  }
+
+  if (!student) return showError('Student not found');
+
+  renderPersonal(student);
+
+  const studentId = student.id;
+
+  // fetch related records in parallel
+  const [acadRes, admRes, appsRes, docsRes, counselRes, payRes, deptRes] = await Promise.all([
+    supabaseClient.from('academics').select('*').eq('student_id', studentId),
+    supabaseClient.from('admissions').select('*').eq('student_id', studentId),
+    supabaseClient.from('admission_applications').select('*').eq('student_id', studentId),
+    supabaseClient.from('documents').select('*').or(`student_id.eq.${studentId}`),
+    supabaseClient.from('counselling_records').select('*').eq('student_id', studentId),
+    supabaseClient.from('payments').select('*').eq('student_id', studentId),
+    supabaseClient.from('departments').select('*')
+  ]).catch(err => { console.error('related fetch error', err); });
+
+  const academic = acadRes?.data?.[0] || null;
+  const admissions = admRes?.data || [];
+  const applications = appsRes?.data || [];
+  let documents = docsRes?.data || [];
+  const counselling = counselRes?.data || [];
+  const payments = payRes?.data || [];
+  const departments = deptRes?.data || [];
+
+  // build department lookup
+  deptMap = {};
+  (departments||[]).forEach(d => {
+    if(!d) return;
+    const id = d.id !== undefined && d.id !== null ? String(d.id) : null;
+    const name = d.dept_name || d.name || d.dept || d.deptName || d.department_name || d.department || '';
+    if(id) deptMap[id] = name || id;
+  });
+
+  // If documents by app are missing, fetch by app ids
+  const appIds = applications.map(a=>a.app_id || a.id).filter(Boolean);
+  if (appIds.length) {
+    const { data: docsByAppData } = await supabaseClient.from('documents').select('*').in('app_id', appIds);
+    if (docsByAppData && docsByAppData.length) documents = documents.concat(docsByAppData);
+  }
+
+  // debug log fetched blobs to help identify missing fields
+  console.debug('fetched profile related data', { applications, documents, counselling, admissions, departments });
+
+  renderAcademic(academic);
+  renderAdmissions(admissions);
+  renderApplications(applications, documents, counselling);
+  renderCounselling(counselling);
+  renderPayments(payments);
+}
+
+function showError(msg) {
+  const main = document.getElementById('profile-main');
+  main.innerHTML = `<div class="max-w-[900px] mx-auto p-6"><div class="bg-white p-6 rounded shadow text-center"><p class="text-lg font-semibold">${msg}</p></div></div>`;
+}
+
+function renderPersonal(st) {
+  document.getElementById('student-name').textContent = st.full_name || st.name || 'Student Profile';
+  document.getElementById('student-unique').textContent = 'ID: ' + (st.unique_id || st.id || 'N/A');
+  const avatar = document.getElementById('student-avatar');
+  avatar.textContent = (st.full_name||st.name||'S')[0].toUpperCase();
+
+  const body = document.getElementById('personal-body');
+  body.innerHTML = '';
+  const fields = [
+    ['Full Name', st.full_name || st.name || 'N/A'],
+    ['Email', st.email || 'N/A'],
+    ['Phone', st.phone || 'N/A'],
+    ['Gender', st.gender || 'N/A'],
+    ['Date of Birth', st.dob || 'N/A'],
+    ['Status', st.status || 'N/A'],
+    ['Community', st.community || 'N/A'],
+    ['Religion', st.religion || 'N/A']
+  ];
+  fields.forEach(f => {
+    const el = document.createElement('div');
+    el.innerHTML = `<p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">${f[0]}</p><p class="text-base font-semibold text-[#111418] dark:text-white">${safeText(f[1])}</p>`;
+    body.appendChild(el);
+  });
+}
+
+function renderAcademic(ac) {
+  const section = document.getElementById('academic-section');
+  const body = document.getElementById('academic-body');
+  if (!ac) { section.classList.add('hidden'); return; }
+  section.classList.remove('hidden');
+  body.innerHTML = '';
+  const items = [
+    ['School Name', ac.school_name || 'N/A'],
+    ['HSC Percentage', ac.plus2_percentage ? ac.plus2_percentage + '%' : (ac.plus2_percentage || 'N/A')],
+    ['Cutoff Score', ac.cutoff || 'N/A'],
+    ['TNEA Eligible', ac.tnea_eligible || 'N/A'],
+    ['TNEA Average', ac.tnea_average || 'N/A']
+  ];
+  items.forEach(it => {
+    const el = document.createElement('div');
+    el.innerHTML = `<p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">${it[0]}</p><p class="text-base font-semibold text-[#111418] dark:text-white">${safeText(it[1])}</p>`;
+    body.appendChild(el);
+  });
+}
+
+function renderAdmissions(adms) {
+  const section = document.getElementById('admissions-section');
+  const body = document.getElementById('admissions-body');
+  if (!adms || !adms.length) { section.classList.add('hidden'); return; }
+  section.classList.remove('hidden');
+  body.innerHTML = '';
+  adms.forEach(adm => {
+    const div = document.createElement('div');
+    div.className = 'p-4 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-[#2d3748] dark:to-[#1a202c] rounded-lg border border-[#e5e7eb] dark:border-[#4a5568]';
+    // resolve preferred and optional branch names (support ids)
+    const pref = adm.preferred_dept_name || adm.preferred_dept || adm.preferred_dept_id || adm.preferred_deptid || adm.preferredDept || adm.preferredDeptId || null;
+    const opt = adm.optional_dept_name || adm.optional_dept || adm.optional_dept_id || adm.optionalDept || null;
+    const prefName = pref && String(pref).match(/^\d+$/) ? (deptMap[String(pref)] || pref) : (deptMap[String(pref)] || pref);
+    const optName = opt && String(opt).match(/^\d+$/) ? (deptMap[String(opt)] || opt) : (deptMap[String(opt)] || opt);
+    div.innerHTML = `<div class="space-y-3"><div><p class="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Preferred Branch</p><p class="text-base font-bold text-blue-600 dark:text-blue-400">${safeText(prefName || 'N/A')}</p></div><div><p class="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Optional Branches</p><p class="text-base font-semibold text-[#111418] dark:text-white">${safeText(optName || 'N/A')}</p></div></div>`;
+    body.appendChild(div);
+  });
+}
+
+function renderApplications(apps, docs, counselling) {
+  const section = document.getElementById('applications-section');
+  const body = document.getElementById('applications-body');
+  if (!apps || !apps.length) { section.classList.add('hidden'); return; }
+  section.classList.remove('hidden');
+  body.innerHTML = '';
+  const docsArray = docs || [];
+
+  apps.forEach(app => {
+    const appId = app.app_id || app.id || app.application_id || app.appId || app.application || 'N/A';
+    const card = document.createElement('div');
+    card.className = 'p-4 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-[#2d3748] dark:to-[#1a202c] rounded-lg border border-[#e5e7eb] dark:border-[#4a5568]';
+    let inner = `<p class="text-sm font-bold text-[#111418] dark:text-white mb-4">Application ${appId}</p><div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">`;
+
+    // prefer counselling_records for GQ/MQ metadata when available
+    const counselRec = (counselling||[]).find(c => {
+      const cApp = c.app_id || c.application_id || c.appId || c.application;
+      return cApp && [app.app_id, app.id, app.application_id, app.appId, app.application].filter(Boolean).map(String).includes(String(cApp));
+    }) || null;
+
+    const appliedGQ = firstDefined(counselRec && counselRec.applied_gq, app.applied_gq, app.gq_applied, app.gqApplied, app.appliedGQ);
+    const gqNo = firstDefined(counselRec && (counselRec.gq_application_number || counselRec.gq_application_no || counselRec.gqAppNo), app.gq_application_number, app.gqApplicationNumber, app.gq_app_no, app.counselling_application_number, app.counsellingAppNo);
+    const gqDate = firstDefined(counselRec && (counselRec.gq_applied_at || counselRec.gq_applied), app.gq_applied_at, app.gq_applied, app.counselling_applied_at, app.gqAppliedAt);
+    const appliedMQ = firstDefined(counselRec && counselRec.applied_mq, app.applied_mq, app.mq_applied, app.appliedMQ, app.mqApplied);
+    const mqConsortium = firstDefined(counselRec && (counselRec.mq_consortium_number || counselRec.mq_consortium || counselRec.mqConsortiumNumber), app.mq_consortium_number, app.mq_consortium, app.mqConsortiumNumber, app.mq_consortium_no);
+    const mqDate = firstDefined(counselRec && (counselRec.mq_applied_at || counselRec.mq_applied), app.mq_applied_at, app.mq_applied, app.mqAppliedAt);
+
+    inner += `<div><p class="text-xs text-gray-600">Applied GQ</p><p class="font-semibold text-green-700">${appliedGQ? 'Yes':'No'}</p></div>`;
+    inner += `<div><p class="text-xs text-gray-600">GQ Application #</p><p class="font-semibold">${safeText(gqNo)}</p></div>`;
+    inner += `<div><p class="text-xs text-gray-600">GQ Applied Date</p><p class="font-semibold">${safeText(gqDate)}</p></div>`;
+    inner += `<div><p class="text-xs text-gray-600">Applied MQ</p><p class="font-semibold text-indigo-700">${appliedMQ? 'Yes':'No'}</p></div>`;
+    inner += `<div><p class="text-xs text-gray-600">MQ Consortium #</p><p class="font-semibold">${safeText(mqConsortium)}</p></div>`;
+    inner += `<div><p class="text-xs text-gray-600">MQ Applied Date</p><p class="font-semibold">${safeText(mqDate)}</p></div>`;
+    inner += `</div>`;
+
+    // documents for this app - match flexible identifiers
+    const appIdCandidates = [app.app_id, app.id, app.application_id, app.appId, app.application].filter(Boolean).map(String);
+    const docsForApp = docsArray.filter(d => {
+      const docAid = d.app_id || d.application_id || d.appId || d.app || d.application || d.applicationId;
+      return docAid && appIdCandidates.includes(String(docAid));
+    });
+
+    inner += `<div class="mt-4"><p class="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-3">Documents</p><div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-3">`;
+
+    const docTypes = ['10th_Mark_Sheet','12th_Mark_Sheet','Community_Certificate','Transfer_Certificate','FG_Certificate','Passport_Photo'];
+    docTypes.forEach(type => {
+      const d = docsForApp.find(x => (x.document_type || x.type || x.tag || x.name) === type) || docsForApp.find(x => (x.tag || '').toLowerCase() === type.toLowerCase()) || docsForApp.find(x => ((x.document_type||'') + '').toLowerCase().includes(type.split('_')[0].toLowerCase()));
+      if (d) inner += `<div class="flex flex-col items-center gap-1"><a href="${d.document_url || d.url || d.path || '#'}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded w-full"><span class="material-symbols-outlined text-sm">visibility</span></a><span class="text-xs font-semibold text-slate-600 dark:text-slate-400">${type.replace('_',' ')}</span></div>`;
+      else inner += `<div class="flex flex-col items-center gap-1"><span class="flex items-center justify-center text-xs text-slate-400 bg-slate-200 dark:bg-slate-700 px-3 py-2 rounded w-full">-</span><span class="text-xs font-semibold text-slate-600 dark:text-slate-400">${type.replace('_',' ')}</span></div>`;
+    });
+
+    // allotment order (from counselling) - match flexible ids
+    const allot = (counselling||[]).find(c => {
+      const cApp = c.app_id || c.application_id || c.appId || c.application;
+      return cApp && appIdCandidates.includes(String(cApp));
+    });
+    if (allot && allot.allotment_order_url) inner += `<div class="flex flex-col items-center gap-1"><a href="${allot.allotment_order_url}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold py-2 px-3 rounded w-full"><span class="material-symbols-outlined text-sm">visibility</span></a><span class="text-xs font-semibold text-slate-600 dark:text-slate-400">Allotment</span></div>`;
+
+    inner += `</div></div>`;
+
+    card.innerHTML = inner;
+    body.appendChild(card);
+  });
+}
+
+function renderCounselling(counselling) {
+  const section = document.getElementById('counselling-section');
+  const body = document.getElementById('counselling-body');
+  if (!counselling || !counselling.length) { section.classList.add('hidden'); return; }
+  section.classList.remove('hidden');
+  body.innerHTML = '';
+  // build table
+  let table = `<table class="w-full text-left border-collapse"><thead><tr class="bg-slate-50 dark:bg-[#2d3748] border-b border-[#e5e7eb] dark:border-[#4a5568]"><th class="px-6 py-3 text-xs font-bold text-slate-600">App #</th><th class="px-6 py-3 text-xs font-bold text-slate-600">Quota</th><th class="px-6 py-3 text-xs font-bold text-slate-600">Allotted Dept</th><th class="px-6 py-3 text-xs font-bold text-slate-600">Order #</th><th class="px-6 py-3 text-xs font-bold text-slate-600">Consortium #</th><th class="px-6 py-3 text-xs font-bold text-slate-600">Status</th></tr></thead><tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">`;
+  counselling.forEach(c => {
+    // flexible department resolution: many possible field names or numeric ids
+    const rawDept = c.dept_name || c.dept || c.deptName || c.allotted_dept_name || c.allotted_dept || c.allotted_dept_id || c.dept_id || c.department_id || c.department || c.allottedDept || null;
+    let deptName = 'N/A';
+    if (rawDept !== null && rawDept !== undefined) {
+      const s = String(rawDept);
+      if (/^\d+$/.test(s)) {
+        deptName = deptMap[s] || s;
+      } else {
+        // prefer the raw text if present, but try fuzzy match against deptMap values
+        deptName = s || 'N/A';
+        const lower = s.toLowerCase();
+        for (const k in deptMap) {
+          const dn = String(deptMap[k] || '').toLowerCase();
+          if (!dn) continue;
+          if (dn === lower || dn.includes(lower) || lower.includes(dn)) { deptName = deptMap[k]; break; }
+        }
+      }
+    }
+
+    // derive status: prefer explicit status, otherwise mark Completed if allotment exists
+    const statusVal = c.status || ((c.allotment_order_number || c.allotment_order_url || c.consortium_number) ? 'Completed' : 'N/A');
+    const statusClass = statusVal==='Registered' ? 'bg-green-100 text-green-700' : (statusVal==='Allotted' || statusVal==='Completed' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700');
+
+    table += `<tr class="hover:bg-slate-50 dark:hover:bg-[#2d3748] transition-colors"><td class="px-6 py-3 text-sm font-semibold">${safeText(c.app_id||c.application_id)}</td><td class="px-6 py-3 text-sm">${safeText(c.quota_type)}</td><td class="px-6 py-3 text-sm font-bold text-green-600 dark:text-green-400">${safeText(deptName)}</td><td class="px-6 py-3 text-sm font-mono">${safeText(c.allotment_order_number)}</td><td class="px-6 py-3 text-sm font-mono">${safeText(c.consortium_number)}</td><td class="px-6 py-3 text-sm"><span class="inline-flex px-2 py-1 rounded-full text-xs font-bold ${statusClass}">${safeText(statusVal)}</span></td></tr>`;
+  });
+  table += '</tbody></table>';
+  body.innerHTML = table;
+}
+
+function renderPayments(payments) {
+  const section = document.getElementById('payments-section');
+  const body = document.getElementById('payments-body');
+  if (!payments || !payments.length) { section.classList.add('hidden'); return; }
+  section.classList.remove('hidden');
+  body.innerHTML = '';
+  let table = `<table class="w-full text-left border-collapse"><thead><tr class="bg-slate-50 dark:bg-[#2d3748] border-b border-[#e5e7eb] dark:border-[#4a5568]"><th class="px-6 py-3 text-xs font-bold text-slate-600">App #</th><th class="px-6 py-3 text-xs font-bold text-slate-600">Bill No</th><th class="px-6 py-3 text-xs font-bold text-slate-600">Payment Mode</th><th class="px-6 py-3 text-xs font-bold text-slate-600">Amount</th></tr></thead><tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">`;
+  payments.forEach(p => {
+    table += `<tr class="hover:bg-slate-50 dark:hover:bg-[#2d3748] transition-colors"><td class="px-6 py-3 text-sm font-semibold">${safeText(p.app_id)}</td><td class="px-6 py-3 text-sm font-bold">${safeText(p.bill_no)}</td><td class="px-6 py-3 text-sm"><span class="inline-flex px-2 py-1 rounded-full text-xs font-bold ${p.mode_of_payment==='Cash'?'bg-green-100 text-green-700':p.mode_of_payment==='Card'?'bg-blue-100 text-blue-700':'bg-gray-100 text-gray-700'}">${safeText(p.mode_of_payment)}</span></td><td class="px-6 py-3 text-sm font-bold text-lg text-green-600 dark:text-green-400">₹ ${Number(p.amount||0).toFixed(2)}</td></tr>`;
+  });
+  table += '</tbody></table>';
+  body.innerHTML = table;
+}
+
+// PDF download (guard html2pdf availability — some browsers block the CDN)
+const _downloadPdfBtn = document.getElementById('downloadPdfBtn');
+if(_downloadPdfBtn){
+  if(typeof html2pdf === 'undefined'){
+    _downloadPdfBtn.disabled = true;
+    _downloadPdfBtn.title = 'PDF export unavailable (html2pdf blocked or missing)';
+    _downloadPdfBtn.classList.add('opacity-60','cursor-not-allowed');
+  } else {
+    _downloadPdfBtn.addEventListener('click', function(evt){
+      const btn = evt.currentTarget;
+      btn.disabled = true;
+      const original = btn.innerHTML;
+      btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">refresh</span> Generating...';
+      const element = document.querySelector('main');
+      const studentName = document.getElementById('student-unique').textContent.replace('ID: ','') || 'student';
+      const opt = { margin: 10, filename: `student_profile_${studentName}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, logging: false, letterRendering: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, pagebreak: { mode: ['avoid-all','css','legacy'] } };
+      try{
+        html2pdf().set(opt).from(element).save().then(()=>{ btn.innerHTML = original; btn.disabled = false; }).catch(()=>{ btn.innerHTML = original; btn.disabled = false; });
+      }catch(e){ console.error('html2pdf error', e); btn.innerHTML = original; btn.disabled = false; }
+    });
+  }
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', () => { loadProfile().catch(err=>{ console.error(err); showError('Failed to load profile'); }); });
+</script>
 </body>
 </html>

@@ -48,13 +48,7 @@
 
   <main class="flex-1 overflow-y-auto">
     <div class="max-w-[1200px] mx-auto p-6 flex flex-col gap-6">
-      <div class="bg-white dark:bg-[#1a202c] border rounded p-4">
-        <div class="flex items-center justify-between">
-          <div><p class="text-sm text-[#617589]">Logged in as</p><p id="debug-user-email" class="font-bold">unknown</p></div>
-          <div class="flex items-center gap-2"><button id="dbg-check-modules" class="px-3 py-2 bg-primary text-white rounded">Check Assigned Modules</button><button id="dbg-show-keys" class="px-3 py-2 border rounded">Show Keys</button></div>
-        </div>
-        <div id="dbg-output" class="mt-3 text-xs font-mono text-[#111418] dark:text-white whitespace-pre-wrap"></div>
-      </div>
+      <!-- debug banner removed -->
 
       <!-- Assigned modules wrapper (client will populate) -->
       <div id="assigned-modules-wrapper" data-user-email="" class="bg-white dark:bg-[#1a202c] rounded-lg border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden p-6">
@@ -63,9 +57,13 @@
       </div>
 
       <!-- Branch Management heading -->
-      <div id="branch-management" class="flex flex-wrap justify-between items-end gap-3"><div class="flex min-w-72 flex-col gap-1"><p class="text-[#111418] dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">Admin Branch Management</p><p class="text-[#617589] dark:text-[#a0aec0] text-base font-normal leading-normal">Manage and assign departments to enquired students.</p></div></div>
+      <div id="branch-management" class="flex flex-wrap justify-between items-end gap-3"><div class="flex min-w-72 flex-col gap-1"><p class="text-[#111418] dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">Admin Branch Management</p><p class="text-[#617589] dark:text-[#a0aec0] text-base font-normal leading-normal">Manage and assign departments to enquired students.</p></div>
+        <div class="flex items-center gap-3">
+          <label class="inline-flex items-center gap-2 text-sm text-[#617589]"><input id="branch-visibility-toggle" type="checkbox" class="h-4 w-4"/> <span>Always show Branch Management</span></label>
+        </div>
+      </div>
       <!-- Accepted table (new) -->
-      <div class="flex flex-col bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden mt-6">
+      <div id="accepted-section" class="flex flex-col bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden mt-6">
         <div class="flex items-center justify-between px-6 py-5 border-b border-[#e5e7eb] dark:border-[#2d3748]">
           <h2 class="text-[#111418] dark:text-white text-xl font-bold leading-tight">Accepted Students</h2>
           <button class="text-primary text-sm font-bold flex items-center gap-1 hover:underline"><span class="material-symbols-outlined text-sm">download</span> Export List</button>
@@ -87,7 +85,7 @@
       </div>
 
       <!-- Tables (empty tbody; client injector will fill) -->
-      <div class="flex flex-col bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden">
+      <div id="pending-section" class="flex flex-col bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden">
         <div class="flex items-center justify-between px-6 py-5 border-b border-[#e5e7eb] dark:border-[#2d3748]">
           <h2 class="text-[#111418] dark:text-white text-xl font-bold leading-tight">Pending Branch Selection</h2>
           <button class="text-primary text-sm font-bold flex items-center gap-1 hover:underline"><span class="material-symbols-outlined text-sm">download</span> Export List</button>
@@ -109,7 +107,7 @@
       </div>
 
       <!-- Assigned / Accepted placeholders -->
-      <div id="assigned-accepted-section" class="mt-8 space-y-6">
+      <div id="assigned-section" class="mt-8 space-y-6">
         <div id="accepted-by-you" class="hidden"></div>
         <div class="rounded-xl shadow-sm border border-[#f0f2f4] dark:border-gray-800 overflow-hidden bg-white dark:bg-[#1a202c]">
           <div class="px-6 py-4 border-b border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#0f1419]"><div class="flex items-center justify-between"><h2 class="text-[#111418] dark:text-white text-xl font-bold leading-tight flex items-center gap-3"><span class="material-symbols-outlined text-primary text-2xl">check_circle</span>Assigned Branches</h2><span id="assigned-count" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">0 Assigned</span></div></div>
@@ -133,19 +131,18 @@ function setText(id, txt){ const el = document.getElementById(id); if(el) el.tex
 document.addEventListener('DOMContentLoaded', function(){
   // Populate debug email from sessionStorage or window.__SERVER_DATA
     try{
-      let email = '';
-      const stored = sessionStorage.getItem('pmc_user');
-      if(stored){ try{ const u = JSON.parse(stored); if(u && u.email) email = u.email; }catch(_){} }
-      if(!email && window.__SERVER_DATA && window.__SERVER_DATA.current_user && window.__SERVER_DATA.current_user.email) email = window.__SERVER_DATA.current_user.email;
-      if(!email && window.ADMIN_USER_EMAIL) email = window.ADMIN_USER_EMAIL;
-      if(email) document.getElementById('debug-user-email').textContent = email;
-      const wrapper = document.getElementById('assigned-modules-wrapper'); if(wrapper) wrapper.dataset.userEmail = email || '';
+  let email = '';
+  const stored = sessionStorage.getItem('pmc_user');
+  if(stored){ try{ const u = JSON.parse(stored); if(u && u.email) email = u.email; }catch(_){} }
+  if(!email && window.__SERVER_DATA && window.__SERVER_DATA.current_user && window.__SERVER_DATA.current_user.email) email = window.__SERVER_DATA.current_user.email;
+  if(!email && window.ADMIN_USER_EMAIL) email = window.ADMIN_USER_EMAIL;
+  const wrapper = document.getElementById('assigned-modules-wrapper'); if(wrapper) wrapper.dataset.userEmail = email || '';
 
       // Load client config then fetch the logged-in user's assigned_modules from public.users
       (function loadAndFetchModules(){
         const script = document.createElement('script');
         script.src = '/config.js';
-        script.onload = async function(){
+            script.onload = async function(){
           try{
             const cfg = window.__SUPABASE_CONFIG || window.__SERVER_CONFIG || window.__CONFIG || {};
             const base = (cfg.SUPABASE_URL||window.ADMIN_SUPABASE_URL||'').replace(/\/+$/, '');
@@ -157,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function(){
             try{ const u = JSON.parse(sessionStorage.getItem('pmc_user')||'null'); if(u && u.user_id) userId = u.user_id; }catch(e){}
 
             // Fallback: try to lookup by email stored on page
-            let emailLookup = document.getElementById('debug-user-email').textContent || '';
+            let emailLookup = email || document.getElementById('assigned-modules-wrapper')?.dataset?.userEmail || '';
 
             let url = null;
             if(userId) url = `${base}/rest/v1/users?select=*&user_id=eq.${encodeURIComponent(userId)}`;
@@ -205,7 +202,7 @@ document.addEventListener('DOMContentLoaded', function(){
                 'dashboard': { label: 'Dashboard', href: '/templates/admin/dashboard.html', icon: 'dashboard' },
                 'enquiries': { label: 'Enquiries', href: '/templates/admin/enquiries.html', icon: 'mail' },
                 'applications': { label: 'Applications', href: '/templates/admin/document_upload_step1.html', icon: 'receipt_long' },
-                'branch_selection': { label: 'Branch Assignment', href: '/templates/admin/branch_selection.html', icon: 'account_tree' },
+                'branch_selection': { label: 'Branch Assignment', href: '#', icon: 'account_tree' },
                 'counselling': { label: 'Counselling', href: '/templates/admin/counselling_list.html', icon: 'how_to_vote' },
                 'payments': { label: 'Payments', href: '/templates/admin/payments_list.html', icon: 'payments' },
                 'documents': { label: 'Documents', href: '/templates/admin/documents_management.html', icon: 'description' },
@@ -233,6 +230,16 @@ document.addEventListener('DOMContentLoaded', function(){
                   a.innerHTML = `<span class="material-symbols-outlined">${spec.icon}</span><p class="text-sm font-medium">${spec.label}</p>`;
                   sidebar.appendChild(a);
                 });
+                // determine branch visibility preference and apply
+                try{
+                  const pref = localStorage.getItem('branchManagementShowPref');
+                  const override = (pref===null) ? null : (pref === 'true');
+                  const shouldShow = (override === null) ? allowed.has('branch_selection') : override;
+                  setBranchSectionsVisibility(shouldShow);
+                  // wire toggle UI
+                  const toggle = document.getElementById('branch-visibility-toggle');
+                  if(toggle){ toggle.checked = (pref==='true'); toggle.addEventListener('change', (e)=>{ localStorage.setItem('branchManagementShowPref', e.target.checked ? 'true' : 'false'); setBranchSectionsVisibility(e.target.checked); }); }
+                }catch(e){ console.warn('branch visibility', e); }
               }
             }catch(e){ console.warn('render sidebar', e); }
 
@@ -326,6 +333,12 @@ document.addEventListener('DOMContentLoaded', function(){
     }catch(e){ console.error('renderFromServerData', e); }
   }
 
+  // show/hide branch management related sections
+  function setBranchSectionsVisibility(show){
+    const ids = ['branch-management','accepted-section','pending-section','assigned-section'];
+    ids.forEach(id => { const el = document.getElementById(id); if(!el) return; el.style.display = show ? '' : 'none'; });
+  }
+
   // If AdminAPI has already populated, render now; otherwise listen for event
   // Also fetch authoritative admissions from the server (no Supabase) and refresh tables.
   async function fetchAdmissionsAndRefresh(){
@@ -347,9 +360,7 @@ document.addEventListener('DOMContentLoaded', function(){
   if(window.__SERVER_DATA){ renderFromServerData(); fetchAdmissionsAndRefresh(); }
   window.addEventListener('admin_api:populated', function(){ renderFromServerData(); fetchAdmissionsAndRefresh(); });
 
-  // Debug buttons
-  const dbgOut = document.getElementById('dbg-output'); document.getElementById('dbg-check-modules').addEventListener('click', async function(){ dbgOut.textContent = ''; try{ if(window.AdminAPI && AdminAPI.get){ dbgOut.textContent += 'Using AdminAPI.get\n'; const users = await AdminAPI.get('users', { select: '*', email: `eq.${document.getElementById('debug-user-email').textContent}` }); dbgOut.textContent += JSON.stringify(users, null, 2); } else { dbgOut.textContent += 'AdminAPI not available'; } }catch(e){ dbgOut.textContent += 'Error: ' + (e.message||e); }});
-  document.getElementById('dbg-show-keys').addEventListener('click', function(){ dbgOut.textContent = ''; dbgOut.textContent += 'ADMIN_SUPABASE_URL=' + (window.ADMIN_SUPABASE_URL||'<none>') + '\n'; dbgOut.textContent += 'ADMIN_SUPABASE_KEY present=' + (!!window.ADMIN_SUPABASE_KEY) + '\n'; dbgOut.textContent += 'AdminAPI present=' + (!!window.AdminAPI) + '\n'; });
+  // debug UI removed
 
   // Delegate Assign Branch clicks: redirect to assign page with student_id
   document.body.addEventListener('click', function(e){

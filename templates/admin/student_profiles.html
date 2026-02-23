@@ -25,7 +25,7 @@
   Export to Excel
 </button>
 <a href="#" data-route="super_admin_dashboard" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">Back to Dashboard</a>
-<a href="{{ url_for('auth.logout') }}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">Logout</a>
+<a href="#" id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">Logout</a>
 </div>
 </header>
 
@@ -45,14 +45,7 @@
       <button onclick="selectAllFields(false)" class="px-3 py-1 bg-gray-200 dark:bg-[#1f2937] text-sm">Deselect all</button>
       <span class="text-xs text-slate-500 ml-3">Selected: <span id="selectedCount">0</span></span>
     </div>
-    <div class="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto border rounded p-3 bg-slate-50 dark:bg-[#071127]">
-      {% for field in export_fields %}
-      <label class="inline-flex items-center gap-2 text-sm">
-        <input type="checkbox" class="export-field-checkbox" value="{{ field }}" onchange="updateSelectedCount()" />
-        <span>{{ field }}</span>
-      </label>
-      {% endfor %}
-    </div>
+    <div id="exportFieldsContainer" class="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto border rounded p-3 bg-slate-50 dark:bg-[#071127]"></div>
     <div class="mt-4 flex justify-end gap-3">
       <button onclick="closeExportModal()" class="px-4 py-2 bg-gray-200 dark:bg-[#1f2937] rounded">Cancel</button>
       <button onclick="submitExport()" class="px-4 py-2 bg-green-600 text-white rounded">Export</button>
@@ -67,7 +60,7 @@
 <p class="text-blue-100 text-base font-normal">Complete student data from all tables in comprehensive table format</p>
 </div>
 <div class="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
-<p class="text-sm text-blue-50">Total Records: <span class="font-bold text-xl">{{ students|length }}</span></p>
+<p class="text-sm text-blue-50">Total Records: <span class="font-bold text-xl" id="count-records">0</span></p>
 </div>
 </div>
 </div>
@@ -114,140 +107,7 @@
 <th class="px-4 py-4 text-xs font-bold text-[#1f2937] dark:text-[#e2e8f0] uppercase tracking-wider">Action</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
-{% if students %}
-{% for data in students %}
-<tr class="hover:bg-blue-50 dark:hover:bg-[#2d3748] transition-colors duration-150 border-l-4 border-l-transparent hover:border-l-blue-500">
-<td class="px-4 py-3 text-xs font-semibold text-[#111418] dark:text-white sticky left-0 bg-white dark:bg-[#1a202c] hover:bg-blue-50 dark:hover:bg-[#2d3748]">
-<div class="flex items-center gap-2">
-<div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-xs">
-{{ (data.student.full_name or data.student.name or 'N')[0]|upper }}
-</div>
-{{ data.student.full_name or data.student.name or 'N/A' }}
-</div>
-</td>
-<td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1] font-mono bg-[#f9fafb] dark:bg-[#0f172a]">{{ data.student.unique_id or 'N/A' }}</td>
-<td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1] truncate">{{ data.student.email or 'N/A' }}</td>
-<td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1]">{{ data.student.phone or 'N/A' }}</td>
-<td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1] capitalize">{{ data.student.gender or 'N/A' }}</td>
-<td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1]">{{ data.student.dob or 'N/A' }}</td>
-<td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1]">{{ data.student.community or 'N/A' }}</td>
-<td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1]">{{ data.student.religion or 'N/A' }}</td>
-<td class="px-4 py-3"><span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">{{ data.student.status or 'N/A' }}</span></td>
-<td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1] truncate">{{ data.academic.school_name or 'N/A' }}</td>
-<td class="px-4 py-3 text-xs font-semibold text-[#1f2937] dark:text-[#f0f9ff] bg-amber-50 dark:bg-amber-900/20">{{ data.student.plus2_percentage or 'N/A' }}</td>
-<td class="px-4 py-3 text-xs font-bold text-[#7c2d12] dark:text-[#fed7aa] bg-orange-100 dark:bg-orange-900/30 rounded px-2">{{ data.academic.cutoff or 'N/A' }}</td>
-<td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1]">{{ data.academic.tnea_eligible or 'N/A' }}</td>
-<td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1]">{{ data.academic.tnea_average or 'N/A' }}</td>
-<td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1] truncate">{% if data.admissions %}{% for adm in data.admissions %}<span class="inline-block px-2 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded mr-1">{{ adm.preferred_dept_name or 'N/A' }}</span>{% endfor %}{% else %}N/A{% endif %}</td>
-<td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1]">{% if data.counselling %}{% for counsel in data.counselling %}<span class="inline-block px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded text-xs font-medium mr-1">{{ counsel.quota_type or 'N/A' }}</span>{% endfor %}{% else %}N/A{% endif %}</td>
-<td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1] truncate">{% if data.counselling %}{% for counsel in data.counselling %}{{ counsel.dept_name or 'N/A' }}{% if not loop.last %}, {% endif %}{% endfor %}{% else %}N/A{% endif %}</td>
-<td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1] font-mono">{% if data.counselling %}{% for counsel in data.counselling %}{{ counsel.allotment_order_number or 'N/A' }}{% if not loop.last %}, {% endif %}{% endfor %}{% else %}N/A{% endif %}</td>
-<td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1] font-mono">{% if data.counselling %}{% for counsel in data.counselling %}{{ counsel.consortium_number or 'N/A' }}{% if not loop.last %}, {% endif %}{% endfor %}{% else %}N/A{% endif %}</td>
-<td class="px-4 py-3">{% if data.counselling %}{% for counsel in data.counselling %}<span class="inline-block px-2 py-1 rounded-full text-xs font-semibold {% if counsel.status == 'Registered' %}bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300{% elif counsel.status == 'Allotted' %}bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300{% else %}bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300{% endif %} mr-1">{{ counsel.status or 'N/A' }}</span>{% endfor %}{% else %}<span class="text-xs text-slate-400">N/A</span>{% endif %}</td>
-<td class="px-4 py-3"><span class="px-3 py-1 rounded-lg text-xs font-bold text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/30">{% if data.payments %}{% for pay in data.payments %}₹{{ pay.amount or '0' }}{% if not loop.last %}, {% endif %}{% endfor %}{% else %}-{% endif %}</span></td>
-<td class="px-4 py-3 text-xs">
-{% if data.applications %}
-  {% for app in data.applications %}
-    {% set docs = data.documents_by_app.get(app.app_id, {}) %}
-    <div class="mb-2">
-      <div class="font-semibold text-xs mb-1 text-[#1f2937] dark:text-[#e2e8f0]">App #{{ app.app_id }}</div>
-      <div class="flex flex-wrap gap-1">
-        <!-- 10th Mark Sheet -->
-        {% if docs.get('10th_Mark_Sheet') %}
-          {% set doc = docs['10th_Mark_Sheet'] %}
-          <a href="{{ doc.document_url }}" target="_blank" rel="noopener noreferrer" title="View 10th Mark Sheet" class="inline-flex items-center gap-1 bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-blue-600 shadow-sm hover:shadow-md transition-all">
-            <span class="material-symbols-outlined text-xs">visibility</span>
-          </a>
-        {% else %}
-          <span class="text-xs text-slate-300 px-2">-</span>
-        {% endif %}
-        
-        <!-- 12th Mark Sheet -->
-        {% if docs.get('12th_Mark_Sheet') %}
-          {% set doc = docs['12th_Mark_Sheet'] %}
-          <a href="{{ doc.document_url }}" target="_blank" rel="noopener noreferrer" title="View 12th Mark Sheet" class="inline-flex items-center gap-1 bg-cyan-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-cyan-600 shadow-sm hover:shadow-md transition-all">
-            <span class="material-symbols-outlined text-xs">visibility</span>
-          </a>
-        {% else %}
-          <span class="text-xs text-slate-300 px-2">-</span>
-        {% endif %}
-        
-        <!-- Community Certificate -->
-        {% if docs.get('Community_Certificate') %}
-          {% set doc = docs['Community_Certificate'] %}
-          <a href="{{ doc.document_url }}" target="_blank" rel="noopener noreferrer" title="View Community Certificate" class="inline-flex items-center gap-1 bg-teal-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-teal-600 shadow-sm hover:shadow-md transition-all">
-            <span class="material-symbols-outlined text-xs">visibility</span>
-          </a>
-        {% else %}
-          <span class="text-xs text-slate-300 px-2">-</span>
-        {% endif %}
-        
-        <!-- Transfer Certificate -->
-        {% if docs.get('Transfer_Certificate') %}
-          {% set doc = docs['Transfer_Certificate'] %}
-          <a href="{{ doc.document_url }}" target="_blank" rel="noopener noreferrer" title="View Transfer Certificate" class="inline-flex items-center gap-1 bg-indigo-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-indigo-600 shadow-sm hover:shadow-md transition-all">
-            <span class="material-symbols-outlined text-xs">visibility</span>
-          </a>
-        {% else %}
-          <span class="text-xs text-slate-300 px-2">-</span>
-        {% endif %}
-        
-        <!-- FG Certificate -->
-        {% if docs.get('FG_Certificate') %}
-          {% set doc = docs['FG_Certificate'] %}
-          <a href="{{ doc.document_url }}" target="_blank" rel="noopener noreferrer" title="View FG Certificate" class="inline-flex items-center gap-1 bg-emerald-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-emerald-600 shadow-sm hover:shadow-md transition-all">
-            <span class="material-symbols-outlined text-xs">visibility</span>
-          </a>
-        {% else %}
-          <span class="text-xs text-slate-300 px-2">-</span>
-        {% endif %}
-        
-        <!-- Passport Photo -->
-        {% if docs.get('Passport_Photo') %}
-          {% set doc = docs['Passport_Photo'] %}
-          <a href="{{ doc.document_url }}" target="_blank" rel="noopener noreferrer" title="View Passport Photo" class="inline-flex items-center gap-1 bg-purple-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-purple-600 shadow-sm hover:shadow-md transition-all">
-            <span class="material-symbols-outlined text-xs">visibility</span>
-          </a>
-        {% else %}
-          <span class="text-xs text-slate-300 px-2">-</span>
-        {% endif %}
-        
-        <!-- Allotment Order (from counselling) -->
-        {% set allotment = data.counselling | selectattr('app_id', 'equalto', app.app_id) | first if data.counselling else None %}
-        {% if allotment and allotment.allotment_order_url %}
-          <a href="{{ allotment.allotment_order_url }}" target="_blank" rel="noopener noreferrer" title="View Allotment Order" class="inline-flex items-center gap-1 bg-orange-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-orange-600 shadow-sm hover:shadow-md transition-all">
-            <span class="material-symbols-outlined text-xs">visibility</span>
-          </a>
-        {% else %}
-          <span class="text-xs text-slate-300 px-2">-</span>
-        {% endif %}
-      </div>
-    </div>
-  {% endfor %}
-{% else %}
-  <span class="text-xs text-slate-400">No docs</span>
-{% endif %}
-</td>
-<td class="px-4 py-3">
-<a href="#" data-action="student_profile" data-student-id="{{ data.student.id }}" class="inline-flex items-center gap-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-xs font-bold py-2 px-3 rounded-lg transition-all shadow-md hover:shadow-lg transform hover:scale-105">
-<span class="material-symbols-outlined text-sm">visibility</span>
-View
-</a>
-</td>
-</tr>
-{% endfor %}
-{% else %}
-<tr>
-<td colspan="23" class="px-6 py-12 text-center">
-<div class="flex flex-col items-center gap-3">
-<span class="material-symbols-outlined text-6xl text-slate-300">person_off</span>
-<p class="text-base font-semibold text-slate-600 dark:text-slate-400">No students found</p>
-</div>
-</td>
-</tr>
-{% endif %}
-</tbody>
+<tbody id="students-rows" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"></tbody>
 </table>
 </div>
 </div>
@@ -255,82 +115,358 @@ View
 </div>
 </main>
 
+<!-- Supabase client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
 <script>
+// CONFIG: values injected from .env
+const SUPABASE_URL = 'https://izxxhnrkcsnnabdhvixh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6eHhobnJrY3NubmFiZGh2aXhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NzkzMDYsImV4cCI6MjA4NTE1NTMwNn0.mVPXk2XF9DzGsZo_SJuTHcXPArdWywxLWJZw3DD9gkE';
+
+let supabaseClient = null;
+if (SUPABASE_URL.startsWith('http')) {
+  try {
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  } catch (err) {
+    console.error('Supabase client init error', err);
+    supabaseClient = null;
+  }
+} else {
+  console.warn('Supabase URL not configured - client disabled');
+}
+
+// Utility maps
+let academicsByStudent = {};
+let admissionsByStudent = {};
+let applicationsByStudent = {};
+let documentsByApp = {};
+let counsellingByStudent = {};
+let paymentsByStudent = {};
+let deptMap = {};
+
+async function loadData() {
+  if (!supabaseClient) return showConfigError();
+
+  // fetch core tables in parallel
+  const [sRes, aRes, applRes, admRes, cRes, dRes, pRes, deptRes] = await Promise.all([
+    supabaseClient.from('students').select('*'),
+    supabaseClient.from('academics').select('*'),
+    supabaseClient.from('admission_applications').select('*'),
+    supabaseClient.from('admissions').select('*'),
+    supabaseClient.from('counselling_records').select('*'),
+    supabaseClient.from('documents').select('*'),
+    supabaseClient.from('payments').select('*'),
+    supabaseClient.from('departments').select('*')
+  ]);
+
+  const students = sRes.data || [];
+  const academics = aRes.data || [];
+  const applications = applRes.data || [];
+  const admissions = admRes.data || [];
+  const counselling = cRes.data || [];
+  const documents = dRes.data || [];
+  const payments = pRes.data || [];
+  const departments = deptRes.data || [];
+
+  // Build department lookup
+  deptMap = {};
+  departments.forEach(d => {
+    if(!d) return;
+    const id = d.id !== undefined && d.id !== null ? String(d.id) : null;
+    const name = d.dept_name || d.name || d.dept || d.deptName || d.department_name || d.department || '';
+    if(id) deptMap[id] = name || id;
+  });
+
+  // Build maps
+  academicsByStudent = {};
+  academics.forEach(ac => {
+    const sid = ac.student_id || ac.student || ac.id;
+    if (sid) academicsByStudent[sid] = ac;
+  });
+
+  applicationsByStudent = {};
+  applications.forEach(ap => {
+    const sid = ap.student_id || ap.student || ap.studentId;
+    if (!sid) return;
+    applicationsByStudent[sid] = applicationsByStudent[sid] || [];
+    applicationsByStudent[sid].push(ap);
+  });
+
+  admissionsByStudent = {};
+  admissions.forEach(ad => {
+    const sid = ad.student_id || ad.student || ad.studentId;
+    if (!sid) return;
+    admissionsByStudent[sid] = admissionsByStudent[sid] || [];
+    admissionsByStudent[sid].push(ad);
+  });
+
+  documentsByApp = {};
+  documents.forEach(doc => {
+    const appId = doc.app_id || doc.application_id || doc.appId;
+    if (!appId) return;
+    documentsByApp[appId] = documentsByApp[appId] || [];
+    documentsByApp[appId].push(doc);
+  });
+
+  counsellingByStudent = {};
+  counselling.forEach(c => {
+    const sid = c.student_id || c.student || c.studentId || c.applicant_id;
+    if (sid) {
+      counsellingByStudent[sid] = counsellingByStudent[sid] || [];
+      counsellingByStudent[sid].push(c);
+    }
+  });
+
+  paymentsByStudent = {};
+  payments.forEach(p => {
+    const sid = p.student_id || p.student || p.applicant_id || p.app_id;
+    if (sid) {
+      paymentsByStudent[sid] = paymentsByStudent[sid] || [];
+      paymentsByStudent[sid].push(p);
+    }
+  });
+
+  renderTable(students);
+  populateExportFields();
+}
+
+function showConfigError() {
+  const tbody = document.getElementById('students-rows');
+  tbody.innerHTML = '<tr><td colspan="23" class="px-6 py-12 text-center"><div class="flex flex-col items-center gap-3"><span class="material-symbols-outlined text-6xl text-slate-300">error</span><p class="text-base font-semibold text-slate-600 dark:text-slate-400">Supabase is not configured. Please set SUPABASE_URL and SUPABASE_ANON_KEY in the script.</p></div></td></tr>';
+}
+
+function renderTable(students) {
+  const tbody = document.getElementById('students-rows');
+  tbody.innerHTML = '';
+  // helper to pick the first available field from possible keys
+  function pick(obj, ...keys){
+    if(!obj) return null;
+    for(const k of keys){
+      if(obj[k] !== undefined && obj[k] !== null && String(obj[k]).trim() !== '') return obj[k];
+    }
+    return null;
+  }
+  students.forEach(student => {
+    const sid = student.id || student.student_id;
+    const academic = academicsByStudent[sid] || {};
+    const apps = applicationsByStudent[sid] || [];
+    const counsel = counsellingByStudent[sid] || [];
+    const pays = paymentsByStudent[sid] || [];
+
+    // normalized fields with fallbacks
+    const phone = pick(student, 'phone', 'whatsapp_number', 'mobile', 'contact_number', 'phone_number') || 'N/A';
+    const dob = pick(student, 'dob', 'date_of_birth', 'birth_date') || 'N/A';
+    const community = pick(student, 'community', 'community_name') || 'N/A';
+    const religion = pick(student, 'religion', 'religion_name') || 'N/A';
+    const fullName = pick(student, 'full_name', 'name') || 'N/A';
+    const uniqueId = pick(student, 'unique_id', 'id') || 'N/A';
+    const plus2 = pick(student, 'plus2_percentage', 'plus2_percent', 'hsc_percentage') || 'N/A';
+    const schoolName = pick(academic, 'school_name', 'school', 'institute_name') || 'N/A';
+
+    // resolve preferred department names from applications (map ids to names when necessary)
+    // Resolve preferred departments from multiple sources: application rows, admissions table, academics
+    const prefCandidates = [];
+    // from admission_applications
+    apps.forEach(a => {
+      const fields = ['preferred_dept_name','preferred_dept','preferred_dept_id','preferred_department_id','preferredDept','preferredDeptId','dept_id','department_id','dept_name','dept'];
+      for(const f of fields){ if(a[f]) prefCandidates.push(a[f]); }
+    });
+    // from admissions table (admissionsByStudent)
+    (admissionsByStudent[sid]||[]).forEach(ad => {
+      const fields = ['preferred_dept_name','preferred_dept','preferred_dept_id','preferred_department_id','preferredDept','preferredDeptId','dept_id','department_id','dept_name','dept'];
+      for(const f of fields){ if(ad[f]) prefCandidates.push(ad[f]); }
+    });
+    // from academics/ad-hoc student fields
+    const acadPref = pick(academic, 'preferred_dept_name','preferred_dept','preferred_dept_id','dept','dept_id');
+    if(acadPref) prefCandidates.push(acadPref);
+
+    // normalize and map to department names where possible
+    const preferredSet = new Set();
+    prefCandidates.forEach(candidate => {
+      if(!candidate) return;
+      const key = String(candidate).trim();
+      if(/^[0-9]+$/.test(key) && deptMap[key]) preferredSet.add(deptMap[key]);
+      else if(deptMap[key]) preferredSet.add(deptMap[key]);
+      else preferredSet.add(key);
+    });
+    const preferredNames = Array.from(preferredSet).join(', ') || 'N/A';
+
+    // resolve allotted department names from counselling records
+    const allottedNames = (counsel.map(c => {
+      const candidate = c.dept_name || c.allotted_dept_name || c.allotted_dept || c.allotted_dept_id || c.dept_id || c.allotted_deptid || null;
+      if(!candidate) return null;
+      const key = String(candidate);
+      if(/^[0-9]+$/.test(key) && deptMap[key]) return deptMap[key];
+      return deptMap[key] || candidate;
+    }).filter(Boolean).join(', ') || 'N/A');
+
+    // Determine counsel status: if any counselling record shows an allotment, mark Completed
+    const hasAllotment = counsel.some(c => {
+      return !!(c && (c.allotment_order_number || c.allotted_dept || c.allotted_dept_id || c.dept_name || c.dept_id || c.consortium_number));
+    });
+    const counselStatusDisplay = hasAllotment ? 'Completed' : (counsel.map(c=>c.status||'N/A').filter(Boolean).join(', ') || 'N/A');
+
+    // build documents html per application
+    let docsHtml = '';
+    if (apps.length) {
+      apps.forEach(app => {
+        const appId = app.app_id || app.id || app.application_id;
+        const docList = documentsByApp[appId] || [];
+        docsHtml += `<div class="mb-2"><div class="font-semibold text-xs mb-1 text-[#1f2937] dark:text-[#e2e8f0]">App #${appId || 'N/A'}</div><div class="flex flex-wrap gap-1">`;
+        if (docList.length) {
+          docList.forEach(d => {
+            const url = d.document_url || d.url || d.path || '#';
+            docsHtml += `<a href="${url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded"> <span class="material-symbols-outlined text-xs">visibility</span></a>`;
+          });
+        } else {
+          docsHtml += `<span class="text-xs text-slate-300 px-2">-</span>`;
+        }
+        docsHtml += `</div></div>`;
+      });
+    } else {
+      docsHtml = `<span class="text-xs text-slate-400">No docs</span>`;
+    }
+
+    const nameInitial = (fullName || 'N')[0] || 'N';
+
+    const row = document.createElement('tr');
+    row.className = 'hover:bg-blue-50 dark:hover:bg-[#2d3748] transition-colors duration-150 border-l-4 border-l-transparent hover:border-l-blue-500';
+    row.innerHTML = `
+      <td class="px-4 py-3 text-xs font-semibold text-[#111418] dark:text-white sticky left-0 bg-white dark:bg-[#1a202c] hover:bg-blue-50 dark:hover:bg-[#2d3748]"><div class="flex items-center gap-2"><div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-xs">${nameInitial.toUpperCase()}</div>${(student.full_name || student.name || 'N/A')}</div></td>
+      <td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1] font-mono bg-[#f9fafb] dark:bg-[#0f172a]">${student.unique_id || student.id || 'N/A'}</td>
+      <td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1] truncate">${student.email || 'N/A'}</td>
+      <td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1]">${phone}</td>
+      <td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1] capitalize">${student.gender || 'N/A'}</td>
+      <td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1]">${dob}</td>
+      <td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1]">${community}</td>
+      <td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1]">${religion}</td>
+      <td class="px-4 py-3"><span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">${student.status || 'N/A'}</span></td>
+      <td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1] truncate">${schoolName}</td>
+      <td class="px-4 py-3 text-xs font-semibold text-[#1f2937] dark:text-[#f0f9ff] bg-amber-50 dark:bg-amber-900/20">${plus2}</td>
+      <td class="px-4 py-3 text-xs font-bold text-[#7c2d12] dark:text-[#fed7aa] bg-orange-100 dark:bg-orange-900/30 rounded px-2">${academic.cutoff || academic.cutoff_score || 'N/A'}</td>
+      <td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1]">${academic.tnea_eligible || academic.tnea || 'N/A'}</td>
+      <td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1]">${academic.tnea_average || academic.tnea_avg || 'N/A'}</td>
+      <td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1] truncate">${preferredNames}</td>
+      <td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1]">${(counsel.map(c=>c.quota_type||'N/A').join(', ') || 'N/A')}</td>
+      <td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1] truncate">${allottedNames}</td>
+      <td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1] font-mono">${(counsel.map(c=>c.allotment_order_number||c.order_number||'N/A').join(', ') || 'N/A')}</td>
+      <td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1] font-mono">${(counsel.map(c=>c.consortium_number||'N/A').join(', ') || 'N/A')}</td>
+      <td class="px-4 py-3">${(function(){
+        const s = counselStatusDisplay || 'N/A';
+        const cls = s==='Registered' ? 'bg-green-100 text-green-700' : (s==='Completed' ? 'bg-blue-100 text-blue-700' : (s==='Allotted' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'));
+        return `<span class="inline-block px-2 py-1 rounded-full text-xs font-semibold ${cls} mr-1">${s}</span>`;
+      })()}</td>
+      <td class="px-4 py-3"><span class="px-3 py-1 rounded-lg text-xs font-bold text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/30">${(pays.map(p=>'₹'+(p.amount||'0')).join(', ')||'-')}</span></td>
+      <td class="px-4 py-3 text-xs">${docsHtml}</td>
+      <td class="px-4 py-3"><a href="/admin/student_profile_view?student_id=${encodeURIComponent(student.id || student.unique_id || student.email || '')}" class="inline-flex items-center gap-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-xs font-bold py-2 px-3 rounded-lg"> <span class="material-symbols-outlined text-sm">visibility</span>View</a></td>
+    `;
+
+    tbody.appendChild(row);
+  });
+
+  // update count
+  const cnt = students.length || 0;
+  const cEl = document.getElementById('count-records');
+  if (cEl) cEl.textContent = cnt;
+}
+
+// Export modal helpers
+const EXPORT_COLUMNS = ['full_name','unique_id','email','phone','gender','dob','community','religion','status','school_name','plus2_percentage','cutoff','tnea_eligible','tnea_average','preferred_depts','quota','allotted_dept','order','consortium_number','counsel_status','payments','documents'];
+
+function populateExportFields() {
+  const container = document.getElementById('exportFieldsContainer');
+  if (!container) return;
+  container.innerHTML = '';
+  EXPORT_COLUMNS.forEach(col => {
+    const lbl = document.createElement('label');
+    lbl.className = 'inline-flex items-center gap-2 text-sm';
+    lbl.innerHTML = `<input type="checkbox" class="export-field-checkbox" value="${col}" onchange="updateSelectedCount()" checked /> <span>${col}</span>`;
+    container.appendChild(lbl);
+  });
+  updateSelectedCount();
+}
+
+function openExportModal() { const modal = document.getElementById('exportModal'); if (modal) { modal.classList.remove('hidden'); modal.classList.add('flex'); } }
+function closeExportModal() { const modal = document.getElementById('exportModal'); if (modal) { modal.classList.add('hidden'); modal.classList.remove('flex'); } }
+function selectAllFields(yes) { document.querySelectorAll('.export-field-checkbox').forEach(b=>b.checked=!!yes); updateSelectedCount(); }
+function updateSelectedCount() { const boxes = Array.from(document.querySelectorAll('.export-field-checkbox')); const count = boxes.filter(b=>b.checked).length; const el = document.getElementById('selectedCount'); if (el) el.textContent = count; }
+
+function submitExport() {
+  const boxes = Array.from(document.querySelectorAll('.export-field-checkbox'));
+  const selected = boxes.filter(b => b.checked).map(b => b.value);
+  // build CSV from current DOM rows
+  const rows = [];
+  const header = selected;
+  rows.push(header.join(','));
+  const tbodyRows = document.querySelectorAll('#students-rows > tr');
+  tbodyRows.forEach(tr => {
+    const data = {};
+    const tds = tr.querySelectorAll('td');
+    data.full_name = tds[0]?.textContent.trim() || '';
+    data.unique_id = tds[1]?.textContent.trim() || '';
+    data.email = tds[2]?.textContent.trim() || '';
+    data.phone = tds[3]?.textContent.trim() || '';
+    data.gender = tds[4]?.textContent.trim() || '';
+    data.dob = tds[5]?.textContent.trim() || '';
+    data.community = tds[6]?.textContent.trim() || '';
+    data.religion = tds[7]?.textContent.trim() || '';
+    data.status = tds[8]?.textContent.trim() || '';
+    data.school_name = tds[9]?.textContent.trim() || '';
+    data.plus2_percentage = tds[10]?.textContent.trim() || '';
+    data.cutoff = tds[11]?.textContent.trim() || '';
+    data.tnea_eligible = tds[12]?.textContent.trim() || '';
+    data.tnea_average = tds[13]?.textContent.trim() || '';
+    data.preferred_depts = tds[14]?.textContent.trim() || '';
+    data.quota = tds[15]?.textContent.trim() || '';
+    data.allotted_dept = tds[16]?.textContent.trim() || '';
+    data.order = tds[17]?.textContent.trim() || '';
+    data.consortium_number = tds[18]?.textContent.trim() || '';
+    data.counsel_status = tds[19]?.textContent.trim() || '';
+    data.payments = tds[20]?.textContent.trim() || '';
+    data.documents = tds[21]?.textContent.trim() || '';
+
+    const line = selected.map(k => `"${(data[k]||'').replace(/"/g,'""')}"`).join(',');
+    rows.push(line);
+  });
+
+  const csv = rows.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'students_export.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 // Search functionality
 const searchInput = document.getElementById('studentSearch');
 if (searchInput) {
   searchInput.addEventListener('keyup', function(e) {
     const searchTerm = this.value.toLowerCase();
-    const rows = document.querySelectorAll('tbody tr');
-    
+    const rows = document.querySelectorAll('#students-rows tr');
     rows.forEach(row => {
-      if (row.textContent.toLowerCase().includes(searchTerm)) {
-        row.style.display = '';
-      } else {
-        row.style.display = 'none';
-      }
+      if (row.textContent.toLowerCase().includes(searchTerm)) row.style.display = ''; else row.style.display = 'none';
     });
-    
-    // Update record count
     const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
-    const recordCount = document.querySelector('.bg-white\\/20');
-    if (recordCount) {
-      recordCount.innerHTML = `<p class="text-sm text-blue-50">Showing: <span class="font-bold text-xl">${visibleRows.length}</span></p>`;
-    }
+    const recordCount = document.getElementById('count-records');
+    if (recordCount) recordCount.textContent = visibleRows.length;
   });
 }
 
-// Auto-adjust table columns width on window resize
-window.addEventListener('resize', function() {
-  const table = document.querySelector('table');
-  if (table) {
-    table.style.minWidth = Math.max(1200, window.innerWidth - 40) + 'px';
-  }
+// Auto-adjust table width on resize
+window.addEventListener('resize', function() { const table = document.querySelector('table'); if (table) table.style.minWidth = Math.max(1200, window.innerWidth - 40) + 'px'; });
+
+// Logout handler
+const logoutBtn = document.getElementById('logoutBtn');
+if (logoutBtn) logoutBtn.addEventListener('click', (e) => { e.preventDefault(); window.location.href = '/auth/logout'; });
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  if (supabaseClient) loadData().catch(err => console.error('loadData error', err));
+  else showConfigError();
 });
-
-// Export modal JS
-function openExportModal() {
-  const modal = document.getElementById('exportModal');
-  if (modal) {
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    // default select all
-    selectAllFields(true);
-    updateSelectedCount();
-  }
-}
-
-function closeExportModal() {
-  const modal = document.getElementById('exportModal');
-  if (modal) {
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-  }
-}
-
-function selectAllFields(yes) {
-  const boxes = document.querySelectorAll('.export-field-checkbox');
-  boxes.forEach(b => b.checked = !!yes);
-  updateSelectedCount();
-}
-
-function updateSelectedCount() {
-  const boxes = Array.from(document.querySelectorAll('.export-field-checkbox'));
-  const count = boxes.filter(b => b.checked).length;
-  const el = document.getElementById('selectedCount');
-  if (el) el.textContent = count;
-}
-
-function submitExport() {
-  const boxes = Array.from(document.querySelectorAll('.export-field-checkbox'));
-  const selected = boxes.filter(b => b.checked).map(b => b.value);
-  // Build query param
-  const params = new URLSearchParams();
-  if (selected.length) params.set('fields', selected.join(','));
-  const url = '{{ url_for('admin.student_profiles_export_excel') }}' + (params.toString() ? ('?' + params.toString()) : '');
-  // Navigate to export URL
-  window.location.href = url;
-}
 </script>
 </body>
 </html>
