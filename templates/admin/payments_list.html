@@ -56,7 +56,7 @@
 <div class="flex flex-1">
 <aside class="w-56 border-r border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#111827] hidden md:flex flex-col">
 <nav class="flex-1 overflow-y-auto px-2 py-6 flex flex-col gap-2">
-<a href="{{ url_for('admin.payments_list') }}" class="flex items-center gap-3 px-4 py-2 text-white bg-primary rounded-lg transition-colors active-nav">
+<a href="#" data-route="payments_list" class="flex items-center gap-3 px-4 py-2 text-white bg-primary rounded-lg transition-colors active-nav">
 <span class="material-symbols-outlined text-xl">payments</span>
 <span class="text-sm font-medium">Payments</span>
 </a>
@@ -69,15 +69,7 @@
 
 <main class="flex-1 overflow-y-auto">
 <div class="max-w-[1400px] mx-auto p-6 flex flex-col gap-6">
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-        <div class="bg-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-50 border border-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-200 text-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-800 px-4 py-3 rounded-lg">
-            {{ message }}
-        </div>
-        {% endfor %}
-    {% endif %}
-{% endwith %}
+<div id="flashContainer"></div>
 
 <div class="flex flex-wrap justify-between items-end gap-3">
 <div class="flex min-w-72 flex-col gap-1">
@@ -92,11 +84,11 @@
 <div class="flex flex-col bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden">
 <div class="flex items-center justify-between px-6 py-5 border-b border-[#e5e7eb] dark:border-[#2d3748]">
 <h2 class="text-[#111418] dark:text-white text-xl font-bold leading-tight">Pending Payment</h2>
-<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">{{ pending_students|length }} Student(s)</span>
+<span id="pendingCount" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">0 Student(s)</span>
 </div>
 
 <div class="px-6 py-4">
-    <input id="pendingSearch" type="search" placeholder="Search pending payments (name, id, reg, dept)..." class="w-full md:w-1/2 px-3 py-2 border rounded-lg focus:outline-none focus:ring" />
+    <input id="pendingSearch" type="search" placeholder="Search pending payments (name, id, dept)..." class="w-full md:w-1/2 px-3 py-2 border rounded-lg focus:outline-none focus:ring" />
 </div>
 
 <div class="overflow-x-auto">
@@ -106,47 +98,12 @@
 <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">App #</th>
 <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Student Name</th>
 <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Unique ID</th>
-<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Registration ID</th>
 <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Allotted Department</th>
 <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Quota</th>
 <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Action</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
-{% if pending_students %}
-    {% for s in pending_students %}
-    <tr class="hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors">
-        <td class="px-6 py-4">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">#{{ s.app_id }}</span>
-        </td>
-        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">{{ s.student_name }}</td>
-        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">{{ s.unique_id }}</td>
-        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">{{ s.registration_id }}</td>
-        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white">{{ s.allotted_dept }}</td>
-        <td class="px-6 py-4">
-            {% if s.quota_type == 'GQ' %}
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">General Quota</span>
-            {% elif s.quota_type == 'MQ' %}
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">Management Quota</span>
-            {% endif %}
-        </td>
-        <td class="px-6 py-4">
-            <a href="{{ url_for('admin.payments_form', app_id=s.app_id) }}" class="inline-flex items-center gap-2 bg-primary text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-primary/90 shadow-sm transition-all active:scale-95">
-                <span class="material-symbols-outlined text-sm">payments</span>
-                Add Payment
-            </a>
-        </td>
-    </tr>
-    {% endfor %}
-{% else %}
-    <tr>
-        <td colspan="7" class="px-6 py-12 text-center text-slate-500">
-            <span class="material-symbols-outlined text-4xl mb-2">check_circle</span>
-            <p class="text-sm font-medium">No pending payments</p>
-        </td>
-    </tr>
-{% endif %}
-</tbody>
+<tbody id="pending-tbody" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"></tbody>
 </table>
 </div>
 </div>
@@ -155,7 +112,7 @@
 <div class="flex flex-col bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden">
 <div class="flex items-center justify-between px-6 py-5 border-b border-[#e5e7eb] dark:border-[#2d3748]">
 <h2 class="text-[#111418] dark:text-white text-xl font-bold leading-tight">Payment Collected</h2>
-<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">{{ completed_students|length }} Student(s)</span>
+<span id="completedCount" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">0 Student(s)</span>
 </div>
 
 <div class="px-6 py-4">
@@ -174,71 +131,77 @@
 <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Amount</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
-{% if completed_students %}
-    {% for s in completed_students %}
-    <tr class="hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors">
-        <td class="px-6 py-4">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">#{{ s.app_id }}</span>
-        </td>
-        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">{{ s.student_name }}</td>
-        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">{{ s.unique_id }}</td>
-        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-bold">{{ s.bill_no }}</td>
-        <td class="px-6 py-4">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold 
-            {% if s.mode_of_payment == 'Cash' %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400
-            {% elif s.mode_of_payment == 'Card' %}bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400
-            {% elif s.mode_of_payment == 'Cheque' %}bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400
-            {% elif s.mode_of_payment == 'Bank Transfer' %}bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400
-            {% else %}bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400{% endif %}">
-                {{ s.mode_of_payment }}
-            </span>
-            {% if s.mode_of_payment == 'UPI' and s.upi_id %}
-            <div class="text-xs text-slate-500 mt-1">{{ s.upi_id }}</div>
-            {% endif %}
-        </td>
-        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-bold">₹ {{ "%.2f"|format(s.amount) }}</td>
-    </tr>
-    {% endfor %}
-{% else %}
-    <tr>
-        <td colspan="6" class="px-6 py-12 text-center text-slate-500">
-            <span class="material-symbols-outlined text-4xl mb-2">folder_open</span>
-            <p class="text-sm font-medium">No payments collected yet</p>
-        </td>
-    </tr>
-{% endif %}
-</tbody>
+<tbody id="completed-tbody" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"></tbody>
 </table>
 </div>
 </div>
 
 </div>
-</div>
 </main>
 </div>
 <script>
-(function(){
-    function debounce(fn, delay){ let t; return function(){ const args=arguments; const ctx=this; clearTimeout(t); t=setTimeout(function(){ fn.apply(ctx, args); }, delay); }; }
-    function filterTable(tableId, query){
-        const q = (query || '').trim().toLowerCase();
-        const rows = document.querySelectorAll('#'+tableId+' tbody tr');
-        rows.forEach(function(r){
-            const text = r.textContent.toLowerCase();
-            r.style.display = (q === '' || text.indexOf(q) !== -1) ? '' : 'none';
-        });
-    }
+// Helper
+function debounce(fn, delay){ let t; return function(){ const args=arguments; const ctx=this; clearTimeout(t); t=setTimeout(function(){ fn.apply(ctx, args); }, delay); }; }
 
-    var pendingInput = document.getElementById('pendingSearch');
-    var completedInput = document.getElementById('completedSearch');
+async function fetchJson(url){ const r = await fetch(url); if(!r.ok) throw new Error('fetch failed '+url); return r.json(); }
 
-    if(pendingInput){
-        pendingInput.addEventListener('input', debounce(function(e){ filterTable('pendingTable', e.target.value); }, 200));
-    }
-    if(completedInput){
-        completedInput.addEventListener('input', debounce(function(e){ filterTable('completedTable', e.target.value); }, 200));
-    }
-})();
+async function loadPaymentsPage(){
+    const pendingTbody = document.getElementById('pending-tbody');
+    const completedTbody = document.getElementById('completed-tbody');
+    const pendingCount = document.getElementById('pendingCount');
+    const completedCount = document.getElementById('completedCount');
+    pendingTbody.innerHTML = '';
+    completedTbody.innerHTML = '';
+
+    let deptMap = {};
+    try{ const deps = await fetchJson('/api/departments'); (deps||[]).forEach(d=>{ const id=d.id||d.dept_id; const name=d.dept_name||d.name||d.department_name; if(id) deptMap[String(id)]=name||('Dept #'+id); }); }catch(e){ console.warn('departments fetch failed', e); }
+
+    let candidates = [];
+    try{ candidates = await fetchJson('/api/payment_candidates'); }catch(e){ console.warn('payment_candidates failed', e); }
+    candidates.sort((a,b)=>Number(a.app_id)-Number(b.app_id));
+    candidates.forEach(s=>{
+        const tr = document.createElement('tr'); tr.className='hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors';
+        const dept = s.preferred_dept_id ? (deptMap[String(s.preferred_dept_id)]||('Dept #'+s.preferred_dept_id)) : '-';
+        const quota = s.quota_type||'-';
+        tr.innerHTML = `
+            <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">#${s.app_id}</span></td>
+            <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">${s.student_name||''}</td>
+            <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${s.unique_id||''}</td>
+            <td class="px-6 py-4 text-sm text-[#111418] dark:text-white">${dept}</td>
+            <td class="px-6 py-4">${quota}</td>
+            <td class="px-6 py-4"><a href="payments_form.html?app_id=${s.app_id}" class="inline-flex items-center gap-2 bg-primary text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-primary/90"> <span class="material-symbols-outlined text-sm">payments</span> Add Payment</a></td>
+        `;
+        pendingTbody.appendChild(tr);
+    });
+    pendingCount.textContent = candidates.length + ' Student(s)';
+
+    let payments = [];
+    try{ payments = await fetchJson('/api/payments'); }catch(e){ console.warn('payments fetch failed', e); }
+    payments.sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
+    payments.forEach(p=>{
+        const tr = document.createElement('tr'); tr.className='hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors';
+        const modeClass = (m)=>{ if(m==='Cash') return 'bg-green-100 text-green-800'; if(m==='Card') return 'bg-blue-100 text-blue-800'; if(m==='Cheque') return 'bg-orange-100 text-orange-800'; if(m==='Bank Transfer') return 'bg-purple-100 text-purple-800'; return 'bg-gray-100 text-gray-800'; };
+        tr.innerHTML = `
+            <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">#${p.app_id}</span></td>
+            <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">${p.student_name || ''}</td>
+            <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${p.unique_id || ''}</td>
+            <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-bold">${p.bill_no}</td>
+            <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${modeClass(p.mode_of_payment)}">${p.mode_of_payment}</span>${p.mode_of_payment==='UPI' && p.upi_id?('<div class="text-xs text-slate-500 mt-1">'+p.upi_id+'</div>'):''}</td>
+            <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-bold">₹ ${Number(p.amount).toFixed(2)}</td>
+        `;
+        completedTbody.appendChild(tr);
+    });
+    completedCount.textContent = payments.length + ' Student(s)';
+
+    // wire search inputs
+    const pendingInput = document.getElementById('pendingSearch');
+    const completedInput = document.getElementById('completedSearch');
+    function filterTable(selector, query){ const q=(query||'').trim().toLowerCase(); document.querySelectorAll(selector+' tbody tr').forEach(r=>{ r.style.display=(q===''|| r.textContent.toLowerCase().indexOf(q)!==-1)?'':'none'; }); }
+    if(pendingInput) pendingInput.addEventListener('input', debounce(e=>filterTable('#pendingTable', e.target.value),200));
+    if(completedInput) completedInput.addEventListener('input', debounce(e=>filterTable('#completedTable', e.target.value),200));
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{ loadPaymentsPage().catch(e=>{ console.error(e); const fc=document.getElementById('flashContainer'); if(fc) fc.innerHTML='<div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">Failed to load payments</div>'; }); });
 </script>
 </body>
 </html>

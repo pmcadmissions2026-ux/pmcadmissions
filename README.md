@@ -1,3 +1,43 @@
+# PMC Admissions — Node.js scaffold
+
+This project scaffolds a minimal Node + Express backend that serves your existing frontend templates and provides simple API routes that proxy to Supabase using a server-side service key.
+
+Quick start
+
+1. Install dependencies
+
+```bash
+npm install
+```
+
+2. Copy your `.env` file (you already provided one) with at least:
+
+```
+SUPABASE_URL=...
+SUPABASE_SERVICE_KEY=...   # keep this secret
+SECRET_KEY=...             # session secret
+```
+
+3. Run in development
+
+```bash
+npm run dev
+```
+
+4. Server routes
+
+- `GET /api/students` - list students (proxied to Supabase)
+- `GET /api/admissions` - list admissions
+- `POST /api/admissions/:id/assign` - assign a branch (expects `allotted_dept_id` and optional `processed_by` in JSON body)
+- `POST /auth/login` - login by email (looks up `staff` table and sets session)
+- `POST /auth/logout` - clear session
+- `GET /auth/me` - session inspection
+
+Notes & next steps
+
+- This scaffold uses the Supabase service key on the server — never put `SUPABASE_SERVICE_KEY` into client code.
+- Add real authentication (Supabase Auth or password checks) before using in production.
+- Map additional routes to your `templates/` HTML files as needed.
 # PMC ADMISSION CONTROL SYSTEM
 
 ## 🚨 Staff-Only Admission Management System

@@ -42,7 +42,10 @@
 <div class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
     <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <h1 class="text-lg font-bold">PMC Admission Portal</h1>
-        <a href="{{ url_for('admin.admin_dashboard') }}" class="text-sm text-gray-600 hover:text-primary">← Dashboard</a>
+        <div class="flex items-center gap-3">
+            <a href="#" data-route="admin_dashboard" class="text-sm text-gray-600 hover:text-primary">← Dashboard</a>
+            <a href="/admin/admin_dashboard#branch-management" class="text-sm px-3 py-2 bg-primary text-white rounded hover:bg-primary/90">Open Branch Management</a>
+        </div>
     </div>
 </div>
 
@@ -99,7 +102,7 @@
                     <!-- Accept Student Button (only when not accepted) -->
                     {% if student.status != 'accepted' %}
                     <div class="flex justify-center mt-4">
-                        <form method="POST" action="{{ url_for('admin.accept_student', student_id=(student.id or student.student_id)) }}" onsubmit="return confirm('Accept this student and generate unique ID?')">
+                        <form method="POST" data-action="accept_student" data-student-id="{{ (student.id or student.student_id) }}" onsubmit="return false;">
                             <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700">Accept Student</button>
                         </form>
                     </div>
@@ -221,7 +224,7 @@
                     <!-- Action Buttons -->
                     <div class="border-t border-gray-200 dark:border-gray-700 pt-6 flex gap-4 justify-between">
                         <div class="flex gap-2">
-                            <a href="{{ url_for('admin.admin_dashboard') }}" class="flex items-center gap-2 px-6 py-3 text-gray-700 dark:text-gray-300 hover:text-primary font-semibold transition-colors">
+                            <a href="#" data-route="admin_dashboard" class="flex items-center gap-2 px-6 py-3 text-gray-700 dark:text-gray-300 hover:text-primary font-semibold transition-colors">
                                 <span class="material-symbols-outlined">arrow_back</span>
                                 Back
                             </a>
@@ -244,7 +247,7 @@
 <script>
     function discardDraft() {
         if (confirm('Are you sure you want to discard this draft?')) {
-            window.location.href = "{{ url_for('admin.admin_dashboard') }}";
+            window.location.href = '/admin/admin-branch-management';
         }
     }
 </script>

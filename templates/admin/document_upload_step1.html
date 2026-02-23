@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+	<meta charset="utf-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<title>Document Upload - Step 1</title>
+	<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+	<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+	<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+	<style>
+		body { font-family: 'Lexend', sans-serif; }
+		.material-symbols-outlined { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+	</style>
+</head>
+<body class="bg-gradient-to-b from-blue-50 to-blue-100 min-h-screen">
+	<nav class="bg-white shadow-md sticky top-0 z-50">
+		<div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+			<h1 class="text-2xl font-bold text-blue-600">PMC ADMISSION PORTAL</h1>
+			<a href="/auth/logout" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">Logout</a>
+		</div>
+	</nav>
+	<div class="max-w-5xl mx-auto px-4 py-8">
+		<div class="mb-8">
+			<h1 class="text-4xl font-bold text-gray-800 mb-2 flex items-center gap-2"><span class="material-symbols-outlined text-blue-600 text-3xl">folder_open</span>Step 1: Select or Create Student</h1>
+			<p class="text-gray-600 mb-4">Choose an existing student from admissions or create a new one to begin document upload.</p>
+		</div>
+			<div class="bg-white rounded-lg shadow-md p-6 mb-8">
+				<div class="flex items-center gap-4 mb-6">
+				<span class="material-symbols-outlined text-blue-500 text-2xl">search</span>
+				<input id="search-input" type="text" placeholder="Search by Unique ID, Name, or Application #" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+				<button id="refresh-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"><span class="material-symbols-outlined">refresh</span>Refresh</button>
+			</div>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+					<!-- Pending uploads: students with no documents -->
+					<div id="pending-section" class="space-y-4">
+						<h3 class="text-lg font-bold text-gray-700">Pending Uploads</h3>
+						<div id="pending-list" class="grid grid-cols-1 gap-6"></div>
+					</div>
+					<!-- Uploaded: students with documents -->
+					<div id="uploaded-section" class="space-y-4">
+						<h3 class="text-lg font-bold text-gray-700">Already Uploaded</h3>
+						<div id="uploaded-list" class="grid grid-cols-1 gap-6"></div>
+					</div>
+				</div>
+		</div>
+	</div>
+	<script>
+		// Fetch admissions and render student cards
+		async function loadStudents(){
+			const pendingEl = document.getElementById('pending-list');
+			const uploadedEl = document.getElementById('uploaded-list');
+			const loadingHtml = '<div class="text-center text-gray-500 py-8"><span class="material-symbols-outlined text-4xl mb-2">hourglass_empty</span>Loading admissions...</div>';
+			if(pendingEl) pendingEl.innerHTML = loadingHtml;
+			if(uploadedEl) uploadedEl.innerHTML = '';
+			try{
+				// Fetch admissions
+				const admRes = await fetch('/api/admissions');
+				if(!admRes.ok) throw new Error('Failed to fetch admissions');
+				const admissions = await admRes.json();
+				// Fetch students
+				const stRes = await fetch('/api/students');
+				if(!stRes.ok) throw new Error('Failed to fetch students');
+				const students = await stRes.json();
+				// Build lookup by student_id
+				const studentById = {};
+				students.forEach(s => { studentById[String(s.id)] = s; });
+				// Merge admissions with student info
+				const searchVal = document.getElementById('search-input').value.trim().toLowerCase();
+				const merged = admissions.map(a => {
+					let st = a.student_id ? studentById[String(a.student_id)] : null;
+					return {
+						app_id: a.app_id || a.id || '-',
+						unique_id: st ? (st.unique_id || '-') : (a.unique_id || '-'),
+						student_name: st ? (st.full_name || st.name || '-') : (a.student_name || a.name || '-'),
+						community: st ? (st.community || a.community || '-') : (a.community || '-'),
+						phone: st ? (st.phone || a.phone || '-') : (a.phone || '-'),
+					};
+				});
+				// Filter
+				const filtered = merged.filter(a => {
+					if(!searchVal) return true;
+					return (a.unique_id && a.unique_id.toLowerCase().includes(searchVal)) ||
+						   (a.student_name && a.student_name.toLowerCase().includes(searchVal)) ||
+						   (a.app_id && String(a.app_id).includes(searchVal));
+				});
+				if(filtered.length === 0){
+					const noneHtml = '<div class="text-center text-gray-500 py-8"><span class="material-symbols-outlined text-4xl mb-2">person_off</span>No matching students found.</div>';
+					if(pendingEl) pendingEl.innerHTML = noneHtml; else if(document.getElementById('student-list')) document.getElementById('student-list').innerHTML = noneHtml;
+					if(uploadedEl) uploadedEl.innerHTML = '';
+					return;
+				}
+				// Determine document counts for filtered students, then render into two sections
+				const uniqueIds = filtered.map(f => f.unique_id).filter(Boolean);
+				let counts = {};
+				try{
+					if(uniqueIds.length > 0){
+						const res = await fetch('/api/documents/counts?unique_ids=' + encodeURIComponent(uniqueIds.join(',')));
+						if(res.ok) counts = await res.json();
+					}
+				}catch(e){ console.warn('failed to fetch counts', e); }
+
+				const noDocs = filtered.filter(f => !(counts[f.unique_id] > 0));
+				const withDocs = filtered.filter(f => (counts[f.unique_id] > 0));
+
+				const pendingEl = document.getElementById('pending-list');
+				const uploadedEl = document.getElementById('uploaded-list');
+				pendingEl.innerHTML = '';
+				uploadedEl.innerHTML = '';
+
+				// render pending (no docs) - show Select button
+				if(noDocs.length === 0){
+					pendingEl.innerHTML = '<div class="text-gray-500 py-6"><span class="material-symbols-outlined text-3xl">hourglass_empty</span><div>No pending students</div></div>';
+				} else {
+					noDocs.forEach(a => {
+						const card = document.createElement('div');
+						card.className = 'bg-white rounded-lg shadow-md p-6 flex flex-col gap-2';
+						card.innerHTML = `<div class="flex items-center gap-3 mb-2"><span class="material-symbols-outlined text-blue-600 text-2xl">person</span><div><div class="text-lg font-bold text-gray-800">${a.student_name||'-'}</div><div class="text-xs text-gray-500">App #: <span class="font-mono">${a.app_id||'-'}</span></div></div></div><div class="flex items-center gap-2"><span class="material-symbols-outlined text-green-600">badge</span><span class="text-sm font-mono text-green-700">${a.unique_id||'-'}</span></div><div class="flex gap-2 mt-4"><button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 select-student-btn" data-app-id="${a.app_id}" data-unique-id="${a.unique_id}" data-name="${a.student_name}"><span class="material-symbols-outlined">check_circle</span>Select Student</button></div>`;
+						pendingEl.appendChild(card);
+					});
+				}
+
+				// render uploaded (with docs) - show View Uploaded Docs
+				if(withDocs.length === 0){
+					uploadedEl.innerHTML = '<div class="text-gray-500 py-6"><span class="material-symbols-outlined text-3xl">folder</span><div>No uploaded documents yet</div></div>';
+				} else {
+					withDocs.forEach(a => {
+						const card = document.createElement('div');
+						card.className = 'bg-gray-50 rounded-lg shadow-md p-6 flex flex-col gap-2';
+						card.innerHTML = `<div class="flex items-center gap-3 mb-2"><span class="material-symbols-outlined text-blue-600 text-2xl">person</span><div><div class="text-lg font-bold text-gray-800">${a.student_name||'-'}</div><div class="text-xs text-gray-500">App #: <span class="font-mono">${a.app_id||'-'}</span></div></div></div><div class="flex items-center gap-2"><span class="material-symbols-outlined text-green-600">badge</span><span class="text-sm font-mono text-green-700">${a.unique_id||'-'}</span></div><div class="flex gap-2 mt-4"><button class="ml-2 bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded view-docs-btn" data-app-id="${a.app_id}" data-unique-id="${a.unique_id}">View Uploaded Docs (${counts[a.unique_id]||0})</button></div>`;
+						uploadedEl.appendChild(card);
+					});
+				}
+			}catch(e){
+				listEl.innerHTML = '<div class="col-span-2 text-center text-red-500 py-8">Error loading admissions</div>';
+			}
+		}
+		document.getElementById('refresh-btn').addEventListener('click', loadStudents);
+		document.getElementById('search-input').addEventListener('input', loadStudents);
+		loadStudents();
+
+		// Handle student selection: navigate to upload page with student data
+		document.addEventListener('click', function(e){
+			const btn = e.target.closest('.select-student-btn');
+			if(!btn) return;
+			e.preventDefault();
+			const name = btn.dataset.name || '';
+			const uniqueId = btn.dataset.uniqueId || '';
+			const appId = btn.dataset.appId || '';
+			if(confirm(`Proceed to document upload for ${name} (ID: ${uniqueId})?`)){
+				const q = new URLSearchParams({ app_id: appId, name: name, unique_id: uniqueId });
+				window.location.href = '/templates/admin/document_upload.html?' + q.toString();
+			}
+		});
+
+		// Handle View Uploaded Docs
+		document.addEventListener('click', async function(e){
+			const vbtn = e.target.closest('.view-docs-btn');
+			if(!vbtn) return;
+			e.preventDefault();
+			const appId = vbtn.dataset.appId;
+			const uniqueId = vbtn.dataset.uniqueId;
+			const dest = document.getElementById('uploaded-docs');
+			if(!dest){
+				const container = document.createElement('div'); container.id = 'uploaded-docs'; container.className = 'max-w-5xl mx-auto px-4 py-4'; document.querySelector('.max-w-5xl').appendChild(container);
+			}
+			const qparam = uniqueId ? ('unique_id=' + encodeURIComponent(uniqueId)) : ('app_id=' + encodeURIComponent(appId));
+			document.getElementById('uploaded-docs').innerHTML = `<div class="bg-white rounded-lg shadow-md p-6 mt-6"><div class="text-gray-600">Loading uploaded documents for ${ uniqueId ? 'Student ID' : 'App #' }: <span class="font-mono">${ uniqueId || appId }</span>...</div></div>`;
+		try{
+			const res = await fetch('/api/documents?' + qparam);
+				if(!res.ok) throw new Error('Failed to fetch documents: ' + res.statusText);
+				const docs = await res.json();
+				if(!Array.isArray(docs) || docs.length === 0){
+					document.getElementById('uploaded-docs').innerHTML = `<div class="bg-white rounded-lg shadow-md p-6 mt-6 text-gray-600">No documents uploaded yet for App #: <span class="font-mono">${appId}</span>.</div>`;
+					return;
+				}
+				let html = `<div class="bg-white rounded-lg shadow-md p-6 mt-6"><h3 class="text-lg font-bold mb-3">Uploaded Documents for App #: <span class="font-mono">${appId}</span></h3><table class="w-full text-sm"><thead><tr class="text-left text-xs text-gray-500"><th class="py-2">Type</th><th class="py-2">URL</th><th class="py-2">Size</th><th class="py-2">Uploaded At</th></tr></thead><tbody>`;
+				docs.forEach(d => {
+					html += `<tr class="border-t"><td class="py-2">${d.document_type || '-'}</td><td class="py-2"><a class="text-blue-600 hover:underline" href="${d.document_url}" target="_blank">Open</a></td><td class="py-2">${d.file_size || '-'}</td><td class="py-2">${d.created_at ? new Date(d.created_at).toLocaleString() : '-'}</td></tr>`;
+				});
+				html += `</tbody></table></div>`;
+				document.getElementById('uploaded-docs').innerHTML = html;
+			}catch(err){
+				document.getElementById('uploaded-docs').innerHTML = `<div class="bg-white rounded-lg shadow-md p-6 mt-6 text-red-600">Error fetching documents: ${String(err)}</div>`;
+			}
+		});
+	</script>
+</body>
+</html>

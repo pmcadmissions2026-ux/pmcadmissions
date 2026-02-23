@@ -7,37 +7,15 @@
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#137fec",
-                        "background-light": "#f6f7f8",
-                        "background-dark": "#101922",
-                    },
-                    fontFamily: {
-                        "display": ["Lexend", "sans-serif"]
-                    },
-                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
-                },
-            },
-        }
-    </script>
 <style>
-        body {
-            font-family: 'Lexend', sans-serif;
-        }
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-    </style>
+        body { font-family: 'Lexend', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+</style>
 </head>
 <body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white min-h-screen flex flex-col">
 <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] px-6 py-3 sticky top-0 z-50">
 <div class="flex items-center gap-4">
-<div class="text-primary">
+<div class="text-blue-600">
 <svg fill="none" height="32" viewbox="0 0 48 48" width="32" xmlns="http://www.w3.org/2000/svg">
 <path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
 </svg>
@@ -45,58 +23,46 @@
 <h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Er. Perumal Manimekalai College of Engineering</h2>
 </div>
 <div class="flex items-center gap-4">
-<a href="{{ url_for('admin.counselling_list') }}" class="text-primary font-semibold">Back to Counselling</a>
+<a href="counselling_list.html" class="text-blue-600 font-semibold">Back to Counselling</a>
 </div>
 </header>
 
 <main class="flex-1 overflow-y-auto">
 <div class="max-w-[1000px] mx-auto p-6 flex flex-col gap-6">
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-        <div class="bg-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-50 border border-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-200 text-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-800 px-4 py-3 rounded-lg">
-            {{ message }}
-        </div>
-        {% endfor %}
-    {% endif %}
-{% endwith %}
+
+<div id="flash"></div>
 
 <div class="bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] p-6">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
             <label class="block text-sm font-semibold text-gray-600 mb-1">Student Name</label>
-            <p class="text-lg font-bold text-gray-800">{{ student.full_name or student.name }}</p>
+            <p id="studentName" class="text-lg font-bold text-gray-800"></p>
         </div>
         <div>
             <label class="block text-sm font-semibold text-gray-600 mb-1">Registration ID</label>
-            <p class="text-lg font-bold text-blue-600">{{ application.registration_id or 'N/A' }}</p>
+            <p id="registrationId" class="text-lg font-bold text-blue-600">N/A</p>
         </div>
         <div>
             <label class="block text-sm font-semibold text-gray-600 mb-1">Unique ID</label>
-            <p class="text-lg font-bold text-green-600">{{ student.unique_id or 'N/A' }}</p>
+            <p id="uniqueId" class="text-lg font-bold text-green-600">N/A</p>
         </div>
     </div>
 </div>
 
-<form method="POST" enctype="multipart/form-data" class="bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] p-6 space-y-6">
+<form id="counsellingForm" class="bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] p-6 space-y-6">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
             <label class="block text-sm font-semibold text-gray-700 mb-2">Allotted Quota <span class="text-red-500">*</span></label>
             <select name="quota_type" id="quota_type" class="w-full h-12 px-4 border border-gray-300 rounded-lg bg-white text-gray-900" required>
                 <option value="">Select Quota</option>
-                <option value="GQ" {% if record and record.quota_type == 'GQ' %}selected{% endif %}>GQ</option>
-                <option value="MQ" {% if record and record.quota_type == 'MQ' %}selected{% endif %}>MQ</option>
+                <option value="GQ">GQ</option>
+                <option value="MQ">MQ</option>
             </select>
         </div>
         <div>
             <label class="block text-sm font-semibold text-gray-700 mb-2">Allotted Department <span class="text-red-500">*</span></label>
-            <select name="allotted_dept_id" class="w-full h-12 px-4 border border-gray-300 rounded-lg bg-white text-gray-900" required>
+            <select name="allotted_dept_id" id="allotted_dept_id" class="w-full h-12 px-4 border border-gray-300 rounded-lg bg-white text-gray-900" required>
                 <option value="">Select Department</option>
-                {% if departments %}
-                    {% for dept in departments %}
-                    <option value="{{ dept.id }}" {% if record and record.allotted_dept_id == dept.id %}selected{% endif %}>{{ dept.dept_name }} ({{ dept.dept_code }})</option>
-                    {% endfor %}
-                {% endif %}
             </select>
         </div>
     </div>
@@ -104,52 +70,105 @@
     <div id="gq_fields" class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
             <label class="block text-sm font-semibold text-gray-700 mb-2">Allotment Order Number <span class="text-red-500">*</span></label>
-            <input type="text" name="allotment_order_number" class="w-full h-12 px-4 border border-gray-300 rounded-lg" value="{{ record.allotment_order_number if record else '' }}" placeholder="Enter order number" />
+            <input id="allotment_order_number" type="text" name="allotment_order_number" class="w-full h-12 px-4 border border-gray-300 rounded-lg" placeholder="Enter order number" />
         </div>
         <div>
             <label class="block text-sm font-semibold text-gray-700 mb-2">Upload Allotment Order (PDF)</label>
-            <input type="file" name="allotment_order_pdf" accept=".pdf" class="w-full h-12 px-4 border border-gray-300 rounded-lg" />
-            {% if record and record.allotment_order_url %}
-            <a href="{{ record.allotment_order_url }}" target="_blank" class="text-sm text-blue-600 underline mt-1 inline-block">View Uploaded PDF</a>
-            {% endif %}
+            <input id="allotment_order_pdf" type="file" name="allotment_order_pdf" accept=".pdf" class="w-full h-12 px-4 border border-gray-300 rounded-lg" />
+            <div id="allotment_link" class="text-sm mt-1"></div>
         </div>
     </div>
 
     <div id="mq_fields" class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
             <label class="block text-sm font-semibold text-gray-700 mb-2">Consortium Number <span class="text-red-500">*</span></label>
-            <input type="text" name="consortium_number" class="w-full h-12 px-4 border border-gray-300 rounded-lg" value="{{ record.consortium_number if record else '' }}" placeholder="Enter consortium number" />
+            <input id="consortium_number" type="text" name="consortium_number" class="w-full h-12 px-4 border border-gray-300 rounded-lg" placeholder="Enter consortium number" />
         </div>
     </div>
 
     <div class="flex items-center justify-end gap-3">
-        <a href="{{ url_for('admin.counselling_list') }}" class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-3 rounded-lg font-semibold transition">Cancel</a>
-        <button type="submit" class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-semibold transition">Save Counselling</button>
+        <a href="counselling_list.html" class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-3 rounded-lg font-semibold transition">Cancel</a>
+        <button id="saveCounselling" type="button" class="bg-blue-600 hover:bg-blue-900 text-white px-6 py-3 rounded-lg font-semibold transition">Save Counselling</button>
     </div>
 </form>
 </div>
 </main>
 
 <script>
-function toggleQuotaFields() {
-    const quota = document.getElementById('quota_type').value;
-    const gqFields = document.getElementById('gq_fields');
-    const mqFields = document.getElementById('mq_fields');
+(function(){
+  function qs(name){ return new URLSearchParams(location.search).get(name); }
 
-    if (quota === 'GQ') {
-        gqFields.style.display = 'grid';
-        mqFields.style.display = 'none';
-    } else if (quota === 'MQ') {
-        gqFields.style.display = 'none';
-        mqFields.style.display = 'grid';
-    } else {
-        gqFields.style.display = 'none';
-        mqFields.style.display = 'none';
+  async function load() {
+    const appId = qs('app_id');
+    const appsRes = await fetch('/api/_admission_applications').then(r=>r.json()).catch(()=>({ok:false, items:[]}));
+    const apps = Array.isArray(appsRes) ? appsRes : (appsRes && appsRes.ok && Array.isArray(appsRes.items) ? appsRes.items : []);
+    const app = apps.find(a=>String(a.app_id)===String(appId) || String(a.id)===String(appId));
+
+    if (app) {
+      document.getElementById('registrationId').textContent = app.registration_id || 'N/A';
     }
-}
 
-document.getElementById('quota_type').addEventListener('change', toggleQuotaFields);
-window.addEventListener('load', toggleQuotaFields);
+    if (app && app.student_id) {
+      const studentsRes = await fetch('/api/students').then(r=>r.json()).catch(()=>({ok:false, items:[]}));
+      const students = Array.isArray(studentsRes) ? studentsRes : (studentsRes && studentsRes.ok && Array.isArray(studentsRes.items) ? studentsRes.items : []);
+      const student = students.find(s=>String(s.id)===String(app.student_id));
+      if (student) {
+        document.getElementById('studentName').textContent = student.full_name || student.student_name || '';
+        document.getElementById('uniqueId').textContent = student.unique_id || 'N/A';
+      }
+    }
+
+    // load departments
+    const deptsRes = await fetch('/api/departments').then(r=>r.json()).catch(()=>({ok:false, items:[]}));
+    const depts = Array.isArray(deptsRes) ? deptsRes : (deptsRes && deptsRes.ok && Array.isArray(deptsRes.items) ? deptsRes.items : []);
+    const deptSelect = document.getElementById('allotted_dept_id');
+    depts.forEach(d=>{ const opt=document.createElement('option'); opt.value=d.id; opt.textContent = d.dept_name + ' ('+ (d.dept_code||'') +')'; deptSelect.appendChild(opt); });
+
+    // load existing counselling record if exists
+    const cRes = await fetch('/api/counselling_records?app_id=' + encodeURIComponent(appId)).then(r=>r.json()).catch(()=>({ok:false, items:[]}));
+    const c = Array.isArray(cRes) ? cRes[0] : (cRes && cRes.ok && Array.isArray(cRes.items) ? cRes.items[0] : null);
+    if (c) {
+      document.getElementById('quota_type').value = c.quota_type || '';
+      document.getElementById('allotment_order_number').value = c.allotment_order_number || '';
+      if (c.allotted_dept_id) document.getElementById('allotted_dept_id').value = c.allotted_dept_id;
+      if (c.allotment_order_url) document.getElementById('allotment_link').innerHTML = `<a href="${c.allotment_order_url}" target="_blank" class="text-sm text-blue-600 underline">View Uploaded PDF</a>`;
+      document.getElementById('consortium_number').value = c.consortium_number || '';
+    }
+
+    // toggle fields
+    function toggleQuotaFields() {
+      const quota = document.getElementById('quota_type').value;
+      const gqFields = document.getElementById('gq_fields');
+      const mqFields = document.getElementById('mq_fields');
+      if (quota === 'GQ') { gqFields.style.display = 'grid'; mqFields.style.display = 'none'; }
+      else if (quota === 'MQ') { gqFields.style.display = 'none'; mqFields.style.display = 'grid'; }
+      else { gqFields.style.display = 'none'; mqFields.style.display = 'none'; }
+    }
+
+    document.getElementById('quota_type').addEventListener('change', toggleQuotaFields);
+    toggleQuotaFields();
+
+    document.getElementById('saveCounselling').addEventListener('click', async ()=>{
+      const payload = new FormData();
+      payload.append('app_id', appId);
+      payload.append('quota_type', document.getElementById('quota_type').value);
+      payload.append('allotted_dept_id', document.getElementById('allotted_dept_id').value);
+      payload.append('allotment_order_number', document.getElementById('allotment_order_number').value || '');
+      const file = document.getElementById('allotment_order_pdf').files[0];
+      if (file) payload.append('allotment_order_pdf', file);
+      payload.append('consortium_number', document.getElementById('consortium_number').value || '');
+
+      try {
+        const res = await fetch('/api/counselling_records', { method: 'POST', body: payload });
+        const j = await res.json();
+        if (j && j.ok) { alert('Saved counselling record'); location.href = 'counselling_list.html'; }
+        else { alert('Error: ' + (j && j.error || JSON.stringify(j))); }
+      } catch (err) { console.error(err); alert('Save failed'); }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', load);
+})();
 </script>
 </body>
 </html>

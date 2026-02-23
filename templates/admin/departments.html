@@ -19,7 +19,7 @@
       </div>
     </div>
     <div class="flex gap-3 items-center">
-      <a href="{{ url_for('admin.super_admin_dashboard') }}" class="px-3 py-2 bg-white/20 hover:bg-white/30 rounded">Back</a>
+      <a href="#" data-route="super_admin_dashboard" class="px-3 py-2 bg-white/20 hover:bg-white/30 rounded">Back</a>
       <button id="open-dept-modal" class="px-4 py-2 bg-white text-indigo-700 rounded shadow hover:opacity-95">+ Add Department</button>
     </div>
   </div>
@@ -37,7 +37,7 @@
           <h3 class="text-lg font-semibold">Create Department</h3>
           <button onclick="closeDeptModal()" aria-label="Close" class="text-white hover:opacity-90">✕</button>
         </div>
-        <form method="POST" action="{{ url_for('admin.create_department') }}" class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form method="POST" data-action="create_department" onsubmit="return false;" class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="block text-xs font-medium text-slate-600 mb-1">Dept Code</label>
             <input name="dept_code" required placeholder="e.g. CSE" class="w-full border px-3 py-2 rounded" />
@@ -107,8 +107,8 @@
               {% endif %}
             </td>
             <td class="p-3">
-              <a href="{{ url_for('admin.edit_department', dept_id=d.id) }}" class="px-3 py-1 bg-indigo-500 text-white rounded text-xs">Edit</a>
-              <form method="POST" action="{{ url_for('admin.delete_department', dept_id=d.id) }}" style="display:inline" onsubmit="return confirm('Delete dept?')">
+              <a href="#" data-action="edit_department" data-dept-id="{{ d.id }}" class="px-3 py-1 bg-indigo-500 text-white rounded text-xs">Edit</a>
+              <form method="POST" data-action="delete_department" data-dept-id="{{ d.id }}" style="display:inline" onsubmit="return confirm('Delete dept?')">
                 <button type="submit" class="px-3 py-1 bg-rose-500 text-white rounded text-xs ml-2">Delete</button>
               </form>
             </td>

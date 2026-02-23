@@ -42,49 +42,38 @@
             <span class="material-symbols-outlined text-primary text-2xl">assignment</span>
             <h1 class="text-lg font-bold">Admin - Branch Assignment</h1>
         </div>
-        <a href="{{ url_for('admin.admin_dashboard') }}" class="text-sm text-gray-600 hover:text-primary">← Back to Dashboard</a>
+        <a href="#" data-route="admin_dashboard" class="text-sm text-gray-600 hover:text-primary">← Back to Dashboard</a>
     </div>
 </div>
 
 <div class="max-w-2xl mx-auto px-4 py-8">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-            <div class="mb-6 p-4 rounded-lg {% if category == 'success' %}bg-green-100 text-green-800 border border-green-300{% else %}bg-red-100 text-red-800 border border-red-300{% endif %}">
-                <div class="flex items-center gap-2">
-                    <span class="material-symbols-outlined text-sm">{% if category == 'success' %}check_circle{% else %}error{% endif %}</span>
-                    {{ message }}
-                </div>
-            </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+    <div id="flash-container" class="mb-6"></div>
 
     <!-- Student Information Card -->
     <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm mb-6 p-6">
         <div class="flex items-start justify-between">
             <div class="flex-1">
-                <h2 class="text-2xl font-bold text-[#111418] dark:text-white mb-4">{{ student.get('full_name', 'Student') }}</h2>
+                <h2 id="student-fullname" class="text-2xl font-bold text-[#111418] dark:text-white mb-4">Student</h2>
                 
                 <div class="grid grid-cols-2 gap-6">
                     <div>
                         <p class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Unique ID</p>
-                        <p class="text-lg font-mono font-semibold text-primary">{{ student.get('unique_id', 'N/A') }}</p>
+                        <p id="student-unique-id" class="text-lg font-mono font-semibold text-primary">N/A</p>
                     </div>
                     <div>
                         <p class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Community</p>
-                        <p class="text-lg font-semibold">{{ student.get('community', 'General') }}</p>
+                        <p id="student-community" class="text-lg font-semibold">General</p>
                     </div>
-                    {% if academic %}
-                    <div>
-                        <p class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Cutoff Score</p>
-                        <p class="text-lg font-semibold text-green-600">{{ "%.2f"|format(academic.get('cutoff', 0)) }}</p>
+                    <div id="academic-block" style="display:none">
+                        <div>
+                            <p class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Cutoff Score</p>
+                            <p id="student-cutoff" class="text-lg font-semibold text-green-600">0.00</p>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Category</p>
+                            <p id="student-category" class="text-lg font-semibold">General</p>
+                        </div>
                     </div>
-                    <div>
-                        <p class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Category</p>
-                        <p class="text-lg font-semibold">{% if academic.get('category_7_5') %}7.5{% else %}General{% endif %}</p>
-                    </div>
-                    {% endif %}
                 </div>
             </div>
             
@@ -97,7 +86,7 @@
     </div>
 
     <!-- Branch Assignment Form -->
-    <form method="POST" class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+    <form id="assign-branch-form" onsubmit="return false;" class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
         <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-800">
             <h3 class="font-bold text-[#111418] dark:text-white flex items-center gap-2">
                 <span class="material-symbols-outlined text-primary">domain</span>
@@ -106,6 +95,16 @@
         </div>
 
         <div class="p-6 space-y-6">
+            <!-- Acceptance Step -->
+            <div id="acceptance-step" class="p-4 border rounded">
+                <p class="text-sm font-semibold mb-2">Acceptance</p>
+                <div id="acceptance-area" class="flex items-center gap-3">
+                    <div id="accept-status" class="text-sm text-gray-600">Loading status…</div>
+                    <input id="accept-name" placeholder="Enter your name to accept" class="rounded-lg border px-3 py-2" />
+                    <button id="accept-btn" class="px-4 py-2 bg-green-600 text-white rounded">Accept Student</button>
+                </div>
+            </div>
+
             <!-- Preferred Department -->
             <div>
                 <label class="block text-sm font-bold text-[#111418] dark:text-white mb-3 flex items-center gap-2">
@@ -114,20 +113,8 @@
                     Preferred Department (Mandatory)
                 </label>
                 
-                <div class="space-y-2">
-                    {% if departments %}
-                        {% for dept in departments %}
-                        <label class="flex items-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                            <input type="radio" name="preferred_dept_id" value="{{ dept.id }}" class="w-4 h-4 text-primary rounded focus:ring-2 focus:ring-primary" required>
-                            <div class="ml-3 flex-1">
-                                <p class="font-semibold text-[#111418] dark:text-white">{{ dept.dept_name }}</p>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">Code: {{ dept.dept_code }}</p>
-                            </div>
-                        </label>
-                        {% endfor %}
-                    {% else %}
-                        <p class="text-red-600">No departments available. Please contact administrator.</p>
-                    {% endif %}
+                <div id="departments-preferred" class="space-y-2">
+                    <p class="text-sm text-gray-500">Loading departments…</p>
                 </div>
                 <p class="text-xs text-gray-600 dark:text-gray-400 mt-2 flex items-center gap-1">
                     <span class="material-symbols-outlined text-sm">info</span>
@@ -144,18 +131,8 @@
                     Optional Departments (Select Multiple)
                 </label>
                 
-                <div class="space-y-2">
-                    {% if departments %}
-                        {% for dept in departments %}
-                        <label class="flex items-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                            <input type="checkbox" name="optional_dept_ids" value="{{ dept.id }}" class="w-4 h-4 text-blue-500 rounded focus:ring-2 focus:ring-blue-500">
-                            <div class="ml-3 flex-1">
-                                <p class="font-semibold text-[#111418] dark:text-white">{{ dept.dept_name }}</p>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">Code: {{ dept.dept_code }}</p>
-                            </div>
-                        </label>
-                        {% endfor %}
-                    {% endif %}
+                <div id="departments-optional" class="space-y-2">
+                    <p class="text-sm text-gray-500">Loading departments…</p>
                 </div>
                 <p class="text-xs text-gray-600 dark:text-gray-400 mt-2 flex items-center gap-1">
                     <span class="material-symbols-outlined text-sm">info</span>
@@ -175,12 +152,12 @@
 
         <!-- Footer -->
         <div class="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-800 px-6 py-4 flex justify-between items-center gap-4">
-            <a href="{{ url_for('admin.admin_dashboard') }}" class="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-primary font-semibold transition-colors">
+            <a href="#" data-route="admin_dashboard" class="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-primary font-semibold transition-colors">
                 <span class="material-symbols-outlined text-sm">arrow_back</span>
                 Cancel
             </a>
             
-            <button type="submit" class="flex items-center gap-2 px-6 py-2 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">
+            <button id="assign-submit" type="submit" class="flex items-center gap-2 px-6 py-2 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">
                 <span class="material-symbols-outlined text-sm">check</span>
                 Assign Branch & Save
             </button>
@@ -211,4 +188,164 @@
 </div>
 
 </body>
+<script>
+// client-side logic: load departments, load student/enquiry if provided, submit admission
+async function fetchJSON(url){ const r = await fetch(url); if(!r.ok) throw new Error(await r.text()); return r.json(); }
+
+function qparam(name){ const u = new URL(location.href); return u.searchParams.get(name); }
+
+async function loadDepartments(){
+    const dest1 = document.getElementById('departments-preferred');
+    const dest2 = document.getElementById('departments-optional');
+    try{
+        const depts = await fetchJSON('/api/departments');
+        if(!depts || depts.length===0){ dest1.innerHTML='<p class="text-red-600">No departments available.</p>'; dest2.innerHTML=''; return; }
+        dest1.innerHTML = '';
+        dest2.innerHTML = '';
+        depts.forEach(d=>{
+            const r = document.createElement('label'); r.className='flex items-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors';
+            r.innerHTML = `<input type="radio" name="preferred_dept_id" value="${d.id}" class="w-4 h-4 text-primary rounded focus:ring-2 focus:ring-primary" required><div class="ml-3 flex-1"><p class="font-semibold text-[#111418] dark:text-white">${escapeHtml(d.dept_name)}</p><p class="text-sm text-gray-600 dark:text-gray-400">Code: ${escapeHtml(d.dept_code||'')}</p></div>`;
+            dest1.appendChild(r);
+
+            const c = document.createElement('label'); c.className=r.className;
+            c.innerHTML = `<input type="checkbox" name="optional_dept_ids" value="${d.id}" class="w-4 h-4 text-blue-500 rounded focus:ring-2 focus:ring-blue-500"><div class="ml-3 flex-1"><p class="font-semibold text-[#111418] dark:text-white">${escapeHtml(d.dept_name)}</p><p class="text-sm text-gray-600 dark:text-gray-400">Code: ${escapeHtml(d.dept_code||'')}</p></div>`;
+            dest2.appendChild(c);
+        })
+    }catch(e){ dest1.innerHTML=`<p class="text-red-600">Error loading departments: ${escapeHtml(String(e))}</p>`; dest2.innerHTML=''; }
+}
+
+function escapeHtml(s){ if(s==null) return ''; return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[c]); }
+
+async function loadContext(){
+    const studentId = qparam('student_id');
+    const enquiryId = qparam('enquiry_id');
+    if(enquiryId){
+        try{
+            const list = await fetchJSON('/api/enquiries');
+            const en = list.find(x=>String(x.id)===String(enquiryId));
+            if(en){ fillFromEnquiry(en); }
+        }catch(e){ console.error(e); }
+    }else if(studentId){
+        try{
+            const s = await fetchJSON('/api/students/' + encodeURIComponent(studentId));
+            if(s){ fillFromStudent(s); document.getElementById('assign-branch-form').dataset.studentId = s.id; }
+        }catch(e){ console.error(e); }
+    }
+}
+
+function fillFromEnquiry(en){
+    document.getElementById('student-fullname').textContent = en.full_name || en.student_full_name || 'Student';
+    document.getElementById('student-unique-id').textContent = en.unique_id || 'N/A';
+    document.getElementById('student-community').textContent = en.community || 'General';
+    if('cutoff' in en){ document.getElementById('student-cutoff').textContent = Number(en.cutoff||0).toFixed(2); document.getElementById('student-category').textContent = en.category_7_5? '7.5':'General'; document.getElementById('academic-block').style.display='flex'; }
+    if(en.student_id) document.getElementById('assign-branch-form').dataset.studentId = en.student_id;
+}
+
+function fillFromStudent(s){
+    document.getElementById('student-fullname').textContent = s.full_name || 'Student';
+    document.getElementById('student-unique-id').textContent = s.unique_id || 'N/A';
+    document.getElementById('student-community').textContent = s.community || 'General';
+    // acceptance status
+    const statusEl = document.getElementById('accept-status');
+    const acceptBtn = document.getElementById('accept-btn');
+    const acceptName = document.getElementById('accept-name');
+    if(s.status && s.status.toLowerCase() === 'accepted'){
+        statusEl.textContent = `Accepted by: ${s.accepted_by || '—'} at ${s.accepted_at || '—'}`;
+        acceptName.style.display = 'none';
+        if(acceptBtn) acceptBtn.style.display = 'none';
+        // enable department selection
+        enableDepartmentControls(true);
+    } else {
+        statusEl.textContent = 'Not accepted yet';
+        // prefill accept name from sessionStorage if available
+        try{ const u = JSON.parse(sessionStorage.getItem('pmc_user')||'null'); if(u){ acceptName.value = (u.first_name? (u.first_name + ' ' + (u.last_name||'')) : (u.email||'')).toUpperCase(); } }catch(e){}
+        enableDepartmentControls(false);
+    }
+}
+
+function enableDepartmentControls(enabled){
+    const submit = document.getElementById('assign-submit');
+    const pref = document.getElementById('departments-preferred');
+    const opt = document.getElementById('departments-optional');
+    if(!submit) return;
+    if(enabled){ submit.removeAttribute('disabled'); if(pref) pref.style.opacity = '1'; if(opt) opt.style.opacity = '1'; }
+    else { submit.setAttribute('disabled','true'); if(pref) pref.style.opacity = '0.6'; if(opt) opt.style.opacity = '0.6'; }
+}
+
+document.getElementById('assign-submit').addEventListener('click', async ()=>{
+    const form = document.getElementById('assign-branch-form');
+    const preferred = form.querySelector('input[name=preferred_dept_id]:checked');
+    if(!preferred){ alert('Please select a preferred department'); return; }
+    const optional = Array.from(form.querySelectorAll('input[name=optional_dept_ids]:checked')).map(i=>Number(i.value));
+    let studentId = form.dataset.studentId;
+    if(!studentId){
+        // create minimal student record using displayed name
+        const payload = { full_name: document.getElementById('student-fullname').textContent };
+        try{
+            const r = await fetch('/api/students', { method: 'POST', headers: { 'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+            if(!r.ok){ showFlash('error', 'Failed creating student: '+ await r.text()); return; }
+            const created = await r.json();
+            studentId = created.id;
+            form.dataset.studentId = studentId;
+        }catch(e){ showFlash('error', 'Error creating student: '+String(e)); return; }
+    }
+    try{
+        const body = { student_id: Number(studentId), preferred_dept_id: Number(preferred.value), optional_dept_ids: optional };
+        const adm = await fetch('/api/admissions', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(body) });
+        if(!adm.ok){ const txt = await adm.text(); showFlash('error', 'Admission create failed: '+txt); return; }
+        const admRow = await adm.json();
+        showFlash('success', 'Admission saved. Admission ID: ' + (admRow && admRow.id));
+    }catch(e){ showFlash('error', 'Error: '+String(e)); }
+});
+
+// Accept student handler
+document.getElementById('accept-btn').addEventListener('click', async function(){
+    const form = document.getElementById('assign-branch-form');
+    const studentId = form.dataset.studentId;
+    if(!studentId){ alert('No student selected'); return; }
+    const name = (document.getElementById('accept-name').value || '').trim();
+    if(!name){ alert('Please enter your name to accept'); return; }
+    try{
+        const r = await fetch(`/api/students/${encodeURIComponent(studentId)}/accept`, { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ accepted_by: name }) });
+        if(!r.ok){ const txt = await r.text(); showFlash('error','Accept failed: '+txt); return; }
+        const updated = await r.json();
+        showFlash('success','Student accepted by ' + name);
+        // refresh student info
+        fillFromStudent(updated);
+    }catch(e){ showFlash('error', 'Accept error: '+String(e)); }
+});
+
+// After creating admission, allow immediate allotment
+async function showAllotmentUI(admission){
+    // create a small panel below form
+    let panel = document.getElementById('allotment-panel');
+    if(panel) panel.remove();
+    panel = document.createElement('div'); panel.id='allotment-panel'; panel.className='mt-4 p-4 border rounded bg-white';
+    panel.innerHTML = `<p class="font-semibold mb-2">Allot a Department Now</p><div id="allot-select" class="mb-2"></div><div><button id='allot-btn' class='px-4 py-2 bg-primary text-white rounded'>Allot</button></div>`;
+    document.getElementById('assign-branch-form').after(panel);
+    // populate select with departments
+    const depts = await fetchJSON('/api/departments');
+    const sel = document.getElementById('allot-select');
+    const s = document.createElement('select'); s.className='rounded border px-3 py-2'; s.id='allot-dept';
+    depts.forEach(d => { const o = document.createElement('option'); o.value = d.id; o.textContent = d.dept_name + (d.dept_code?(' ('+d.dept_code+')'):''); s.appendChild(o); });
+    sel.appendChild(s);
+    document.getElementById('allot-btn').addEventListener('click', async ()=>{
+        const dept = document.getElementById('allot-dept').value;
+        if(!dept) return alert('Select department');
+        try{
+            const r = await fetch(`/api/admissions/${encodeURIComponent(admission.id)}/assign`, { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ allotted_dept_id: Number(dept), processed_by: (JSON.parse(sessionStorage.getItem('pmc_user')||'null')||{}).email || '' }) });
+            if(!r.ok){ const txt = await r.text(); showFlash('error','Allot failed: '+txt); return; }
+            const res = await r.json();
+            showFlash('success','Department allotted');
+        }catch(e){ showFlash('error','Allot error: '+String(e)); }
+    });
+}
+
+function showFlash(kind, text){
+    const c = document.getElementById('flash-container');
+    c.innerHTML = `<div class="mb-6 p-4 rounded-lg ${kind==='success'?'bg-green-100 text-green-800 border border-green-300':'bg-red-100 text-red-800 border border-red-300'}"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">${kind==='success'?'check_circle':'error'}</span>${escapeHtml(text)}</div></div>`;
+}
+
+(async function(){ await loadDepartments(); await loadContext(); })();
+</script>
 </html>

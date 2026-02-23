@@ -87,9 +87,9 @@
 <button class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-700 transition-all font-medium text-sm" onclick="printReport()">
 <span class="material-symbols-outlined text-sm">print</span> Print Report
             </button>
-<button class="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-all font-medium text-sm">
+<button id="export-xls" type="button" class="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-all font-medium text-sm">
 <span class="material-symbols-outlined text-sm">description</span> Export to Excel
-            </button>
+</button>
 </div>
 </nav>
 <main class="max-w-[1200px] mx-auto p-4 md:p-8">
@@ -102,12 +102,12 @@
 <span class="bg-primary text-white px-4 py-1 rounded text-sm font-bold uppercase tracking-wider">B.E - First Year</span>
 </div>
 <div class="text-right">
-          <form method="get" class="flex items-center gap-3">
+          <form id="report-form" class="flex items-center gap-3" onsubmit="return false;">
             <label class="text-sm text-slate-500">Report Date</label>
-            <input type="date" name="date" value="{{ selected_date_iso or '' }}" class="border px-2 py-1 rounded bg-white text-sm" />
-            <button type="submit" class="px-3 py-1 bg-blue-600 text-white rounded text-sm">Load</button>
+            <input id="report-date" type="date" name="date" class="border px-2 py-1 rounded bg-white text-sm" />
+            <button id="load-report" class="px-3 py-1 bg-blue-600 text-white rounded text-sm">Load</button>
           </form>
-          <p class="text-sm font-semibold text-slate-600 dark:text-slate-400 mt-2">Selected: <span class="text-slate-900 dark:text-white ml-2 border-b border-slate-400">{{ selected_date_display or '' }}</span></p>
+          <p class="text-sm font-semibold text-slate-600 dark:text-slate-400 mt-2">Selected: <span id="selected-date-display" class="text-slate-900 dark:text-white ml-2 border-b border-slate-400"></span></p>
 </div>
 </div>
 </header>
@@ -118,8 +118,8 @@
 <th class="w-10" rowspan="3">S.No</th>
 <th class="w-20" rowspan="3">Dept</th>
 <th class="py-2" colspan="2">Actual No of Seats</th>
-<th colspan="3">Admitted Upto<br/>{{ selected_date_display or '' }}</th>
-<th colspan="3">Total Admitted As On<br/>{{ selected_date_display or '' }}</th>
+<th colspan="3">Admitted Upto<br/><span class="selected-date-hdr"></span></th>
+<th colspan="3">Total Admitted As On<br/><span class="selected-date-hdr"></span></th>
 <th colspan="2">Vacancy</th>
 </tr>
 <tr>
@@ -136,71 +136,36 @@
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
-            {% for d in departments %}
-              {% set mq = (d.get('mq') or 0) | int %}
-              {% set gq = (d.get('gq') or d.get('seats') or 0) | int %}
-              {% set adm_mq_upto = (d.get('adm_mq_upto') or 0) | int %}
-              {% set adm_gq_upto = (d.get('adm_gq_upto') or d.get('admitted_count') or 0) | int %}
-              {% set adm_gqs_upto = (d.get('adm_gqs_upto') or 0) | int %}
-              {% set adm_mq_on = (d.get('adm_mq_on') or 0) | int %}
-              {% set adm_gq_on = (d.get('adm_gq_on') or 0) | int %}
-              {% set adm_gqs_on = (d.get('adm_gqs_on') or 0) | int %}
-                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                    <td class="font-medium">{{ loop.index }}</td>
-                    <td class="font-bold text-slate-900 dark:text-white text-left px-4">{{ d.dept_code or d.short_name or d.dept_name }}</td>
-                    <td>{{ mq }}</td>
-                    <td>{{ gq }}</td>
-                    {# Admitted Upto (cumulative) #}
-                    <td>{{ adm_mq_upto if (adm_mq_upto is defined) else adm_mq }}</td>
-                    <td>{{ adm_gq_upto if (adm_gq_upto is defined) else adm_gq }}</td>
-                    <td>{{ adm_gqs_upto if (adm_gqs_upto is defined) else adm_gqs }}</td>
-                    {# Total Admitted As On (on-date) #}
-                    <td class="bg-slate-50 dark:bg-slate-800/50 font-semibold">{{ adm_mq_on if (adm_mq_on is defined) else adm_mq }}</td>
-                    <td class="bg-slate-50 dark:bg-slate-800/50 font-semibold">{{ adm_gq_on if (adm_gq_on is defined) else adm_gq }}</td>
-                    <td class="bg-slate-50 dark:bg-slate-800/50 font-semibold">{{ adm_gqs_on if (adm_gqs_on is defined) else adm_gqs }}</td>
-                    {% set vac_mq = mq - adm_mq_upto %}
-                    {% set vac_gq = gq - adm_gq_upto %}
-                    <td class="text-red-600 dark:text-red-400 font-medium">{{ vac_mq if vac_mq > 0 else 0 }}</td>
-                    <td class="text-red-600 dark:text-red-400 font-medium">{{ vac_gq if vac_gq > 0 else 0 }}</td>
-                </tr>
-            {% endfor %}
+            <!-- Rows will be rendered client-side -->
+            <tbody id="report-rows" class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300"></tbody>
 </tbody>
-<tfoot class="bg-slate-100 dark:bg-slate-800 font-bold text-slate-900 dark:text-white">
-<tr>
-            <td class="text-right px-4 py-3 uppercase" colspan="2">Total ({{ totalMqSeats + totalGqSeats }})</td>
-            <td>{{ totalMqSeats }}</td>
-            <td>{{ totalGqSeats }}</td>
-            <td>{{ totalMqAdmUpto }}</td>
-            <td>{{ totalGqAdmUpto }}</td>
-            <td>{{ totalGqsAdmUpto }}</td>
-            <td>{{ totalMqAdmOn }}</td>
-            <td>{{ totalGqAdmOn }}</td>
-            <td>{{ totalGqsAdmOn }}</td>
-            <td class="text-red-600 dark:text-red-400">{{ (totalMqSeats - totalMqAdmUpto) if (totalMqSeats - totalMqAdmUpto) > 0 else 0 }}</td>
-            <td class="text-red-600 dark:text-red-400">{{ (totalGqSeats - totalGqAdmUpto) if (totalGqSeats - totalGqAdmUpto) > 0 else 0 }}</td>
-</tr>
-</tfoot>
+<tfoot id="report-footer" class="bg-slate-100 dark:bg-slate-800 font-bold text-slate-900 dark:text-white"></tfoot>
 </table>
 </div>
 <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
 <div class="space-y-3">
-<div class="flex items-center justify-between p-3 border border-slate-200 dark:border-slate-800 rounded-lg">
-<span class="text-sm font-medium">MQ - TOTAL ADMITTED ON {{ selected_date_display or '' }}</span>
-<span class="text-lg font-bold text-primary">{{ totalMqAdmOn or 0 }}</span>
-</div>
-<div class="flex items-center justify-between p-3 border border-slate-200 dark:border-slate-800 rounded-lg">
-<span class="text-sm font-medium">GQ - TOTAL ADMITTED ON {{ selected_date_display or '' }}</span>
-<span class="text-lg font-bold text-primary">{{ totalGqAdmOn or 0 }}</span>
-</div>
-<div class="flex items-center justify-between p-3 border border-slate-200 dark:border-slate-800 rounded-lg">
-<span class="text-sm font-medium">GQ(S) - TOTAL ADMITTED ON {{ selected_date_display or '' }}</span>
-<span class="text-lg font-bold text-primary">{{ totalGqsAdmOn or 0 }}</span>
-</div>
+  <div class="flex items-center justify-between p-3 border border-slate-200 dark:border-slate-800 rounded-lg">
+    <div>
+      <div class="text-sm font-medium">MQ - TOTAL ADMITTED ON <span id="card-mq-date" class="ml-1 selected-date-hdr"></span></div>
+    </div>
+    <span id="card-mq-total" class="text-lg font-bold text-primary">0</span>
+  </div>
+  <div class="flex items-center justify-between p-3 border border-slate-200 dark:border-slate-800 rounded-lg">
+    <div>
+      <div class="text-sm font-medium">GQ - TOTAL ADMITTED ON <span id="card-gq-date" class="ml-1 selected-date-hdr"></span></div>
+    </div>
+    <span id="card-gq-total" class="text-lg font-bold text-primary">0</span>
+  </div>
+  <div class="flex items-center justify-between p-3 border border-slate-200 dark:border-slate-800 rounded-lg">
+    <div>
+      <div class="text-sm font-medium">GQ(S) - TOTAL ADMITTED ON <span id="card-gqs-date" class="ml-1 selected-date-hdr"></span></div>
+    </div>
+    <span id="card-gqs-total" class="text-lg font-bold text-primary">0</span>
+  </div>
 </div>
 <div class="flex flex-col justify-center items-center bg-slate-50 dark:bg-slate-800/50 rounded-lg p-6 border-2 border-dashed border-slate-300 dark:border-slate-700">
-<span class="material-symbols-outlined text-4xl text-slate-400 mb-2">calendar_month</span>
-<p class="text-slate-500 dark:text-slate-400 uppercase text-xs font-bold tracking-widest mb-1">Status Reference Date</p>
-<p class="text-2xl font-black text-slate-900 dark:text-white">{{ selected_date_display or '' }}</p>
+  <p id="status-reference-title" class="text-slate-500 dark:text-slate-400 uppercase text-xs font-bold tracking-widest mb-1"></p>
+  <p id="status-date-display" class="text-2xl font-black text-slate-900 dark:text-white"></p>
 </div>
 </div>
 <div class="mt-12 flex justify-between items-end">
@@ -219,6 +184,204 @@
 </footer>
 <script>
         document.getElementById('current-timestamp').innerText = new Date().toLocaleString();
+
+        // Client-side rendering: load departments and counselling_records and render the report
+        async function fetchJSON(url){
+          const r = await fetch(url, { cache: 'no-store' });
+          if(!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+          return r.json();
+        }
+
+        function toISODateInput(d){
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth()+1).padStart(2,'0');
+          const dd = String(d.getDate()).padStart(2,'0');
+          return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function formatDisplayDate(d){
+          return d.toLocaleDateString();
+        }
+
+        function endOfDay(date){ const d = new Date(date); d.setHours(23,59,59,999); return d; }
+        function startOfDay(date){ const d = new Date(date); d.setHours(0,0,0,0); return d; }
+
+        async function renderReport(selectedDate){
+          const rowsContainer = document.getElementById('report-rows');
+          const footer = document.getElementById('report-footer');
+          const disp = document.getElementById('selected-date-display');
+          disp.innerText = formatDisplayDate(selectedDate);
+
+          // fetch data
+          const depts = await fetchJSON('/api/departments');
+          const counselling = await fetchJSON('/api/counselling_records');
+          const crs = Array.isArray(counselling) ? counselling : (counselling && counselling.items ? counselling.items : []);
+
+          // Filter counselling records that indicate admission completed:
+          // completed if allotment_order_number OR consortium_number is present (not null/empty)
+          const completed = crs.filter(r => r && (r.allotment_order_number || r.consortium_number));
+
+          const uptoDate = endOfDay(selectedDate);
+          const onStart = startOfDay(selectedDate);
+          const onEnd = endOfDay(selectedDate);
+
+          let totalMqSeats=0, totalGqSeats=0, totalMqAdmUpto=0, totalGqAdmUpto=0, totalGqsAdmUpto=0, totalMqAdmOn=0, totalGqAdmOn=0, totalGqsAdmOn=0;
+
+          // render rows
+          rowsContainer.innerHTML = '';
+          depts.forEach((d, idx) => {
+            const deptId = d.id;
+            const mqSeats = Number(d.mq_seats || d.mq || 0);
+            const gqSeats = Number(d.gq_seats || d.gq || (d.seats ? d.seats : 0));
+            totalMqSeats += mqSeats;
+            totalGqSeats += gqSeats;
+
+            // admitted upto selected date
+            const admUptoMQ = completed.filter(r => Number(r.allotted_dept_id) === Number(deptId) && (r.quota_type === 'MQ') && new Date(r.created_at) <= uptoDate).length;
+            const admUptoGQ = completed.filter(r => Number(r.allotted_dept_id) === Number(deptId) && (r.quota_type === 'GQ') && new Date(r.created_at) <= uptoDate).length;
+            const admUptoGQS = 0; // reserved placeholder
+
+            totalMqAdmUpto += admUptoMQ;
+            totalGqAdmUpto += admUptoGQ;
+            totalGqsAdmUpto += admUptoGQS;
+
+            // admitted on selected date (records with created_at between start and end of selected date)
+            const admOnMQ = completed.filter(r => Number(r.allotted_dept_id) === Number(deptId) && (r.quota_type === 'MQ') && new Date(r.created_at) >= onStart && new Date(r.created_at) <= onEnd).length;
+            const admOnGQ = completed.filter(r => Number(r.allotted_dept_id) === Number(deptId) && (r.quota_type === 'GQ') && new Date(r.created_at) >= onStart && new Date(r.created_at) <= onEnd).length;
+            const admOnGQS = 0;
+
+            totalMqAdmOn += admOnMQ;
+            totalGqAdmOn += admOnGQ;
+            totalGqsAdmOn += admOnGQS;
+
+            const vacMq = Math.max(0, mqSeats - admUptoMQ);
+            const vacGq = Math.max(0, gqSeats - admUptoGQ);
+
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors';
+            tr.innerHTML = `
+              <td class="font-medium">${idx+1}</td>
+              <td class="font-bold text-slate-900 dark:text-white text-left px-4">${escapeHtml(d.dept_code || d.short_name || d.dept_name || '')}</td>
+              <td>${mqSeats}</td>
+              <td>${gqSeats}</td>
+              <td>${admUptoMQ}</td>
+              <td>${admUptoGQ}</td>
+              <td>${admUptoGQS}</td>
+              <td class="bg-slate-50 dark:bg-slate-800/50 font-semibold">${admOnMQ}</td>
+              <td class="bg-slate-50 dark:bg-slate-800/50 font-semibold">${admOnGQ}</td>
+              <td class="bg-slate-50 dark:bg-slate-800/50 font-semibold">${admOnGQS}</td>
+              <td class="text-red-600 dark:text-red-400 font-medium">${vacMq}</td>
+              <td class="text-red-600 dark:text-red-400 font-medium">${vacGq}</td>
+            `;
+            rowsContainer.appendChild(tr);
+          });
+
+          // footer totals
+          footer.innerHTML = `
+            <tr>
+              <td class="text-right px-4 py-3 uppercase" colspan="2">Total (${totalMqSeats + totalGqSeats})</td>
+              <td>${totalMqSeats}</td>
+              <td>${totalGqSeats}</td>
+              <td>${totalMqAdmUpto}</td>
+              <td>${totalGqAdmUpto}</td>
+              <td>${totalGqsAdmUpto}</td>
+              <td>${totalMqAdmOn}</td>
+              <td>${totalGqAdmOn}</td>
+              <td>${totalGqsAdmOn}</td>
+              <td class="text-red-600 dark:text-red-400">${Math.max(0, totalMqSeats - totalMqAdmUpto)}</td>
+              <td class="text-red-600 dark:text-red-400">${Math.max(0, totalGqSeats - totalGqAdmUpto)}</td>
+            </tr>
+          `;
+          // populate header/date elements and summary cards
+          try{
+            const dateStr = formatDisplayDate(selectedDate);
+            document.querySelectorAll('.selected-date-hdr').forEach(el => el.innerText = dateStr);
+            const mqTotalEl = document.getElementById('card-mq-total'); if(mqTotalEl) mqTotalEl.innerText = totalMqAdmOn;
+            const gqTotalEl = document.getElementById('card-gq-total'); if(gqTotalEl) gqTotalEl.innerText = totalGqAdmOn;
+            const gqsTotalEl = document.getElementById('card-gqs-total'); if(gqsTotalEl) gqsTotalEl.innerText = totalGqsAdmOn;
+            const mqDateEl = document.getElementById('card-mq-date'); if(mqDateEl) mqDateEl.innerText = dateStr;
+            const gqDateEl = document.getElementById('card-gq-date'); if(gqDateEl) gqDateEl.innerText = dateStr;
+            const gqsDateEl = document.getElementById('card-gqs-date'); if(gqsDateEl) gqsDateEl.innerText = dateStr;
+            const statusTitle = document.getElementById('status-reference-title'); if(statusTitle) statusTitle.innerText = 'Status Reference Date';
+            const statusDate = document.getElementById('status-date-display'); if(statusDate) statusDate.innerText = dateStr;
+          }catch(e){ console.warn('populate summary cards error', e); }
+        }
+
+        function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>\\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]||c)); }
+
+        document.addEventListener('DOMContentLoaded', () => {
+          const dateInput = document.getElementById('report-date');
+          const today = new Date();
+          dateInput.value = toISODateInput(today);
+          const selectedDate = new Date(dateInput.value);
+
+          document.getElementById('load-report').addEventListener('click', async (e) => {
+            const val = dateInput.value ? new Date(dateInput.value) : new Date();
+            await renderReport(val);
+          });
+
+          // Export CSV wiring
+          const exportBtn = document.getElementById('export-xls');
+          if(exportBtn){
+            exportBtn.addEventListener('click', () => {
+              try{
+                exportReportToCSV();
+              }catch(e){ console.error('export error', e); alert('Export failed: ' + (e && e.message ? e.message : e)); }
+            });
+          }
+
+          // initial render
+          renderReport(selectedDate).catch(err => { console.error('renderReport error', err); alert('Error loading report: ' + err.message); });
+        });
+
+        // Export table data to CSV (simple, Excel-compatible CSV)
+        function exportReportToCSV(){
+          const rowsTbody = document.getElementById('report-rows');
+          if(!rowsTbody) return alert('Report rows not found');
+          const table = document.querySelector('.table-container table');
+          if(!table) return alert('Report table not found');
+
+          // build header from second thead row if present, otherwise flatten all th
+          let headerCells = [];
+          const theadRows = table.querySelectorAll('thead tr');
+          if(theadRows && theadRows.length >= 2){
+            headerCells = Array.from(theadRows[1].querySelectorAll('th')).map(th => th.innerText.trim());
+          } else if(theadRows.length === 1){
+            headerCells = Array.from(theadRows[0].querySelectorAll('th')).map(th => th.innerText.trim());
+          }
+
+          const csvRows = [];
+          if(headerCells.length) csvRows.push(headerCells.join(','));
+
+          const trs = Array.from(rowsTbody.querySelectorAll('tr'));
+          trs.forEach(tr => {
+            const vals = Array.from(tr.querySelectorAll('td')).map(td => {
+              let v = td.innerText || '';
+              v = v.replace(/\"/g, '""');
+              if(v.indexOf(',') !== -1 || v.indexOf('"') !== -1 || v.indexOf('\n') !== -1) v = '"' + v + '"';
+              return v;
+            });
+            csvRows.push(vals.join(','));
+          });
+
+          const csvContent = csvRows.join('\r\n');
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const dateEl = document.getElementById('report-date');
+          const datePart = dateEl && dateEl.value ? dateEl.value.replace(/-/g,'') : toISODateInput(new Date());
+          const filename = `admissions_report_${datePart}.csv`;
+
+          if(navigator.msSaveBlob){ navigator.msSaveBlob(blob, filename); }
+          else {
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+          }
+        }
     </script>
 
 </body></html>

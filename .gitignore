@@ -1,3 +1,8 @@
+node_modules/
+.env
+npm-debug.log
+dist/
+coverage/
 /.env
 __pycache__/
 .pytest_cache/

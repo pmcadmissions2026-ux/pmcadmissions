@@ -51,20 +51,12 @@
 
 <main class="flex-1 overflow-y-auto">
 <div class="max-w-4xl mx-auto p-6 flex flex-col gap-6">
-<a href="{{ url_for('admin.payments_list') }}" class="flex items-center gap-2 text-primary hover:text-primary/80 font-semibold mb-4">
+<a href="payments_list.html" class="flex items-center gap-2 text-primary hover:text-primary/80 font-semibold mb-4">
 <span class="material-symbols-outlined">arrow_back</span>
 Back to Payments
 </a>
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-        <div class="bg-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-50 border border-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-200 text-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-800 px-4 py-3 rounded-lg">
-            {{ message }}
-        </div>
-        {% endfor %}
-    {% endif %}
-{% endwith %}
+<div id="flashContainer"></div>
 
 <!-- Page Header -->
 <div class="flex flex-wrap justify-between items-end gap-3">
@@ -80,32 +72,26 @@ Back to Payments
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
             <label class="block text-sm font-semibold text-gray-600 mb-1">Student Name</label>
-            <p class="text-lg font-bold text-gray-800">{{ student.full_name or student.name }}</p>
+            <p id="studentName" class="text-lg font-bold text-gray-800">-</p>
         </div>
         <div>
             <label class="block text-sm font-semibold text-gray-600 mb-1">Unique ID</label>
-            <p class="text-lg font-bold text-blue-600">{{ student.unique_id or 'N/A' }}</p>
+            <p id="studentUnique" class="text-lg font-bold text-blue-600">-</p>
         </div>
         <div>
             <label class="block text-sm font-semibold text-gray-600 mb-1">Registration ID</label>
-            <p class="text-lg font-bold text-green-600">{{ application.registration_id or 'N/A' }}</p>
+            <p id="registrationId" class="text-lg font-bold text-green-600">-</p>
         </div>
     </div>
     
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-200">
         <div>
             <label class="block text-sm font-semibold text-gray-600 mb-1">Allotted Department</label>
-            <p class="text-lg font-bold text-gray-800">{{ dept_name }}</p>
+            <p id="deptName" class="text-lg font-bold text-gray-800">-</p>
         </div>
         <div>
             <label class="block text-sm font-semibold text-gray-600 mb-1">Allotted Quota</label>
-                {% if quota_type == 'GQ' %}
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800">General Quota</span>
-                {% elif quota_type == 'MQ' %}
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-800">Management Quota</span>
-                {% else %}
-                <span class="text-sm text-gray-500">{{ quota_type }}</span>
-                {% endif %}
+            <p id="quotaType" class="text-sm text-gray-500">-</p>
         </div>
     </div>
 </div>
@@ -114,8 +100,7 @@ Back to Payments
 <div class="bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] p-6">
 <h3 class="text-lg font-bold text-[#111418] dark:text-white mb-6">Payment Details</h3>
 
-<form method="POST" class="space-y-6">
-    <!-- Bill Number -->
+<form id="paymentForm" class="space-y-6">
     <div>
         <label for="bill_no" class="block text-sm font-semibold text-gray-700 mb-2">
             <span class="flex items-center gap-2">
@@ -123,73 +108,44 @@ Back to Payments
                 Bill Number
             </span>
         </label>
-        <input type="text" id="bill_no" name="bill_no" 
-               value="{{ record.bill_no or '' }}" 
-               placeholder="e.g., BILL-001, INV-2026-001"
-               class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" 
-               required/>
+        <input type="text" id="bill_no" name="bill_no" placeholder="e.g., BILL-001" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg" required />
         <p class="text-xs text-gray-500 mt-1">Unique bill/invoice number for this payment</p>
     </div>
 
-    <!-- Mode of Payment -->
     <div>
         <label for="mode_of_payment" class="block text-sm font-semibold text-gray-700 mb-2">
-            <span class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-lg">account_balance_wallet</span>
-                Mode of Payment
-            </span>
+            <span class="flex items-center gap-2"><span class="material-symbols-outlined text-lg">account_balance_wallet</span> Mode of Payment</span>
         </label>
-        <select id="mode_of_payment" name="mode_of_payment" 
-                class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                required>
+        <select id="mode_of_payment" name="mode_of_payment" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg" required>
             <option value="">-- Select Mode of Payment --</option>
-            <option value="Cash" {% if record and record.mode_of_payment == 'Cash' %}selected{% endif %}>Cash</option>
-            <option value="Card" {% if record and record.mode_of_payment == 'Card' %}selected{% endif %}>Card (Debit/Credit)</option>
-            <option value="Cheque" {% if record and record.mode_of_payment == 'Cheque' %}selected{% endif %}>Cheque</option>
-            <option value="Bank Transfer" {% if record and record.mode_of_payment == 'Bank Transfer' %}selected{% endif %}>Bank Transfer</option>
-            <option value="UPI" {% if record and record.mode_of_payment == 'UPI' %}selected{% endif %}>UPI</option>
+            <option value="Cash">Cash</option>
+            <option value="Card">Card (Debit/Credit)</option>
+            <option value="Cheque">Cheque</option>
+            <option value="Bank Transfer">Bank Transfer</option>
+            <option value="UPI">UPI</option>
         </select>
         <p class="text-xs text-gray-500 mt-1">Select the method used for payment</p>
     </div>
 
-    <!-- Amount -->
     <div>
         <label for="amount" class="block text-sm font-semibold text-gray-700 mb-2">
-            <span class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-lg">currency_rupee</span>
-                Amount (₹)
-            </span>
+            <span class="flex items-center gap-2"><span class="material-symbols-outlined text-lg">currency_rupee</span> Amount (₹)</span>
         </label>
-        <input type="number" id="amount" name="amount" step="0.01" min="0"
-               value="{{ record.amount or '' }}" 
-               placeholder="e.g., 50000"
-               class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-               required/>
+        <input type="number" id="amount" name="amount" step="0.01" min="0" placeholder="e.g., 50000" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg" required />
         <p class="text-xs text-gray-500 mt-1">Enter the payment amount in rupees</p>
     </div>
 
-    <!-- UPI ID (visible only when UPI selected) -->
-    <div id="upi-row" style="display: none;">
-        <label for="upi_id" class="block text-sm font-semibold text-gray-700 mb-2">
-            <span class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-lg">qr_code</span>
-                UPI ID (e.g., name@bank)
-            </span>
-        </label>
-        <input type="text" id="upi_id" name="upi_id"
-               value="{{ record.upi_id or '' }}"
-               placeholder="e.g., scb@upi or name@bank"
-               class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
-        <p class="text-xs text-gray-500 mt-1">Provide the payer's UPI ID when payment was made via UPI</p>
+    <div id="upi-row" style="display:none;">
+        <label for="upi_id" class="block text-sm font-semibold text-gray-700 mb-2">UPI ID (e.g., name@bank)</label>
+        <input type="text" id="upi_id" name="upi_id" placeholder="e.g., name@upi" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg" />
     </div>
 
-    <!-- Form Actions -->
     <div class="flex gap-4 pt-4 border-t border-gray-200">
-        <button type="submit" class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-lg transition-all active:scale-95">
+        <button type="submit" class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-lg">
             <span class="material-symbols-outlined">check_circle</span>
-            {% if record %}Update Payment{% else %}Save Payment{% endif %}
+            Save Payment
         </button>
-        <a href="{{ url_for('admin.payments_list') }}" class="flex items-center gap-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-lg transition-all">
+        <a href="payments_list.html" class="flex items-center gap-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-lg">
             <span class="material-symbols-outlined">close</span>
             Cancel
         </a>
@@ -198,26 +154,98 @@ Back to Payments
 </div>
 </div>
 </main>
+
 <script>
-    function toggleUpiRow(){
-        const sel = document.getElementById('mode_of_payment');
-        const upiRow = document.getElementById('upi-row');
-        const upiInput = document.getElementById('upi_id');
-        if(!sel || !upiRow) return;
-        if(sel.value === 'UPI'){
-            upiRow.style.display = 'block';
-            if(upiInput) upiInput.setAttribute('required','required');
-        } else {
-            upiRow.style.display = 'none';
-            if(upiInput) upiInput.removeAttribute('required');
+function $(id){ return document.getElementById(id); }
+function showFlash(msg, type='error'){
+    const fc = document.getElementById('flashContainer'); if(!fc) return; fc.innerHTML = `<div class="bg-${type==='success'?'green':'red'}-50 border border-${type==='success'?'green':'red'}-200 text-${type==='success'?'green':'red'}-800 px-4 py-3 rounded-lg">${msg}</div>`;
+}
+
+function debounce(fn, delay){ let t; return function(){ const args=arguments; const ctx=this; clearTimeout(t); t=setTimeout(function(){ fn.apply(ctx, args); }, delay); }; }
+
+async function fetchJson(url){ const r = await fetch(url); if(!r.ok) throw new Error('fetch failed '+url); return r.json(); }
+
+function getQueryParam(name){ const params = new URLSearchParams(window.location.search); return params.get(name); }
+
+async function loadPaymentForm(){
+    const appId = getQueryParam('app_id');
+    if(!appId){ showFlash('app_id query param required'); return; }
+
+    try{
+        // fetch admission_application by app_id first, fall back to diagnostics and counselling_records
+        let app = null;
+        try{
+            const appRes = await fetchJson('/api/admission_applications?app_id='+encodeURIComponent(appId));
+            if(appRes && appRes.ok && appRes.item) app = appRes.item;
+            else if(appRes && appRes.item) app = appRes.item;
+        }catch(e){ /* not found or error, we'll fallback */ }
+
+        if(!app){
+            // try diagnostic list as a fallback
+            let apps = await fetchJson('/api/_admission_applications');
+            if(!Array.isArray(apps) && apps && Array.isArray(apps.items)) apps = apps.items;
+            if(!Array.isArray(apps)) apps = [];
+            app = apps.find(a=>String(a.app_id)===String(appId));
         }
-    }
-    document.addEventListener('DOMContentLoaded', function(){
-        const sel = document.getElementById('mode_of_payment');
-        if(sel){ sel.addEventListener('change', toggleUpiRow); }
-        // initial toggle based on existing record
-        toggleUpiRow();
-    });
+        // If admission application row not found, try to recover from counselling_records
+        if(!app){
+            try{
+                let crs = await fetchJson('/api/counselling_records');
+                if(!Array.isArray(crs) && crs && Array.isArray(crs.data)) crs = crs.data;
+                if(!Array.isArray(crs)) crs = [];
+                const cr = crs.find(c=>String(c.app_id)===String(appId));
+                if(cr){
+                    app = {
+                        app_id: Number(cr.app_id),
+                        student_id: cr.student_id || null,
+                        preferred_dept_id: cr.allotted_dept_id || null,
+                        quota_type: cr.quota_type || null,
+                        registration_id: null
+                    };
+                }
+            }catch(e){ console.warn('counselling_records fetch failed', e); }
+        }
+
+        if(!app){ showFlash('Admission application not found'); return; }
+
+        let students = await fetchJson('/api/students');
+        if(!Array.isArray(students) && students && Array.isArray(students.data)) students = students.data;
+        if(!Array.isArray(students)) students = [];
+        const stud = students.find(s=>String(s.id)===String(app.student_id));
+
+        let deps = await fetchJson('/api/departments');
+        if(!Array.isArray(deps) && deps && Array.isArray(deps.data)) deps = deps.data;
+        if(!Array.isArray(deps)) deps = [];
+        const deptMap = {}; deps.forEach(d=>{ deptMap[String(d.id)] = d.dept_name || d.name; });
+
+        $('studentName').textContent = stud ? (stud.full_name || stud.student_name || '') : '-';
+        $('studentUnique').textContent = stud ? (stud.unique_id || '') : '-';
+        $('registrationId').textContent = app.registration_id || '-';
+        $('deptName').textContent = (app.preferred_dept_id ? (deptMap[String(app.preferred_dept_id)] || ('Dept #'+app.preferred_dept_id)) : '-');
+        $('quotaType').textContent = app.quota_type || '-';
+
+        // wire UPI visibility
+        $('mode_of_payment').addEventListener('change', function(e){ const upiRow = $('upi-row'); if(this.value==='UPI'){ upiRow.style.display='block'; $('upi_id').required = true; } else { upiRow.style.display='none'; $('upi_id').required = false; } });
+
+        // submit handler
+        $('paymentForm').addEventListener('submit', async function(ev){ ev.preventDefault();
+            const bill_no = $('bill_no').value.trim(); const mode_of_payment = $('mode_of_payment').value; const amount = $('amount').value; const upi_id = $('upi_id').value.trim();
+            if(!bill_no || !mode_of_payment || !amount) { showFlash('Please fill required fields'); return; }
+            const payload = { app_id: Number(appId), bill_no, mode_of_payment, amount: Number(amount) };
+            if(mode_of_payment==='UPI' && upi_id) payload.upi_id = upi_id;
+            try{
+                const r = await fetch('/api/payments', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
+                const j = await r.json();
+                if(!r.ok) { showFlash(j && j.error ? j.error : 'Failed to create payment'); return; }
+                showFlash('Payment saved', 'success');
+                setTimeout(()=> location.href = 'payments_list.html', 800);
+            }catch(e){ console.error(e); showFlash('Request failed'); }
+        });
+
+    }catch(e){ console.error(e); showFlash('Failed to load form'); }
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{ loadPaymentForm(); });
 </script>
 </body>
 </html>

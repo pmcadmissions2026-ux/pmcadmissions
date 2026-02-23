@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html class="light" lang="en">
 <head>
     <meta charset="utf-8"/>
@@ -217,23 +217,6 @@ function appendStatusLine(text){
     else el.querySelector('div').innerHTML += `<div class="text-xs mt-1">${text}</div>`;
 }
 
-// Global error handlers to surface resource/script errors in-page
-window.addEventListener('error', function(ev){
-    try{
-        if(ev && ev.target && (ev.target.src || ev.target.href)){
-            appendStatusLine(`Resource load error: ${ev.target.src || ev.target.href}`);
-        } else if(ev && ev.message){
-            appendStatusLine(`JS error: ${ev.message} at ${ev.filename || ev.lineno || ''}:${ev.lineno || ''}:${ev.colno || ''}`,'error');
-        } else {
-            appendStatusLine(`Unknown error event: ${String(ev)}`,'error');
-        }
-    }catch(e){ console.warn('error handler failed', e); }
-});
-
-window.addEventListener('unhandledrejection', function(ev){
-    try{ appendStatusLine(`Unhandled promise rejection: ${ev.reason && ev.reason.message ? ev.reason.message : String(ev.reason)}`,'error'); }catch(e){ console.warn(e); }
-});
-
 document.addEventListener('DOMContentLoaded', function(){
     const fileInputs = ['file_10th_mark', 'file_12th_mark', 'file_community', 'file_photo', 'file_tc', 'file_fg'];
 
@@ -277,8 +260,6 @@ document.addEventListener('DOMContentLoaded', function(){
         }
     }
 });
-</script>
-
 <!-- Load Supabase UMD client -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
 <script>
@@ -297,50 +278,10 @@ async function initDocumentUpload(){
     // load config (config.js exposes window.__ENV)
     const cfgScript = document.createElement('script'); cfgScript.src = '/config.js'; document.head.appendChild(cfgScript);
     cfgScript.onload = async function(){
-            try{
+        try{
             const cfg = window.__ENV || {};
-            if(!cfg.SUPABASE_URL || !cfg.SUPABASE_KEY) { setStatus('Supabase config missing in /config.js','error'); return; }
-
-            // Ensure Supabase UMD client is available. Some browsers block third-party script storage (Tracking Prevention).
-            async function ensureSupabaseClient(){
-                // prefer global names that UMD might expose
-                if(window.supabase && typeof window.supabase.createClient === 'function') return window.supabase;
-                if(window.supabaseJs && typeof window.supabaseJs.createClient === 'function') return window.supabaseJs;
-                if(typeof createClient === 'function') return { createClient };
-
-                // Try to load a local copy first (recommended to avoid tracking prevention)
-                const tryLoad = (src) => new Promise(resolve => {
-                    const s = document.createElement('script'); s.src = src; s.async = true;
-                    s.onload = () => resolve(true); s.onerror = () => resolve(false);
-                    document.head.appendChild(s);
-                });
-
-                const fallbacks = ['/static/js/supabase.min.js','https://unpkg.com/@supabase/supabase-js/dist/umd/supabase.min.js'];
-                for(const f of fallbacks){
-                    appendStatusLine(`Attempting to load Supabase client from ${f} ...`);
-                    const ok = await tryLoad(f);
-                    if(!ok) { appendStatusLine(`Failed to load ${f}`); continue; }
-                    // loaded - check globals
-                    if(window.supabase && typeof window.supabase.createClient === 'function') return window.supabase;
-                    if(window.supabaseJs && typeof window.supabaseJs.createClient === 'function') return window.supabaseJs;
-                    if(typeof createClient === 'function') return { createClient };
-                }
-                return null;
-            }
-
-            let useServerUpload = false;
-            const supabaseLib = await ensureSupabaseClient();
-            let sb = null;
-            if(!supabaseLib){
-                appendStatusLine('Supabase client library not available in browser; will use server-side upload fallback.');
-                useServerUpload = true;
-            } else {
-                // create client using whichever API we found
-                const supabaseObj = (typeof supabaseLib.createClient === 'function') ? supabaseLib : (supabaseLib.createClient ? supabaseLib : null);
-                const createClientFn = (supabaseObj && supabaseObj.createClient) ? supabaseObj.createClient.bind(supabaseObj) : (typeof createClient === 'function' ? createClient : null);
-                if(!createClientFn){ appendStatusLine('Unable to find createClient function on Supabase library; will use server-side upload fallback.'); useServerUpload = true; }
-                else { sb = createClientFn(cfg.SUPABASE_URL, cfg.SUPABASE_KEY); }
-            }
+            if(!cfg.SUPABASE_URL || !cfg.SUPABASE_KEY) return console.warn('Supabase config missing');
+            const supabase = supabaseJs.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_KEY);
 
             // show applicant info if we can find it via /api/admissions -> student
             // Only perform admissions lookup if the step1 page did not supply name/unique in the querystring
@@ -360,8 +301,6 @@ async function initDocumentUpload(){
 
             // wire file inputs and upload flow
             const fileInputs = ['file_10th_mark','file_12th_mark','file_community','file_photo','file_tc','file_fg'];
-            // use sb as our supabase client
-            const supabase = sb;
             fileInputs.forEach(id => {
                 const el = document.getElementById(id);
                 const disp = document.getElementById(id + '_name');
@@ -384,40 +323,26 @@ async function initDocumentUpload(){
                     const input = document.getElementById(id);
                     if(!input || !input.files || input.files.length===0) continue;
                     const file = input.files[0];
-                        appendStatusLine(`Uploading ${file.name} ...`);
-                        try{
-                            if(!useServerUpload && sb){
-                                // browser-side upload using supabase-js
-                                const remotePath = `${String(appIdVal)}/${Date.now()}_${file.name}`;
-                                const up = await sb.storage.from('Student_files').upload(remotePath, file, { upsert: false });
-                                if(up && up.error){ anyErrors = true; appendStatusLine(`Upload failed for ${file.name}: ${up.error.message}`); continue; }
-                                const path = (up && up.data && up.data.path) ? up.data.path : remotePath;
-                                const urlRes = sb.storage.from('Student_files').getPublicUrl(path);
-                                const publicUrl = (urlRes && urlRes.data && urlRes.data.publicUrl) ? urlRes.data.publicUrl : `${cfg.SUPABASE_URL.replace(/\/$/,'')}/storage/v1/object/public/Student_files/${encodeURIComponent(path)}`;
-                                appendStatusLine(`Uploaded ${file.name} -> ${publicUrl}`);
+                    const remotePath = `${String(appIdVal)}/${Date.now()}_${file.name}`;
+                    appendStatusLine(`Uploading ${file.name} ...`);
+                    try{
+                        const up = await supabase.storage.from('Student_files').upload(remotePath, file, { upsert: false });
+                        if(up && up.error){ anyErrors = true; appendStatusLine(`Upload failed for ${file.name}: ${up.error.message}`); continue; }
+                        // get public url
+                        const path = (up && up.data && up.data.path) ? up.data.path : remotePath;
+                        const urlRes = supabase.storage.from('Student_files').getPublicUrl(path);
+                        const publicUrl = (urlRes && urlRes.data && urlRes.data.publicUrl) ? urlRes.data.publicUrl : `${cfg.SUPABASE_URL.replace(/\/$/,'')}/storage/v1/object/public/Student_files/${encodeURIComponent(path)}`;
+                        appendStatusLine(`Uploaded ${file.name} -> ${publicUrl}`);
 
-                                // send metadata to server for insertion into documents table
-                                const userObj = (() => { try{ return JSON.parse(sessionStorage.getItem('pmc_user')||'null'); }catch(e){return null;} })();
-                                const studentName = (document.getElementById('student-name') && document.getElementById('student-name').textContent) ? document.getElementById('student-name').textContent.trim() : null;
-                                const studentUnique = (document.getElementById('student-unique') && document.getElementById('student-unique').textContent) ? document.getElementById('student-unique').textContent.trim() : null;
-                                const payload = { app_id: appIdVal, document_type: id, document_url: publicUrl, file_size: file.size, uploaded_by: userObj && userObj.user_id ? userObj.user_id : null, student_name: studentName, student_unique: studentUnique };
-                                const metaRes = await fetch('/api/documents', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                                if(!metaRes.ok){ anyErrors = true; let text = await metaRes.text(); try{ const j = JSON.parse(text); text = j.error || JSON.stringify(j); }catch(e){} appendStatusLine(`Metadata insert failed for ${file.name}: ${text}`); }
-                                else { const ok = await metaRes.json(); appendStatusLine(`Metadata recorded (doc_id: ${ok.document && ok.document.doc_id ? ok.document.doc_id : 'unknown'})`); }
-                            } else {
-                                // server-side upload fallback: POST file to /api/upload-file
-                                const fd = new FormData(); fd.append('file', file, file.name); fd.append('app_id', appIdVal); fd.append('document_type', id);
-                                const studentName = (document.getElementById('student-name') && document.getElementById('student-name').textContent) ? document.getElementById('student-name').textContent.trim() : null;
-                                const studentUnique = (document.getElementById('student-unique') && document.getElementById('student-unique').textContent) ? document.getElementById('student-unique').textContent.trim() : null;
-                                if(studentName) fd.append('student_name', studentName);
-                                if(studentUnique) fd.append('student_unique', studentUnique);
-                                const userObj = (() => { try{ return JSON.parse(sessionStorage.getItem('pmc_user')||'null'); }catch(e){return null;} })();
-                                if(userObj && userObj.user_id) fd.append('uploaded_by', String(userObj.user_id));
-                                const upRes = await fetch('/api/upload-file', { method: 'POST', body: fd });
-                                if(!upRes.ok){ anyErrors = true; let text = await upRes.text(); try{ const j = JSON.parse(text); text = j.error || JSON.stringify(j); }catch(e){} appendStatusLine(`Server upload failed for ${file.name}: ${text}`); }
-                                else { const ok = await upRes.json(); appendStatusLine(`Server uploaded ${file.name} -> ${ok.publicUrl || ok.document && ok.document.document_url || 'unknown'}`); }
-                            }
-                        }catch(err){ anyErrors = true; appendStatusLine(`Exception uploading ${file.name}: ${String(err)}`); }
+                        // send metadata to server for insertion into documents table
+                        const userObj = (() => { try{ return JSON.parse(sessionStorage.getItem('pmc_user')||'null'); }catch(e){return null;} })();
+                        const studentName = (document.getElementById('student-name') && document.getElementById('student-name').textContent) ? document.getElementById('student-name').textContent.trim() : null;
+                        const studentUnique = (document.getElementById('student-unique') && document.getElementById('student-unique').textContent) ? document.getElementById('student-unique').textContent.trim() : null;
+                        const payload = { app_id: appIdVal, document_type: id, document_url: publicUrl, file_size: file.size, uploaded_by: userObj && userObj.user_id ? userObj.user_id : null, student_name: studentName, student_unique: studentUnique };
+                        const metaRes = await fetch('/api/documents', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                        if(!metaRes.ok){ anyErrors = true; let text = await metaRes.text(); try{ const j = JSON.parse(text); text = j.error || JSON.stringify(j); }catch(e){} appendStatusLine(`Metadata insert failed for ${file.name}: ${text}`); }
+                        else { const ok = await metaRes.json(); appendStatusLine(`Metadata recorded (doc_id: ${ok.document && ok.document.doc_id ? ok.document.doc_id : 'unknown'})`); }
+                    }catch(err){ anyErrors = true; appendStatusLine(`Exception uploading ${file.name}: ${String(err)}`); }
                 }
 
                 if(uploadBtnEl) uploadBtnEl.disabled = false;
@@ -429,3 +354,4 @@ async function initDocumentUpload(){
 }
 document.addEventListener('DOMContentLoaded', initDocumentUpload);
 </script>
+

@@ -67,29 +67,20 @@
 <!-- Sidebar Navigation -->
 <aside class="w-56 border-r border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#111827] hidden md:flex flex-col">
 <nav class="flex-1 overflow-y-auto px-2 py-6 flex flex-col gap-2">
-<a href="{{ url_for('admin.documents_management') }}" class="flex items-center gap-3 px-4 py-2 text-white bg-primary rounded-lg transition-colors active-nav">
+<a href="#" class="flex items-center gap-3 px-4 py-2 text-white bg-primary rounded-lg transition-colors active-nav">
 <span class="material-symbols-outlined text-xl">description</span>
 <span class="text-sm font-medium">Documents</span>
 </a>
 </nav>
 <div class="border-t border-[#e5e7eb] dark:border-[#2d3748] px-4 py-4">
-<p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">{{ user.name }}</p>
-<p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">{{ user.role }}</p>
+<p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">Admin</p>
+<p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">Administrator</p>
 </div>
 </aside>
 <!-- Main Content -->
 <main class="flex-1 overflow-y-auto">
 <div class="max-w-[1400px] mx-auto p-6 flex flex-col gap-6">
-<!-- Flash Messages -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-        <div class="bg-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-50 border border-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-200 text-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-800 px-4 py-3 rounded-lg">
-            {{ message }}
-        </div>
-        {% endfor %}
-    {% endif %}
-{% endwith %}
+<!-- Flash messages removed; client-side UI will show notifications if needed -->
 
 <!-- Page Header -->
 <div class="flex flex-wrap justify-between items-end gap-3">
@@ -108,7 +99,7 @@
 <div class="flex items-center justify-between">
 <div>
 <p class="text-xs text-[#617589] dark:text-[#a0aec0] font-medium uppercase">Total Documents</p>
-<p class="text-2xl font-bold text-[#111418] dark:text-white mt-1">{{ total_documents }}</p>
+<p id="totalDocuments" class="text-2xl font-bold text-[#111418] dark:text-white mt-1">0</p>
 </div>
 <span class="material-symbols-outlined text-3xl text-primary opacity-20">description</span>
 </div>
@@ -142,147 +133,13 @@
 <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Actions</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
-{% if documents %}
-    {% for student in documents %}
-    <tr class="hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors group">
-        <td class="px-6 py-4">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                #{{ student.app_id or 'N/A' }}
-            </span>
-        </td>
-        <td class="px-6 py-4">
-            <div class="text-sm font-semibold text-[#111418] dark:text-white">{{ student.student_name }}</div>
-        </td>
-        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">{{ student.unique_id }}</td>
-        
-        <!-- 10th Mark Sheet -->
-        <td class="px-6 py-4">
-            {% if student.documents.get('10th_Mark_Sheet') %}
-                {% set doc = student.documents['10th_Mark_Sheet'] %}
-                <div class="flex gap-1">
-                    <a href="{{ doc.document_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-blue-600 transition-colors" title="View">
-                        <span class="material-symbols-outlined text-xs">visibility</span>
-                    </a>
-                    <a href="{{ doc.document_url }}" download class="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-green-600 transition-colors" title="Download">
-                        <span class="material-symbols-outlined text-xs">download</span>
-                    </a>
-                </div>
-            {% else %}
-                <span class="text-xs text-slate-400">-</span>
-            {% endif %}
-        </td>
-        
-        <!-- 12th Mark Sheet -->
-        <td class="px-6 py-4">
-            {% if student.documents.get('12th_Mark_Sheet') %}
-                {% set doc = student.documents['12th_Mark_Sheet'] %}
-                <div class="flex gap-1">
-                    <a href="{{ doc.document_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-blue-600 transition-colors" title="View">
-                        <span class="material-symbols-outlined text-xs">visibility</span>
-                    </a>
-                    <a href="{{ doc.document_url }}" download class="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-green-600 transition-colors" title="Download">
-                        <span class="material-symbols-outlined text-xs">download</span>
-                    </a>
-                </div>
-            {% else %}
-                <span class="text-xs text-slate-400">-</span>
-            {% endif %}
-        </td>
-        
-        <!-- Community Certificate -->
-        <td class="px-6 py-4">
-            {% if student.documents.get('Community_Certificate') %}
-                {% set doc = student.documents['Community_Certificate'] %}
-                <div class="flex gap-1">
-                    <a href="{{ doc.document_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-blue-600 transition-colors" title="View">
-                        <span class="material-symbols-outlined text-xs">visibility</span>
-                    </a>
-                    <a href="{{ doc.document_url }}" download class="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-green-600 transition-colors" title="Download">
-                        <span class="material-symbols-outlined text-xs">download</span>
-                    </a>
-                </div>
-            {% else %}
-                <span class="text-xs text-slate-400">-</span>
-            {% endif %}
-        </td>
-        
-        <!-- Passport Photo -->
-        <td class="px-6 py-4">
-            {% if student.documents.get('Passport_Photo') %}
-                {% set doc = student.documents['Passport_Photo'] %}
-                <div class="flex gap-1">
-                    <a href="{{ doc.document_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-blue-600 transition-colors" title="View">
-                        <span class="material-symbols-outlined text-xs">visibility</span>
-                    </a>
-                    <a href="{{ doc.document_url }}" download class="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-green-600 transition-colors" title="Download">
-                        <span class="material-symbols-outlined text-xs">download</span>
-                    </a>
-                </div>
-            {% else %}
-                <span class="text-xs text-slate-400">-</span>
-            {% endif %}
-        </td>
-        
-        <!-- Transfer Certificate -->
-        <td class="px-6 py-4">
-            {% if student.documents.get('Transfer_Certificate') %}
-                {% set doc = student.documents['Transfer_Certificate'] %}
-                <div class="flex gap-1">
-                    <a href="{{ doc.document_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-blue-600 transition-colors" title="View">
-                        <span class="material-symbols-outlined text-xs">visibility</span>
-                    </a>
-                    <a href="{{ doc.document_url }}" download class="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-green-600 transition-colors" title="Download">
-                        <span class="material-symbols-outlined text-xs">download</span>
-                    </a>
-                </div>
-            {% else %}
-                <span class="text-xs text-slate-400">-</span>
-            {% endif %}
-        </td>
-        
-        <!-- FG Certificate -->
-        <td class="px-6 py-4">
-            {% if student.documents.get('FG_Certificate') %}
-                {% set doc = student.documents['FG_Certificate'] %}
-                <div class="flex gap-1">
-                    <a href="{{ doc.document_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-blue-600 transition-colors" title="View">
-                        <span class="material-symbols-outlined text-xs">visibility</span>
-                    </a>
-                    <a href="{{ doc.document_url }}" download class="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-green-600 transition-colors" title="Download">
-                        <span class="material-symbols-outlined text-xs">download</span>
-                    </a>
-                </div>
-            {% else %}
-                <span class="text-xs text-slate-400">-</span>
-            {% endif %}
-        </td>
-        
-        <!-- Actions Column -->
-        <td class="px-6 py-4">
-            <button onclick="openEditModal('{{ student.app_id or '' }}', '{{ student.student_id or '' }}', '{{ student.student_name }}')" class="inline-flex items-center gap-1 bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded hover:bg-blue-700 transition-colors">
-                <span class="material-symbols-outlined text-sm">edit</span>
-                Edit Documents
-            </button>
-        </td>
-    </tr>
-    {% endfor %}
-{% else %}
-    <tr>
-        <td colspan="9" class="px-6 py-12 text-center text-slate-500">
-            <span class="material-symbols-outlined text-4xl mb-2">folder_open</span>
-            <p class="text-sm font-medium">No documents found</p>
-            <p class="text-xs text-slate-400 mt-1">Students haven't uploaded any documents yet.</p>
-        </td>
-    </tr>
-{% endif %}
-</tbody>
+<tbody id="documents-tbody" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"></tbody>
 </table>
 </div>
 
 <!-- Pagination -->
 <div class="px-6 py-4 flex items-center justify-between border-t border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c]">
-<p class="text-sm text-[#617589]">Showing {{ documents|length if documents else 0 }} documents</p>
+<p id="showingCount" class="text-sm text-[#617589]">Showing 0 documents</p>
 </div>
 </div>
 </div>
@@ -487,11 +344,12 @@ document.getElementById('file_fg_new')?.addEventListener('change', function(e) {
     document.getElementById('file_fg_new_name').textContent = e.target.files[0]?.name || 'No file selected';
 });
 
-function openEditModal(appId, studentId, studentName) {
+function openEditModal(appId, studentId, studentName, studentUnique) {
     currentModalData = {
         appId: appId,
         studentId: studentId,
         studentName: studentName,
+        studentUnique: studentUnique || null,
         existingDocuments: {}
     };
     
@@ -510,25 +368,45 @@ function openEditModal(appId, studentId, studentName) {
         }
     });
     
-    // Fetch existing documents for this student
-    fetch(`/admin/get-student-documents/${appId}`)
-        .then(response => {
-            console.log('Fetch response status:', response.status);
-            return response.json();
-        })
+    // Fetch existing documents for this application via API
+    fetch(`/api/documents?app_id=${encodeURIComponent(appId)}`)
+        .then(r => r.json())
         .then(data => {
-            console.log('Fetch response data:', data);
-            if (data.success) {
-                currentModalData.existingDocuments = data.documents || {};
-                console.log('Set existingDocuments:', currentModalData.existingDocuments);
-                updateModalStatus();
-            } else {
-                console.error('Fetch returned success: false', data);
-            }
+            // Normalize response: either { ok:true, documents: [...] } or array
+            let docs = [];
+            if (data && data.ok && Array.isArray(data.documents)) docs = data.documents;
+            else if (Array.isArray(data)) docs = data;
+
+            const map = {};
+            // normalize document_type variants to canonical keys used by modal
+            const typeMap = {
+                'file_10th_mark': '10th_Mark_Sheet',
+                'file_12th_mark': '12th_Mark_Sheet',
+                'file_community': 'Community_Certificate',
+                'file_photo': 'Passport_Photo',
+                'file_tc': 'Transfer_Certificate',
+                'file_fg': 'FG_Certificate',
+                '10th_Mark_Sheet': '10th_Mark_Sheet',
+                '12th_Mark_Sheet': '12th_Mark_Sheet',
+                'Community_Certificate': 'Community_Certificate',
+                'Passport_Photo': 'Passport_Photo',
+                'Transfer_Certificate': 'Transfer_Certificate',
+                'FG_Certificate': 'FG_Certificate'
+            };
+
+            docs.forEach(d => {
+                if (!d) return;
+                const dt = (d.document_type || '').trim();
+                const key = typeMap[dt] || dt || (d.doc_id || d.id) && ('unknown_' + (d.doc_id || d.id));
+                if (key) map[key] = d;
+            });
+            currentModalData.existingDocuments = map;
+            updateModalStatus();
         })
-        .catch(error => {
-            console.error('Error fetching documents:', error);
-            updateModalStatus(); // Call anyway to show missing status
+        .catch(err => {
+            console.error('Error fetching documents for app', appId, err);
+            currentModalData.existingDocuments = {};
+            updateModalStatus();
         });
     
     document.getElementById('editModal').classList.remove('hidden');
@@ -597,17 +475,17 @@ function replaceDocument(docType, fileInputId) {
     
     if (confirm(`Delete existing ${docType.replace(/_/g, ' ')} and upload a new one?`)) {
         const existingDoc = currentModalData.existingDocuments[docType];
-        if (existingDoc && existingDoc.id) {
-            fetch(`/admin/delete-document/${existingDoc.id}`, {
-                method: 'DELETE',
-                headers: {'Content-Type': 'application/json'}
-            })
-            .then(response => response.json())
+        const docId = existingDoc && (existingDoc.id || existingDoc.doc_id);
+        if (existingDoc && docId) {
+            fetch(`/api/documents/${docId}`, { method: 'DELETE' })
+            .then(r => r.json())
             .then(data => {
-                if (data.success) {
+                if (data && data.ok) {
                     document.getElementById(fileInputId).click();
                     delete currentModalData.existingDocuments[docType];
                     updateModalStatus();
+                } else {
+                    console.error('Failed to delete document', data);
                 }
             })
             .catch(error => console.error('Error deleting document:', error));
@@ -617,8 +495,10 @@ function replaceDocument(docType, fileInputId) {
 
 function uploadDocuments() {
     const formData = new FormData();
-    formData.append('application_id', currentModalData.appId);
-    formData.append('student_id', currentModalData.studentId);
+    // server expects 'app_id' or unique_id; include both when available
+    formData.append('app_id', currentModalData.appId || '');
+    formData.append('student_id', currentModalData.studentId || '');
+    if(currentModalData.studentUnique) formData.append('unique_id', currentModalData.studentUnique);
     
     const fileMappings = [
         { id: 'file_10th_new', name: 'file_10th_mark' },
@@ -642,22 +522,38 @@ function uploadDocuments() {
         alert('Please select at least one document to upload');
         return;
     }
-    
-    fetch('/admin/applications', {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
+
+    // Append files using document type as field name so server can map
+    const typeMap = {
+        'file_10th_new': '10th_Mark_Sheet',
+        'file_12th_new': '12th_Mark_Sheet',
+        'file_community_new': 'Community_Certificate',
+        'file_photo_new': 'Passport_Photo',
+        'file_tc_new': 'Transfer_Certificate',
+        'file_fg_new': 'FG_Certificate'
+    };
+
+    fileMappings.forEach(mapping => {
+        const fileInput = document.getElementById(mapping.id);
+        if (fileInput?.files.length > 0) {
+            const docType = typeMap[mapping.id] || mapping.name;
+            formData.append(docType, fileInput.files[0]);
         }
+    });
+
+    fetch('/api/upload-file', {
+        method: 'POST',
+        body: formData
     })
-    .then(response => response.json())
+    .then(r => r.json())
     .then(data => {
-        if (data.success) {
+        if (data && data.ok) {
             alert('Documents uploaded successfully!');
             closeEditModal();
-            location.reload();
+            loadDocuments();
         } else {
-            alert('Error uploading documents: ' + (data.error || 'Unknown error'));
+            console.error('Upload error', data);
+            alert('Error uploading documents: ' + (data.error || JSON.stringify(data)));
         }
     })
     .catch(error => {
@@ -668,16 +564,14 @@ function uploadDocuments() {
 // Search functionality
 document.getElementById('searchInput').addEventListener('keyup', function(e) {
     const searchTerm = e.target.value.toLowerCase();
-    const rows = document.querySelectorAll('table tbody tr');
-    
+    const rows = document.querySelectorAll('#documents-tbody tr');
+
     rows.forEach(row => {
-        const studentName = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-        const uniqueId = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
-        const appNum = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
-        
-        if (studentName.includes(searchTerm) || 
-            uniqueId.includes(searchTerm) || 
-            appNum.includes(searchTerm)) {
+        const studentName = (row.querySelector('td:nth-child(2)')?.textContent || '').toLowerCase();
+        const uniqueId = (row.querySelector('td:nth-child(3)')?.textContent || '').toLowerCase();
+        const appNum = (row.querySelector('td:nth-child(1)')?.textContent || '').toLowerCase();
+
+        if (studentName.includes(searchTerm) || uniqueId.includes(searchTerm) || appNum.includes(searchTerm)) {
             row.style.display = '';
         } else {
             row.style.display = 'none';
@@ -687,20 +581,14 @@ document.getElementById('searchInput').addEventListener('keyup', function(e) {
 
 function deleteDocument(docId, studentName) {
     if (confirm(`Delete document from ${studentName}? This action cannot be undone.`)) {
-        // Send delete request
-        fetch(`/admin/delete-document/${docId}`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => response.json())
+        fetch(`/api/documents/${docId}`, { method: 'DELETE' })
+        .then(r => r.json())
         .then(data => {
-            if (data.success) {
+            if (data && data.ok) {
                 alert('Document deleted successfully');
-                location.reload();
+                loadDocuments();
             } else {
-                alert('Error deleting document: ' + (data.error || 'Unknown error'));
+                alert('Error deleting document: ' + (data.error || JSON.stringify(data)));
             }
         })
         .catch(error => {
@@ -709,6 +597,141 @@ function deleteDocument(docId, studentName) {
         });
     }
 }
+
+// Load documents and render into table
+function loadDocuments() {
+    const tbody = document.getElementById('documents-tbody');
+    tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-8 text-center text-slate-400">Loading...</td></tr>';
+    // Try diagnostic endpoint that lists documents when no app_id is provided
+    fetch('/api/_documents')
+        .then(r => r.json())
+        .then(data => {
+            let list = [];
+            if (data && data.ok && Array.isArray(data.items)) list = data.items;
+            else if (Array.isArray(data)) list = data;
+
+            // Normalize documents grouped by app_id and document_type
+            const docsByApp = {};
+            const typeMap = {
+                'file_10th_mark': '10th_Mark_Sheet',
+                'file_12th_mark': '12th_Mark_Sheet',
+                'file_community': 'Community_Certificate',
+                'file_photo': 'Passport_Photo',
+                'file_tc': 'Transfer_Certificate',
+                'file_fg': 'FG_Certificate',
+                // accept already-normalized types
+                '10th_Mark_Sheet': '10th_Mark_Sheet',
+                '12th_Mark_Sheet': '12th_Mark_Sheet',
+                'Community_Certificate': 'Community_Certificate',
+                'Passport_Photo': 'Passport_Photo',
+                'Transfer_Certificate': 'Transfer_Certificate',
+                'FG_Certificate': 'FG_Certificate'
+            };
+
+            list.forEach(d => {
+                const aid = (d.app_id !== undefined && d.app_id !== null) ? String(d.app_id) : (d.appid !== undefined ? String(d.appid) : null);
+                if(!aid) return;
+                if(!docsByApp[aid]) docsByApp[aid] = { app_id: Number(aid), documents: {}, raw: [] };
+                const dt = (d.document_type || '').trim();
+                const key = typeMap[dt] || dt || ('unknown_' + (d.doc_id || d.id || Math.random()));
+                docsByApp[aid].documents[key] = d;
+                docsByApp[aid].raw.push(d);
+            });
+
+            // Fetch admission_applications and students to build rows based on applications
+            Promise.all([
+                fetch('/api/_admission_applications').then(r => r.json()).catch(() => ({ ok: false, items: [] })),
+                fetch('/api/students').then(r => r.json()).catch(() => [])
+            ]).then(([appsRes, studentsRes]) => {
+                let appsList = [];
+                if (appsRes && appsRes.ok && Array.isArray(appsRes.items)) appsList = appsRes.items;
+                else if (Array.isArray(appsRes)) appsList = appsRes;
+
+                const studentsList = Array.isArray(studentsRes) ? studentsRes : (studentsRes && studentsRes.ok && Array.isArray(studentsRes.items) ? studentsRes.items : []);
+
+                const studentMap = {};
+                studentsList.forEach(s => { if(s && s.id) studentMap[String(s.id)] = s; });
+
+                const appMap = {};
+                appsList.forEach(a => { if(a && (a.app_id !== undefined)) appMap[String(a.app_id)] = a; });
+
+                // Choose the set of application ids to render: union of appsList and docsByApp
+                const appIds = new Set(Object.keys(appMap));
+                Object.keys(docsByApp).forEach(k => appIds.add(k));
+
+                const rows = Array.from(appIds).map(x => Number(x)).sort((a,b) => a - b);
+
+                document.getElementById('totalDocuments').textContent = rows.length;
+                const showing = document.getElementById('showingCount');
+                if (showing) showing.textContent = `Showing ${rows.length} documents`;
+
+                if (!rows.length) {
+                    tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-12 text-center text-slate-500">\n            <span class="material-symbols-outlined text-4xl mb-2">folder_open</span>\n            <p class="text-sm font-medium">No documents found</p>\n            <p class="text-xs text-slate-400 mt-1">Students haven\'t uploaded any documents yet.</p>\n        </td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                rows.forEach(appId => {
+                    const appKey = String(appId);
+                    const appRow = appMap[appKey] || { app_id: appId, student_id: null };
+                    const student = appRow.student_id ? studentMap[String(appRow.student_id)] : null;
+
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors group';
+
+                    const appCell = document.createElement('td'); appCell.className='px-6 py-4';
+                    appCell.innerHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">#${appId}</span>`;
+
+                    const nameCell = document.createElement('td'); nameCell.className='px-6 py-4';
+                    nameCell.innerHTML = `<div class="text-sm font-semibold text-[#111418] dark:text-white">${(student && (student.student_name || student.full_name)) || ''}</div>`;
+
+                    const uidCell = document.createElement('td'); uidCell.className='px-6 py-4 text-sm text-[#111418] dark:text-white font-mono';
+                    uidCell.textContent = (student && student.unique_id) || '';
+
+                    tr.appendChild(appCell);
+                    tr.appendChild(nameCell);
+                    tr.appendChild(uidCell);
+
+                    function renderDocCell(docTypeKey) {
+                        const td = document.createElement('td'); td.className='px-6 py-4';
+                        const doc = (docsByApp[appKey] && docsByApp[appKey].documents && docsByApp[appKey].documents[docTypeKey]) || null;
+                        if (doc) {
+                            td.innerHTML = `<div class="flex gap-1">\n<a href="${doc.document_url}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 bg-blue-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-blue-600 transition-colors" title="View">\n<span class="material-symbols-outlined text-xs">visibility</span>\n</a>\n<a href="${doc.document_url}" download class="inline-flex items-center gap-1 bg-green-500 text-white text-xs font-bold py-1 px-2 rounded hover:bg-green-600 transition-colors" title="Download">\n<span class="material-symbols-outlined text-xs">download</span>\n</a>\n</div>`;
+                        } else {
+                            td.innerHTML = '<span class="text-xs text-slate-400">-</span>';
+                        }
+                        return td;
+                    }
+
+                    tr.appendChild(renderDocCell('10th_Mark_Sheet'));
+                    tr.appendChild(renderDocCell('12th_Mark_Sheet'));
+                    tr.appendChild(renderDocCell('Community_Certificate'));
+                    tr.appendChild(renderDocCell('Passport_Photo'));
+                    tr.appendChild(renderDocCell('Transfer_Certificate'));
+                    tr.appendChild(renderDocCell('FG_Certificate'));
+
+                    const actionTd = document.createElement('td'); actionTd.className='px-6 py-4';
+                    const btn = document.createElement('button');
+                    btn.className='inline-flex items-center gap-1 bg-blue-600 text-white text-xs font-bold py-2 px-3 rounded hover:bg-blue-700 transition-colors';
+                    btn.innerHTML = '<span class="material-symbols-outlined text-sm">edit</span> Edit Documents';
+                    btn.onclick = () => openEditModal(appId || '', (student && student.id) || '', (student && (student.student_name || student.full_name)) || '', (student && student.unique_id) || '');
+                    actionTd.appendChild(btn);
+                    tr.appendChild(actionTd);
+
+                    tbody.appendChild(tr);
+                });
+            }).catch(err => { console.error('Error fetching apps/students', err); });
+        })
+        .catch(err => {
+            console.error('Error loading documents', err);
+            document.getElementById('documents-tbody').innerHTML = '<tr><td colspan="9" class="px-6 py-12 text-center text-red-500">Error loading documents</td></tr>';
+        });
+}
+
+// Initial load
+document.addEventListener('DOMContentLoaded', () => {
+    loadDocuments();
+});
 </script>
 </body>
 </html>

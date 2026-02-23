@@ -48,44 +48,35 @@
 </div>
 <h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Er. Perumal Manimekalai College of Engineering</h2>
 </div>
+</div>
+
 <div class="flex items-center gap-4">
-<a href="{{ url_for('auth.logout') }}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium">Logout</a>
+    <a href="/auth/logout" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium">Logout</a>
 </div>
 </header>
 
 <div class="flex flex-1">
 <aside class="w-56 border-r border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#111827] hidden md:flex flex-col">
-<nav class="flex-1 overflow-y-auto px-2 py-6 flex flex-col gap-2">
-<a href="{{ url_for('admin.enquiries') }}" class="flex items-center gap-3 px-4 py-2 text-white bg-primary rounded-lg transition-colors active-nav">
-<span class="material-symbols-outlined text-xl">mail</span>
-<span class="text-sm font-medium">Enquiries</span>
-</a>
-</nav>
-<div class="border-t border-[#e5e7eb] dark:border-[#2d3748] px-4 py-4">
-<p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">{{ user.name }}</p>
-<p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">{{ user.role }}</p>
-</div>
+    <nav id="sidebar-nav" class="flex-1 overflow-y-auto px-2 py-6 flex flex-col gap-2">
+        <!-- Sidebar links will be populated client-side based on assigned modules -->
+    </nav>
+    <div class="border-t border-[#e5e7eb] dark:border-[#2d3748] px-4 py-4">
+        <p id="sidebar-user-name" class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">-</p>
+        <p id="sidebar-user-role" class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">-</p>
+    </div>
 </aside>
 
 <main class="flex-1 overflow-y-auto">
 <div class="max-w-[1400px] mx-auto p-6 flex flex-col gap-6">
-<!-- Flash Messages -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-        <div class="bg-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-50 border border-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-200 text-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-800 px-4 py-3 rounded-lg">
-            {{ message }}
-        </div>
-        {% endfor %}
-    {% endif %}
-{% endwith %}
+<!-- Flash messages area (client-side) -->
+<div id="flash-area"></div>
 
 <div class="flex flex-wrap justify-between items-end gap-3">
 <div class="flex min-w-72 flex-col gap-1">
 <p class="text-[#111418] dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">Student Enquiries</p>
 <p class="text-[#617589] dark:text-[#a0aec0] text-base font-normal leading-normal">Manage and process student enquiries for admission.</p>
 </div>
-<a href="{{ url_for('admin.new_enquiry') }}" class="flex items-center justify-center gap-2 h-10 px-6 bg-primary hover:bg-blue-600 text-white rounded-lg font-semibold transition-colors">
+<a href="/templates/admin/new_enquiry.html" class="flex items-center justify-center gap-2 h-10 px-6 bg-primary hover:bg-blue-600 text-white rounded-lg font-semibold transition-colors">
 <span class="material-symbols-outlined text-xl">add</span>
 <span>New Enquiry</span>
 </a>
@@ -104,71 +95,86 @@
 <th class="px-6 py-3 text-left text-xs font-semibold text-[#617589] dark:text-[#a0aec0] uppercase">TNEA Eligible</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
-{% for enq in enquiries %}
-<tr class="hover:bg-[#f9fafb] dark:hover:bg-[#111827] transition-colors">
-<td class="px-6 py-4 whitespace-nowrap">
-<p class="text-sm font-medium text-[#111418] dark:text-white">{{ enq.student_name }}</p>
-</td>
-<td class="px-6 py-4 whitespace-nowrap">
-<p class="text-sm text-[#617589] dark:text-[#a0aec0]">{{ enq.whatsapp_number }}</p>
-</td>
-<td class="px-6 py-4 whitespace-nowrap">
-    {% if enq.cutoff_score is not none %}
-        <p class="text-sm font-medium text-[#111418] dark:text-white">{{ '%.2f'|format(enq.cutoff_score) }}</p>
-    {% else %}
-        <p class="text-sm text-gray-500">N/A</p>
-    {% endif %}
-</td>
-<td class="px-6 py-4 whitespace-nowrap">
-<p class="text-sm text-[#617589] dark:text-[#a0aec0]">{{ enq.created_at[:10] if enq.created_at else 'N/A' }}</p>
-</td>
-<td class="px-6 py-4 whitespace-nowrap">
-    {% if enq.tnea_eligible is none %}
-        <span class="text-sm font-medium text-gray-500">N/A</span>
-    {% elif enq.tnea_eligible %}
-        <span class="px-3 py-1 inline-flex text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">Eligible</span>
-    {% else %}
-        <span class="px-3 py-1 inline-flex text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">Not Eligible</span>
-    {% endif %}
-</td>
-<td class="px-6 py-4 whitespace-nowrap">
-    <a href="{{ url_for('admin.view_enquiry', enquiry_id=enq.id) }}" class="px-3 py-1 bg-primary text-white rounded-lg text-sm font-medium">View</a>
-</td>
-</tr>
-{% else %}
-<tr>
-<td colspan="6" class="px-6 py-8 text-center">
-<div class="flex flex-col items-center gap-2">
-<span class="material-symbols-outlined text-[#617589] text-5xl">mail</span>
-<p class="text-[#617589] dark:text-[#a0aec0] text-sm font-medium">No enquiries found</p>
-</div>
-</td>
-</tr>
-{% endfor %}
-</tbody>
+<tbody id="enquiries-tbody" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"></tbody>
 </table>
 </div>
 </div>
 
 <!-- Stats Footer -->
 <div class="grid grid-cols-3 gap-4">
-<div class="bg-white dark:bg-[#1a202c] p-6 rounded-lg border border-[#e5e7eb] dark:border-[#2d3748]">
-<p class="text-[#617589] dark:text-[#a0aec0] text-xs font-semibold uppercase">Total Enquiries</p>
-<p class="text-3xl font-black text-[#111418] dark:text-white mt-2">{{ enquiries|length }}</p>
-</div>
-<div class="bg-white dark:bg-[#1a202c] p-6 rounded-lg border border-[#e5e7eb] dark:border-[#2d3748]">
-<p class="text-[#617589] dark:text-[#a0aec0] text-xs font-semibold uppercase">Open Enquiries</p>
-<p class="text-3xl font-black text-blue-600 mt-2">{{ enquiries|selectattr('status', 'equalto', 'open')|list|length }}</p>
-</div>
-<div class="bg-white dark:bg-[#1a202c] p-6 rounded-lg border border-[#e5e7eb] dark:border-[#2d3748]">
-<p class="text-[#617589] dark:text-[#a0aec0] text-xs font-semibold uppercase">Converted</p>
-<p class="text-3xl font-black text-green-600 mt-2">{{ enquiries|selectattr('status', 'equalto', 'converted')|list|length }}</p>
-</div>
+    <div class="bg-white dark:bg-[#1a202c] p-6 rounded-lg border border-[#e5e7eb] dark:border-[#2d3748]">
+        <p class="text-[#617589] dark:text-[#a0aec0] text-xs font-semibold uppercase">Total Enquiries</p>
+        <p id="total-enquiries-count" class="text-3xl font-black text-[#111418] dark:text-white mt-2">0</p>
+    </div>
+    <div class="bg-white dark:bg-[#1a202c] p-6 rounded-lg border border-[#e5e7eb] dark:border-[#2d3748]">
+        <p class="text-[#617589] dark:text-[#a0aec0] text-xs font-semibold uppercase">Open Enquiries</p>
+        <p id="open-enquiries-count" class="text-3xl font-black text-blue-600 mt-2">0</p>
+    </div>
+    <div class="bg-white dark:bg-[#1a202c] p-6 rounded-lg border border-[#e5e7eb] dark:border-[#2d3748]">
+        <p class="text-[#617589] dark:text-[#a0aec0] text-xs font-semibold uppercase">Converted</p>
+        <p id="converted-enquiries-count" class="text-3xl font-black text-green-600 mt-2">0</p>
+    </div>
 </div>
 
 </div>
 </main>
 </div>
+<script>
+// Client-side enquiries loader
+async function fetchEnquiries(){
+    const out = document.getElementById('enquiries-tbody');
+    const flash = document.getElementById('flash-area');
+    try{
+        out.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-sm text-[#617589]">Loading…</td></tr>';
+        const res = await fetch('/api/enquiries');
+        if(!res.ok) throw new Error('Failed to load enquiries');
+        const arr = await res.json();
+        if(!Array.isArray(arr) || arr.length===0){ out.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center"><div class="flex flex-col items-center gap-2"><span class="material-symbols-outlined text-[#617589] text-5xl">mail</span><p class="text-[#617589] dark:text-[#a0aec0] text-sm font-medium">No enquiries found</p></div></td></tr>'; return; }
+
+        out.innerHTML = '';
+        arr.forEach(enq => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-[#f9fafb] dark:hover:bg-[#111827] transition-colors';
+            const created = enq.created_at ? (new Date(enq.created_at)).toLocaleDateString() : 'N/A';
+            const cutoffDisplay = (enq.cutoff !== null && enq.cutoff !== undefined) ? Number(enq.cutoff).toFixed(2) : 'N/A';
+            const eligible = (enq.tnea_eligible === true) ? '<span class="px-3 py-1 inline-flex text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">Eligible</span>' : (enq.tnea_eligible === false ? '<span class="px-3 py-1 inline-flex text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">Not Eligible</span>' : '<span class="text-sm font-medium text-gray-500">N/A</span>');
+            tr.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap"><p class="text-sm font-medium text-[#111418] dark:text-white">${escapeHtml(enq.student_name||'')}</p></td>
+                <td class="px-6 py-4 whitespace-nowrap"><p class="text-sm text-[#617589] dark:text-[#a0aec0]">${escapeHtml(enq.whatsapp_number||'')}</p></td>
+                <td class="px-6 py-4 whitespace-nowrap"><p class="text-sm font-medium text-[#111418] dark:text-white">${cutoffDisplay}</p></td>
+                <td class="px-6 py-4 whitespace-nowrap"><p class="text-sm text-[#617589] dark:text-[#a0aec0]">${created}</p></td>
+                <td class="px-6 py-4 whitespace-nowrap">${eligible}</td>
+                <td class="px-6 py-4 whitespace-nowrap"><a href="/templates/admin/view_enquiry.html?enquiry_id=${encodeURIComponent(enq.id)}" class="px-3 py-1 bg-primary text-white rounded-lg text-sm font-medium">View</a></td>
+            `;
+            out.appendChild(tr);
+        });
+
+        // update stats footer
+        try{
+            const totalEl = document.getElementById('total-enquiries-count');
+            const openEl = document.getElementById('open-enquiries-count');
+            const convEl = document.getElementById('converted-enquiries-count');
+            if(totalEl) totalEl.textContent = String(arr.length || 0);
+            const openCount = arr.filter(x => (x.status||'').toLowerCase() === 'open').length;
+            const convCount = arr.filter(x => (x.status||'').toLowerCase() === 'converted').length;
+            if(openEl) openEl.textContent = String(openCount);
+            if(convEl) convEl.textContent = String(convCount);
+        }catch(e){ console.warn('update stats', e); }
+
+    }catch(err){
+        out.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-sm text-red-600">Error loading enquiries</td></tr>';
+        if(flash) flash.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">${escapeHtml(err.message||String(err))}</div>`;
+        console.error(err);
+    }
+}
+
+function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+document.addEventListener('DOMContentLoaded', function(){
+    // populate sidebar user info from sessionStorage if available
+    try{ const u = JSON.parse(sessionStorage.getItem('pmc_user')||'null'); if(u){ document.getElementById('sidebar-user-name').textContent = (u.first_name||u.email||'User'); document.getElementById('sidebar-user-role').textContent = (u.role_id?('Role '+u.role_id):''); } }catch(e){}
+    fetchEnquiries();
+});
+</script>
 </body>
 </html>

@@ -60,8 +60,8 @@
 <span class="material-symbols-outlined">notifications</span>
 </button>
 <div class="flex items-center gap-2">
-<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="Staff profile placeholder" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBAylw7G0AO3PbAaUi4anRbueA0QrPWgiUkWTJExTZFL1NLSK7vNkDh0eWVYmF80arWPe6uf1GPUSeR_49jq_fTWFl4ksuN6Bf-cKwJwlheGjkIRpFAyUAJEBYynKqWvjeJbPNtyv1-xOenjsmtp7mkduZ-yGC1JTVn688S9NusKAkxWB-Hl34LCthFa6XPw1rhe-hFk_yw-jjn_Zg-7ue5IostSMv5E6B4dYMToOrbKMqY8Vg4Ccai1pjWQAQ_RuFmo1UTcfn0Qro");'></div>
-<span class="text-sm font-medium">{{ user.name if user else 'Staff Member' }}</span>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" id="staff-avatar" style='background-image: url("https://via.placeholder.com/80")'></div>
+<span id="staff-name" class="text-sm font-medium">Staff Member</span>
 </div>
 </div>
 </header>
@@ -69,45 +69,8 @@
 <div class="max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8">
 <!-- Headline -->
 <h1 class="text-center text-[32px] font-bold tracking-tight mb-8">Step 1: Student Enquiry Form</h1>
-                        <!-- Flash messages and debug output -->
-                        {% with messages = get_flashed_messages(with_categories=true) %}
-                            {% if messages %}
-                                <div class="max-w-5xl mx-auto mb-4 px-4">
-                                    {% for category, msg in messages %}
-                                        <div class="p-3 rounded {{ 'bg-red-50 text-red-800' if category == 'error' else 'bg-green-50 text-green-800' }}">{{ msg }}</div>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        {% endwith %}
-
-                        {% if debug_error %}
-                            <div class="max-w-5xl mx-auto mb-4 px-4">
-                                <label class="text-sm font-semibold mb-2 text-red-700">Debug Traceback (showing full exception):</label>
-                                <pre class="whitespace-pre-wrap text-sm text-red-700 bg-red-50 p-4 rounded">{{ debug_error }}</pre>
-                            </div>
-                        {% endif %}
-                                                {% if success_redirect %}
-                                                    <script>
-                                                        // Show a brief success popup then redirect to the provided URL
-                                                        (function(){
-                                                            // Use a non-blocking toast-like dialog
-                                                            const wrap = document.createElement('div');
-                                                            wrap.style.position = 'fixed';
-                                                            wrap.style.left = '50%';
-                                                            wrap.style.top = '20px';
-                                                            wrap.style.transform = 'translateX(-50%)';
-                                                            wrap.style.zIndex = 9999;
-                                                            wrap.innerHTML = '<div style="background:#ecfdf5;border:1px solid #bbf7d0;color:#065f46;padding:12px 18px;border-radius:8px;font-weight:600;box-shadow:0 6px 18px rgba(2,6,23,0.08)">Enquiry created successfully — redirecting...</div>';
-                                                            document.addEventListener('DOMContentLoaded', function(){
-                                                                document.body.appendChild(wrap);
-                                                                // Remove after 2.5s and redirect
-                                                                setTimeout(function(){
-                                                                    try { window.location.href = '{{ success_redirect }}'; } catch(e) { window.location = '{{ success_redirect }}'; }
-                                                                }, 2500);
-                                                            });
-                                                        })();
-                                                    </script>
-                                                {% endif %}
+                        <!-- Flash area (client-managed) -->
+                        <div id="flash-area"></div>
 <!-- Progress Stepper -->
 <div class="mb-10 bg-white dark:bg-background-dark border border-[#dbe0e6] dark:border-[#2d3748] rounded-xl p-6 shadow-sm section">
 <div class="grid grid-cols-3 gap-x-2">
@@ -154,7 +117,7 @@
 </div>
 </div>
 <!-- Form Container -->
-<form method="POST" action="{{ url_for('admin.new_enquiry') }}">
+<form method="POST" data-action="new_enquiry" onsubmit="return false;">
 <div class="bg-white dark:bg-background-dark border border-[#dbe0e6] dark:border-[#2d3748] rounded-xl shadow-lg overflow-hidden">
 <!-- Personal Details Section -->
 <div class="p-8 border-b border-[#f0f2f4] dark:border-[#2d3748]">
@@ -569,94 +532,81 @@
         }
     </script>
     <script>
-        // Client-side uniqueness checks for enquiries
-        async function checkFieldUnique(field, value) {
-            if (!field || !value) return {exists: false};
-            try {
-                const resp = await fetch('/admin/enquiries/check-unique?field=' + encodeURIComponent(field) + '&value=' + encodeURIComponent(value), {credentials: 'same-origin'});
-                if (!resp.ok) return {error: 'server'};
-                return await resp.json();
-            } catch (e) {
-                console.error('checkFieldUnique error', e);
-                return {error: e.toString()};
-            }
-        }
-
-        function fieldLabel(name) {
-            if (name === 'plus2_register_number') return '+2 Register Number';
-            if (name === 'aadhar_number') return 'Aadhar Number';
-            if (name === 'email') return 'Email';
-            return name;
-        }
-
-        function showFieldError(el, msg) {
-            clearFieldError(el);
-            el.classList.add('border-red-500');
-            const small = document.createElement('div');
-            small.className = 'error-msg text-sm text-red-600 mt-1';
-            small.innerText = msg;
-            el.parentNode.appendChild(small);
-        }
-
-        function clearFieldError(el) {
-            el.classList.remove('border-red-500');
-            const parent = el.parentNode;
-            if (!parent) return;
-            const existing = parent.querySelector('.error-msg');
-            if (existing) existing.remove();
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const fields = ['plus2_register_number','email','aadhar_number'];
-            fields.forEach(function(name) {
-                const el = document.querySelector('[name="' + name + '"]');
-                if (!el) return;
-                el.addEventListener('blur', async function() {
-                    const val = (el.value || '').trim();
-                    if (!val) { clearFieldError(el); return; }
-                    const res = await checkFieldUnique(name, val);
-                    if (res && res.exists) {
-                        const label = fieldLabel(name);
-                        showFieldError(el, `${label} already exists (${res.matched_count})`);
-                    } else {
-                        clearFieldError(el);
-                    }
-                });
-            });
-
+        // New client submit handler: post student + academic + enquiry to server
+        document.addEventListener('DOMContentLoaded', function(){
+            try{ const u = JSON.parse(sessionStorage.getItem('pmc_user')||'null'); if(u){ document.getElementById('staff-name').textContent = (u.first_name||u.email||'Staff Member'); } }catch(e){}
             const form = document.querySelector('form[method="POST"]');
-            if (!form) return;
-            form.addEventListener('submit', async function(e) {
-                // Allow bypass when user confirmed duplicate warning
-                if (window._duplicateBypass) {
-                    return true;
-                }
-                const duplicates = [];
-                for (const name of ['plus2_register_number','email','aadhar_number']) {
-                    const el = form.querySelector('[name="' + name + '"]');
-                    if (!el) continue;
-                    const val = (el.value || '').trim();
-                    if (!val) { clearFieldError(el); continue; }
-                    const res = await checkFieldUnique(name, val);
-                    if (res && res.exists) {
-                        duplicates.push({name, el, res});
-                        showFieldError(el, `${fieldLabel(name)} already used by another enquiry`);
+            if(!form) return;
+            form.addEventListener('submit', async function(e){
+                e.preventDefault();
+                calculateCutoff();
+                const fd = new FormData(form);
+                const student = {
+                    full_name: fd.get('full_name')||'',
+                    email: fd.get('email')||null,
+                    phone: null,
+                    whatsapp_number: fd.get('whatsapp_number')||null,
+                    father_name: fd.get('father_name')||null,
+                    mother_name: fd.get('mother_name')||null,
+                    community: fd.get('community_custom') && fd.get('community') === 'Other' ? fd.get('community_custom') : fd.get('community') || null,
+                    date_of_birth: fd.get('date_of_birth')||null,
+                    gender: fd.get('gender')||null,
+                    aadhar_number: fd.get('aadhar_number')||null,
+                    emis_number: fd.get('emis_number')||null,
+                    plus2_register_number: fd.get('plus2_register_number')||null,
+                    tenth_school_name: fd.get('tenth_school_name')||null,
+                    tenth_marks: fd.get('tenth_marks')? Number(fd.get('tenth_marks')): null,
+                    tenth_percentage: fd.get('tenth_percentage')? Number(fd.get('tenth_percentage')): null,
+                    tenth_year: fd.get('tenth_year')? Number(fd.get('tenth_year')): null,
+                    plus2_school_name: fd.get('plus2_school_name')||null,
+                    plus2_marks: fd.get('plus2_marks')? Number(fd.get('plus2_marks')): null,
+                    plus2_percentage: fd.get('plus2_percentage')? Number(fd.get('plus2_percentage')): null,
+                    plus2_year: fd.get('plus2_year')? Number(fd.get('plus2_year')): null,
+                    board: fd.get('board')||null,
+                    study_state: fd.get('study_state')||null,
+                    group_studied: fd.get('group_studied')||null,
+                    medium_of_study: fd.get('medium_of_study')||null,
+                    category_7_5: !!fd.get('category_7_5'),
+                    first_graduate: !!fd.get('first_graduate'),
+                    general_quota: fd.get('general_quota')||null,
+                    reference_details: fd.get('reference_details')||null
+                };
+                const academic = {
+                    school_name: fd.get('plus2_school_name')||null,
+                    board: fd.get('board')||null,
+                    maths_marks: fd.get('maths_marks')? Number(fd.get('maths_marks')): null,
+                    physics_marks: fd.get('physics_marks')? Number(fd.get('physics_marks')): null,
+                    chemistry_marks: fd.get('chemistry_marks')? Number(fd.get('chemistry_marks')): null,
+                    cutoff: document.getElementById('cutoff') ? Number(document.getElementById('cutoff').value || 0) : null,
+                    tnea_average: document.getElementById('tnea_average') ? Number(document.getElementById('tnea_average').value || 0) : null,
+                    tnea_eligible: (function(){ try{ const el = document.getElementById('tnea_eligibility'); return el && el.className && el.className.indexOf('green') !== -1 ? true : (el && el.className && el.className.indexOf('red') !== -1 ? false : null);}catch(e){return null;} })()
+                };
+                const enquiry = {
+                    subject: fd.get('subject')||null,
+                    preferred_course: fd.get('preferred_course')||null,
+                    source: fd.get('source')||null,
+                    status: 'open'
+                };
+                const flash = document.getElementById('flash-area'); if(flash) flash.innerHTML = '';
+                try{
+                    const resp = await fetch('/api/enquiries', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student, academic, enquiry }) });
+                    const ct = resp.headers.get('content-type') || '';
+                    let body = null;
+                    let bodyText = null;
+                    if(ct.indexOf('application/json') !== -1){
+                        body = await resp.json();
                     } else {
-                        clearFieldError(el);
+                        bodyText = await resp.text();
                     }
-                }
-                if (duplicates.length > 0) {
-                    e.preventDefault();
-                    // Show a confirmation instead of blocking outright. If user confirms,
-                    // set a bypass flag and re-submit the form so server-side dedupe can run.
-                    const proceed = confirm('Duplicate value(s) detected. Click OK to continue and reuse existing records, or Cancel to revise the highlighted fields.');
-                    if (proceed) {
-                        window._duplicateBypass = true;
-                        form.submit();
-                        return true;
+                    if(!resp.ok){
+                        const msg = body && (body.error||body.message) ? (body.error||body.message) : (bodyText || resp.statusText || 'Create failed');
+                        throw new Error(msg);
                     }
-                    duplicates[0].el.focus();
-                    return false;
+                    if(flash) flash.innerHTML = `<div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">Enquiry created — redirecting...</div>`;
+                    setTimeout(()=> window.location.href = '/templates/admin/enquiries.html', 900);
+                }catch(err){
+                    if(flash) flash.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">${(err && err.message) ? err.message : String(err)}</div>`;
+                    console.error(err);
                 }
             });
         });

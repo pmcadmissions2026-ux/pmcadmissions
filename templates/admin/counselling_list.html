@@ -56,7 +56,7 @@
 <div class="flex flex-1">
 <aside class="w-56 border-r border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#111827] hidden md:flex flex-col">
 <nav class="flex-1 overflow-y-auto px-2 py-6 flex flex-col gap-2">
-<a href="{{ url_for('admin.counselling_list') }}" class="flex items-center gap-3 px-4 py-2 text-white bg-primary rounded-lg transition-colors active-nav">
+<a href="#" data-route="counselling_list" class="flex items-center gap-3 px-4 py-2 text-white bg-primary rounded-lg transition-colors active-nav">
 <span class="material-symbols-outlined text-xl">how_to_vote</span>
 <span class="text-sm font-medium">Counselling</span>
 </a>
@@ -69,15 +69,7 @@
 
 <main class="flex-1 overflow-y-auto">
 <div class="max-w-[1400px] mx-auto p-6 flex flex-col gap-6">
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        {% for category, message in messages %}
-        <div class="bg-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-50 border border-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-200 text-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-800 px-4 py-3 rounded-lg">
-            {{ message }}
-        </div>
-        {% endfor %}
-    {% endif %}
-{% endwith %}
+<div id="flashContainer"></div>
 
 <div class="flex flex-wrap justify-between items-end gap-3">
 <div class="flex min-w-72 flex-col gap-1">
@@ -92,7 +84,7 @@
 <div class="flex flex-col bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden">
 <div class="flex items-center justify-between px-6 py-5 border-b border-[#e5e7eb] dark:border-[#2d3748]">
 <h2 class="text-[#111418] dark:text-white text-xl font-bold leading-tight">Pending Counselling</h2>
-<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">{{ pending_students|length }} Student(s)</span>
+<span id="pendingCount" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">0 Student(s)</span>
 </div>
 
 <div class="overflow-x-auto">
@@ -109,54 +101,32 @@
 <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Action</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
-{% if pending_students %}
-    {% for s in pending_students %}
-    <tr class="hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors">
-        <td class="px-6 py-4">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">#{{ s.app_id }}</span>
-        </td>
-        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">{{ s.student_name }}</td>
-        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">{{ s.unique_id }}</td>
-        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white">
-            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
-                <span class="material-symbols-outlined text-sm">description</span>
-                {{ s.documents_count }} file(s)
-            </span>
-        </td>
-        <td class="px-6 py-4 text-sm">
-            {% if s.applied_for_counselling %}
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Yes</span>
-            {% else %}
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300">No</span>
-            {% endif %}
-        </td>
-        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">{{ s.counselling_application_number or '-' }}</td>
-        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white">{{ s.counselling_applied_at or '-' }}</td>
-        <td class="px-6 py-4">
-            {% if s.applied_for_counselling %}
-                <a href="{{ url_for('admin.counselling_form', app_id=s.app_id) }}" class="inline-flex items-center gap-2 bg-primary text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-primary/90 shadow-sm transition-all active:scale-95">
-                    <span class="material-symbols-outlined text-sm">how_to_vote</span>
-                    Start Counselling
-                </a>
-            {% else %}
-                <a href="{{ url_for('admin.counselling_apply', app_id=s.app_id) }}" class="inline-flex items-center gap-2 bg-yellow-500 text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-yellow-600 shadow-sm transition-all active:scale-95">
-                    <span class="material-symbols-outlined text-sm">edit</span>
-                    Mark Applied
-                </a>
-            {% endif %}
-        </td>
-    </tr>
-    {% endfor %}
-{% else %}
-    <tr>
-        <td colspan="6" class="px-6 py-12 text-center text-slate-500">
-            <span class="material-symbols-outlined text-4xl mb-2">check_circle</span>
-            <p class="text-sm font-medium">No pending students</p>
-        </td>
-    </tr>
-{% endif %}
-</tbody>
+<tbody id="pending-tbody" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"></tbody>
+</table>
+</div>
+</div>
+
+<!-- APPLIED (STEP 1) STUDENTS TABLE -->
+<div class="flex flex-col bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden">
+<div class="flex items-center justify-between px-6 py-5 border-b border-[#e5e7eb] dark:border-[#2d3748]">
+<h2 class="text-[#111418] dark:text-white text-xl font-bold leading-tight">Applied (Step 1)</h2>
+<span id="appliedCount" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">0 Student(s)</span>
+</div>
+
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-[#f8fafc] dark:bg-[#2d3748] border-b border-[#e5e7eb] dark:border-[#2d3748]">
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">App #</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Student Name</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Unique ID</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Applied</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Application #</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Applied Date</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Action</th>
+</tr>
+</thead>
+<tbody id="applied-tbody" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"></tbody>
 </table>
 </div>
 </div>
@@ -165,7 +135,7 @@
 <div class="flex flex-col bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden">
 <div class="flex items-center justify-between px-6 py-5 border-b border-[#e5e7eb] dark:border-[#2d3748]">
 <h2 class="text-[#111418] dark:text-white text-xl font-bold leading-tight">Completed Counselling</h2>
-<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">{{ completed_students|length }} Student(s)</span>
+<span id="completedCount" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">0 Student(s)</span>
 </div>
 
 <div class="overflow-x-auto">
@@ -180,52 +150,7 @@
 <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Details</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
-{% if completed_students %}
-    {% for s in completed_students %}
-    <tr class="hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors">
-        <td class="px-6 py-4">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">#{{ s.app_id }}</span>
-        </td>
-        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">{{ s.student_name }}</td>
-        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">{{ s.unique_id }}</td>
-        <td class="px-6 py-4">
-            {% if s.quota_type == 'GQ' %}
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">General Quota</span>
-            {% elif s.quota_type == 'MQ' %}
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">Management Quota</span>
-            {% else %}
-            <span class="text-sm text-gray-500">N/A</span>
-            {% endif %}
-        </td>
-        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">{{ s.allotted_dept }}</td>
-        <td class="px-6 py-4">
-            <div class="flex gap-2">
-                {% if s.quota_type == 'GQ' and s.allotment_order_url %}
-                <a href="{{ s.allotment_order_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 dark:text-blue-300 text-xs font-bold py-1 px-3 rounded-lg transition-all">
-                    <span class="material-symbols-outlined text-sm">description</span>
-                    View Order
-                </a>
-                {% endif %}
-                {% if s.quota_type == 'MQ' and s.consortium_number %}
-                <span class="inline-flex items-center gap-1 bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-300 text-xs font-bold py-1 px-3 rounded-lg">
-                    <span class="material-symbols-outlined text-sm">numbers</span>
-                    {{ s.consortium_number }}
-                </span>
-                {% endif %}
-            </div>
-        </td>
-    </tr>
-    {% endfor %}
-{% else %}
-    <tr>
-        <td colspan="6" class="px-6 py-12 text-center text-slate-500">
-            <span class="material-symbols-outlined text-4xl mb-2">folder_open</span>
-            <p class="text-sm font-medium">No completed counselling records</p>
-        </td>
-    </tr>
-{% endif %}
-</tbody>
+<tbody id="completed-tbody" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"></tbody>
 </table>
 </div>
 </div>
@@ -234,5 +159,154 @@
 </div>
 </main>
 </div>
+
+<script>
+async function loadCounsellingList() {
+    const docsRes = await fetch('/api/_documents').then(r => r.json()).catch(()=>({ok:false, items:[]}));
+    let items = [];
+    if (Array.isArray(docsRes)) items = docsRes;
+    else if (docsRes && docsRes.ok && Array.isArray(docsRes.items)) items = docsRes.items;
+
+    const appIds = new Set();
+    items.forEach(d => { const aid = d.app_id || d.appid || d.application_id; if(aid) appIds.add(String(aid)); });
+
+    // Build document counts keyed by app_id from the documents list
+    const docCounts = {};
+    (items||[]).forEach(d => { const aid = String(d.app_id || d.appid || d.application_id || ''); if(!aid) return; docCounts[aid] = (docCounts[aid] || 0) + 1; });
+
+    // fetch admission applications, students, counselling records and departments
+    const [appsRes, studentsRes, counsellingRes, deptsRes] = await Promise.all([
+        fetch('/api/_admission_applications').then(r=>r.json()).catch(()=>({ok:false, items:[]})),
+        fetch('/api/students').then(r=>r.json()).catch(()=>({ok:false, items:[]})),
+        fetch('/api/counselling_records').then(r=>r.json()).catch(()=>({ok:false, items:[]})),
+        fetch('/api/departments').then(r=>r.json()).catch(()=>({ok:false, items:[]}))
+    ]);
+
+    let apps = Array.isArray(appsRes) ? appsRes : (appsRes && appsRes.ok && Array.isArray(appsRes.items) ? appsRes.items : []);
+    let students = Array.isArray(studentsRes) ? studentsRes : (studentsRes && studentsRes.ok && Array.isArray(studentsRes.items) ? studentsRes.items : []);
+    let counselling = Array.isArray(counsellingRes) ? counsellingRes : (counsellingRes && counsellingRes.ok && Array.isArray(counsellingRes.items) ? counsellingRes.items : []);
+    let departments = Array.isArray(deptsRes) ? deptsRes : (deptsRes && deptsRes.ok && Array.isArray(deptsRes.items) ? deptsRes.items : []);
+
+    // build department id -> name map
+    const deptMap = {};
+    (departments||[]).forEach(d => {
+        const id = d && (d.id || d.dept_id || d.department_id) ? (d.id || d.dept_id || d.department_id) : null;
+        const name = d && (d.dept_name || d.name || d.department_name) ? (d.dept_name || d.name || d.department_name) : null;
+        if(id && name) deptMap[String(id)] = name;
+    });
+
+    const appMap = {};
+    apps.forEach(a => { if(a && a.app_id && appIds.has(String(a.app_id))) appMap[String(a.app_id)] = a; });
+    const studentMap = {};
+    students.forEach(s => { if(s && s.id) studentMap[String(s.id)] = s; });
+    const counsellingMap = {};
+    counselling.forEach(c => { if(c && c.app_id) counsellingMap[String(c.app_id)] = c; });
+
+    // build union of appIds and apps present
+    const allAppIds = new Set(Object.keys(appMap));
+    appIds.forEach(x=> allAppIds.add(x));
+
+    const pendingTbody = document.getElementById('pending-tbody');
+    const appliedTbody = document.getElementById('applied-tbody');
+    const completedTbody = document.getElementById('completed-tbody');
+    const pendingCount = document.getElementById('pendingCount');
+    const appliedCount = document.getElementById('appliedCount');
+    const completedCount = document.getElementById('completedCount');
+
+    pendingTbody.innerHTML = '';
+    appliedTbody.innerHTML = '';
+    completedTbody.innerHTML = '';
+    let pending = 0, applied = 0, completed = 0;
+
+    if (allAppIds.size === 0) {
+        pendingTbody.innerHTML = '<tr><td colspan="8" class="px-6 py-12 text-center text-slate-500"><span class="material-symbols-outlined text-4xl mb-2">folder_open</span><p class="text-sm font-medium">No students with uploaded documents</p></td></tr>';
+        pendingCount.textContent = '0 Student(s)';
+        appliedCount.textContent = '0 Student(s)';
+        completedCount.textContent = '0 Student(s)';
+        return;
+    }
+
+    Array.from(allAppIds).sort((a,b)=>Number(a)-Number(b)).forEach(appId => {
+        const app = appMap[appId] || { app_id: Number(appId), student_id: null };
+        const student = app.student_id ? studentMap[String(app.student_id)] : null;
+        const c = counsellingMap[appId] || null;
+
+        // Define states:
+        // isApplied: user completed step 1 (applied_gq/applied_mq or has counselling_application_number)
+        // isAllotted: final allotment exists (allotted_dept_id present)
+        const isApplied = !!(c && (c.applied_gq || c.applied_mq || c.counselling_application_number || c.gq_applied_at || c.mq_applied_at));
+        // Consider a record 'allotted' (completed) only when an allotted department exists
+        // AND there is a documented allotment identifier (order number/url or consortium number).
+        const hasAllotmentIdentifier = !!(c && (c.allotment_order_number || c.allotment_order_url || c.consortium_number));
+        const isAllotted = !!(c && (c.allotted_dept_id || c.allotted_dept) && hasAllotmentIdentifier);
+
+        const appliedLabel = isApplied ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">Yes</span>' : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-700">No</span>';
+
+        const applicationNumber = c && (c.counselling_application_number || c.gq_application_number || c.mq_application_number) ? (c.counselling_application_number || c.gq_application_number || c.mq_application_number) : '-';
+        const appliedDateRaw = c && (c.gq_applied_at || c.mq_applied_at) ? (c.gq_applied_at || c.mq_applied_at) : null;
+        const appliedDate = appliedDateRaw ? new Date(appliedDateRaw).toLocaleString() : '-';
+
+        const actionHref = isAllotted ? ('counselling_form.html?app_id='+appId) : (isApplied ? ('counselling_form.html?app_id='+appId) : ('counselling_apply.html?app_id='+appId));
+        const actionClass = isAllotted || isApplied ? 'bg-primary text-white' : 'bg-yellow-500 text-white';
+        const actionIcon = isAllotted || isApplied ? 'how_to_vote' : 'edit';
+        const actionLabel = isAllotted || isApplied ? 'Start Counselling' : 'Mark Applied';
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors';
+
+        // Build row HTML per target table so column count matches headers
+        let rowHtml = '';
+        if (isAllotted) {
+            // Completed table: App #, Student Name, Unique ID, Allotted Quota, Allotted Department, Details
+            const quotaLabel = c && (c.quota_type || (c.applied_gq ? 'GQ' : (c.applied_mq ? 'MQ' : null))) ? (c.quota_type || (c.applied_gq ? 'GQ' : (c.applied_mq ? 'MQ' : '-'))) : '-';
+            const deptName = (c && (c.allotted_dept || c.allotted_dept_name)) ? (c.allotted_dept || c.allotted_dept_name) : (c && c.allotted_dept_id ? (deptMap[String(c.allotted_dept_id)] || ('Dept #'+c.allotted_dept_id)) : '-');
+            const details = (c && (c.allotment_order_number || c.allotment_order_url || c.consortium_number)) ? (c.allotment_order_number || c.consortium_number || (c.allotment_order_url ? ('<a href="'+c.allotment_order_url+'" target="_blank">View</a>') : '-')) : '-';
+            rowHtml = `
+                <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">#${appId}</span></td>
+                <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">${(student && (student.student_name || student.full_name)) || ''}</td>
+                <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${(student && student.unique_id) || ''}</td>
+                <td class="px-6 py-4 text-sm text-[#111418] dark:text-white">${quotaLabel}</td>
+                <td class="px-6 py-4 text-sm text-[#111418] dark:text-white">${deptName}</td>
+                <td class="px-6 py-4 text-sm text-[#111418] dark:text-white">${details}</td>
+            `;
+            tr.innerHTML = rowHtml;
+            completedTbody.appendChild(tr); completed++;
+        } else if (isApplied) {
+            // Applied table: App #, Student Name, Unique ID, Applied, Application #, Applied Date, Action
+            rowHtml = `
+                <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">#${appId}</span></td>
+                <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">${(student && (student.student_name || student.full_name)) || ''}</td>
+                <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${(student && student.unique_id) || ''}</td>
+                <td class="px-6 py-4 text-sm">${appliedLabel}</td>
+                <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${applicationNumber}</td>
+                <td class="px-6 py-4 text-sm text-[#111418] dark:text-white">${appliedDate}</td>
+                <td class="px-6 py-4"><a href="${actionHref}" class="inline-flex items-center gap-2 ${actionClass} text-xs font-bold py-2 px-4 rounded-lg"> <span class="material-symbols-outlined text-sm">${actionIcon}</span> ${actionLabel}</a></td>
+            `;
+            tr.innerHTML = rowHtml;
+            appliedTbody.appendChild(tr); applied++;
+        } else {
+            // Pending table: include Documents column
+            rowHtml = `
+                <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">#${appId}</span></td>
+                <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">${(student && (student.student_name || student.full_name)) || ''}</td>
+                <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${(student && student.unique_id) || ''}</td>
+                <td class="px-6 py-4 text-sm text-[#111418] dark:text-white"><span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700"> <span class="material-symbols-outlined text-sm">description</span> ${docCounts[String(appId)] || 0} file(s)</span></td>
+                <td class="px-6 py-4 text-sm">${appliedLabel}</td>
+                <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${applicationNumber}</td>
+                <td class="px-6 py-4 text-sm text-[#111418] dark:text-white">${appliedDate}</td>
+                <td class="px-6 py-4"><a href="${actionHref}" class="inline-flex items-center gap-2 ${actionClass} text-xs font-bold py-2 px-4 rounded-lg"> <span class="material-symbols-outlined text-sm">${actionIcon}</span> ${actionLabel}</a></td>
+            `;
+            tr.innerHTML = rowHtml;
+            pendingTbody.appendChild(tr); pending++;
+        }
+    });
+
+    pendingCount.textContent = pending + ' Student(s)';
+    appliedCount.textContent = applied + ' Student(s)';
+    completedCount.textContent = completed + ' Student(s)';
+}
+
+document.addEventListener('DOMContentLoaded', () => { loadCounsellingList(); });
+</script>
 </body>
 </html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Staff - Add / Edit - PMC Engineering</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<style> body{ font-family: 'Lexend', sans-serif; } .material-symbols-outlined{ font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; } </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white min-h-screen flex flex-col">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] px-6 py-3 sticky top-0 z-50">
+<div class="flex items-center gap-4">
+<div class="text-blue-600">
+<svg fill="none" height="32" viewbox="0 0 48 48" width="32" xmlns="http://www.w3.org/2000/svg"><path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path></svg>
+</div>
+<h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Er. Perumal Manimekalai College of Engineering</h2>
+</div>
+</header>
+
+<main class="flex-1 overflow-y-auto">
+<div class="max-w-3xl mx-auto p-6">
+<div id="flashContainer"></div>
+<a href="staff_management.html" class="inline-flex items-center gap-2 text-blue-600 mb-4"><span class="material-symbols-outlined">arrow_back</span>Back to Staff</a>
+<h1 id="formTitle" class="text-2xl font-bold mb-4">Add Staff Member</h1>
+
+<div class="bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] p-6">
+<form id="staffForm" class="grid grid-cols-1 gap-4">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div>
+<label class="block text-sm font-semibold mb-1">Employee ID</label>
+<input id="employee_id" name="employee_id" class="w-full px-3 py-2 border rounded" required />
+</div>
+<div>
+<label class="block text-sm font-semibold mb-1">Email</label>
+<input id="email" name="email" type="email" class="w-full px-3 py-2 border rounded" required />
+</div>
+<div>
+<label class="block text-sm font-semibold mb-1">First Name</label>
+<input id="first_name" name="first_name" class="w-full px-3 py-2 border rounded" />
+</div>
+<div>
+<label class="block text-sm font-semibold mb-1">Last Name</label>
+<input id="last_name" name="last_name" class="w-full px-3 py-2 border rounded" />
+</div>
+<div>
+<label class="block text-sm font-semibold mb-1">Phone</label>
+<input id="phone" name="phone" class="w-full px-3 py-2 border rounded" />
+</div>
+<div>
+<label class="block text-sm font-semibold mb-1">Role</label>
+<select id="role_id" class="w-full px-3 py-2 border rounded">
+  <option value="1">Super Admin</option>
+  <option value="3">Admin</option>
+  <option value="2">Staff</option>
+</select>
+</div>
+</div>
+
+<div>
+<label class="block text-sm font-semibold mb-1">Password (set or leave blank)</label>
+<input id="password" name="password" type="password" class="w-full px-3 py-2 border rounded" />
+</div>
+
+<div>
+<label class="block text-sm font-semibold mb-1">Assigned Modules</label>
+<p class="text-xs text-slate-500 mb-2">Select modules this user should access. Stored as JSON.</p>
+<div id="modulesList" class="grid grid-cols-2 gap-2">
+<!-- checkboxes injected by JS -->
+</div>
+</div>
+
+<div class="flex items-center gap-4">
+<label class="inline-flex items-center gap-2"><input id="is_active" type="checkbox" checked /> Active</label>
+</div>
+
+<div class="pt-4 border-t flex gap-3">
+<button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded font-bold">Save</button>
+<a href="staff_management.html" class="px-4 py-2 rounded border">Cancel</a>
+</div>
+</form>
+</div>
+</div>
+</main>
+
+<script>
+const MODULES = [
+  'dashboard', 'enquiries', 'applications', 'branch_selection', 'counselling', 'payments', 'documents', 'reports', 'staff'
+];
+function $(id){ return document.getElementById(id); }
+function showFlash(msg, type='info'){ const fc=$('flashContainer'); if(!fc) return; fc.innerHTML = `<div class="bg-${type==='success'?'green':'red'}-50 border border-${type==='success'?'green':'red'}-200 text-${type==='success'?'green':'red'}-800 px-4 py-3 rounded-lg">${msg}</div>`; setTimeout(()=>{ if(fc) fc.innerHTML=''; },3000);} 
+async function fetchJson(url, opts){ const r = await fetch(url, opts); if(!r.ok) throw new Error('fetch failed '+url); return r.json(); }
+
+function renderModuleCheckboxes(selected){ const container = $('modulesList'); container.innerHTML=''; MODULES.forEach(m=>{ const id = 'mod_'+m; const checked = selected && selected.indexOf(m)!==-1 ? 'checked' : ''; const html = `<label class="inline-flex items-center gap-2"><input type="checkbox" id="${id}" value="${m}" ${checked} /> <span class="text-sm">${m.replace(/_/g,' ')}</span></label>`; const div = document.createElement('div'); div.innerHTML = html; container.appendChild(div); }); }
+
+async function loadForm(){ const params = new URLSearchParams(location.search); const userId = params.get('user_id'); if(userId){ $('formTitle').textContent = 'Edit Staff Member'; try{ const users = await fetchJson('/api/users'); const user = users.find(u=>String(u.user_id)===String(userId)); if(!user){ showFlash('User not found', 'error'); return; }
+      $('employee_id').value = user.employee_id||'';
+      $('email').value = user.email||'';
+      $('first_name').value = user.first_name||'';
+      $('last_name').value = user.last_name||'';
+      $('phone').value = user.phone||'';
+      $('role_id').value = user.role_id ? String(user.role_id) : '2';
+      $('is_active').checked = user.is_active === undefined ? true : Boolean(user.is_active);
+      let mods = [];
+      try{ mods = Array.isArray(user.assigned_modules) ? user.assigned_modules : (user.assigned_modules && typeof user.assigned_modules === 'string' ? JSON.parse(user.assigned_modules||'[]') : []); }catch(e){ mods = []; }
+      renderModuleCheckboxes(mods);
+      // form submit will hit PUT
+      $('staffForm').addEventListener('submit', async function(ev){ ev.preventDefault(); const payload = collectForm(); try{ const res = await fetchJson('/api/users/'+encodeURIComponent(userId), { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) }); if(res && res.ok){ showFlash('Updated', 'success'); setTimeout(()=> location.href='staff_management.html', 600); }else{ showFlash(res && res.error?res.error:'Update failed'); } }catch(e){ console.error(e); showFlash('Update failed'); } });
+    }catch(e){ console.error(e); showFlash('Failed to load user'); }
+  }else{
+    renderModuleCheckboxes([]);
+    // create handler
+    $('staffForm').addEventListener('submit', async function(ev){ ev.preventDefault(); const payload = collectForm(); try{ const res = await fetchJson('/api/users', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) }); if(res && res.ok){ showFlash('Created', 'success'); setTimeout(()=> location.href='staff_management.html', 600); }else{ showFlash(res && res.error?res.error:'Create failed'); } }catch(e){ console.error(e); showFlash('Create failed'); } });
+  }
+}
+
+function collectForm(){ const assigned = []; MODULES.forEach(m=>{ const el = document.getElementById('mod_'+m); if(el && el.checked) assigned.push(m); }); return {
+  employee_id: $('employee_id').value.trim(),
+  email: $('email').value.trim(),
+  password: $('password').value || undefined,
+  first_name: $('first_name').value.trim(),
+  last_name: $('last_name').value.trim(),
+  phone: $('phone').value.trim() || null,
+  role_id: Number($('role_id').value),
+  is_active: $('is_active').checked,
+  assigned_modules: assigned
+}; }
+
+window.addEventListener('DOMContentLoaded', loadForm);
+</script>
+</body>
+</html>

@@ -37,6 +37,7 @@ else:
 
 # Register blueprints
 from auth.routes import auth_bp
+# Admin blueprint to serve admin templates (pages under templates/admin)
 from admin.routes import admin_bp
 # Test routes for quick Supabase checks
 from test.routes import test_bp
@@ -44,6 +45,7 @@ from test.routes import test_bp
 # from student.routes import student_bp
 
 app.register_blueprint(auth_bp)
+# register admin blueprint
 app.register_blueprint(admin_bp)
 # register test blueprint
 app.register_blueprint(test_bp)
@@ -57,8 +59,8 @@ app.register_blueprint(test_bp)
 def index():
     """Home page - redirect to login if not authenticated"""
     if 'user_id' in session:
-        # Staff-only system - all users go to admin dashboard
-        return redirect(url_for('admin.dashboard'))
+        # Staff-only system - render the admin dashboard template (frontend will fetch data)
+        return render_template('admin/admin_dashboard.html')
     return redirect(url_for('auth.login'))
 
 @app.route('/health')

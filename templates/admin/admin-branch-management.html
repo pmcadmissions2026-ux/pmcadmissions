@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Admin Branch Management - PMC Engineering</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = { darkMode: "class", theme: { extend: { colors: { "primary": "#137fec", "background-light": "#f6f7f8", "background-dark": "#101922" }, fontFamily: { "display": ["Lexend", "sans-serif"] }, }, }, }
+    </script>
+    <style>
+        body { font-family: 'Lexend', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white min-h-screen flex flex-col">
+<!-- Header -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] px-6 py-3 sticky top-0 z-50">
+    <div class="flex items-center gap-4">
+        <div class="text-primary">
+            <svg fill="none" height="32" viewbox="0 0 48 48" width="32" xmlns="http://www.w3.org/2000/svg"><path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path></svg>
+        </div>
+        <h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Er. Perumal Manimekalai College of Engineering</h2>
+    </div>
+        <div class="flex items-center gap-4">
+        <a href="/auth/logout" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium">Logout</a>
+    </div>
+</header>
+
+<div class="flex flex-1">
+    <aside class="w-56 border-r border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#111827] hidden md:flex flex-col">
+        <nav class="flex-1 overflow-y-auto px-2 py-6 flex flex-col gap-2">
+            <a href="/admin" class="flex items-center gap-3 px-4 py-2 text-white bg-primary rounded-lg transition-colors active-nav">
+                <span class="material-symbols-outlined text-xl">shield_person</span>
+                <span class="text-sm font-medium">Admin Portal</span>
+            </a>
+            <a href="/admin/enquiries" class="flex items-center gap-3 px-4 py-2 text-[#111418] dark:text-white hover:bg-[#f0f2f4] rounded">
+                <span class="material-symbols-outlined text-xl">mail</span>
+                <span class="text-sm font-medium">Enquiries</span>
+            </a>
+            <a href="/admin/admin-branch-management" class="flex items-center gap-3 px-4 py-2 bg-primary text-white rounded-lg transition-colors">
+                <span class="material-symbols-outlined text-xl">account_tree</span>
+                <span class="text-sm font-medium">Branch Assignment</span>
+            </a>
+        </nav>
+        <div class="border-t border-[#e5e7eb] dark:border-[#2d3748] px-4 py-4">
+            <p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">System Status</p>
+            <div class="flex items-center gap-2 px-3 py-2"><div class="size-2 rounded-full bg-green-500"></div><span class="text-xs text-[#617589]">Admission Server Live</span></div>
+        </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto">
+    <div class="max-w-[1200px] mx-auto p-6 flex flex-col gap-6">
+
+    <!-- PageHeading -->
+    <div id="branch-management" class="flex flex-wrap justify-between items-end gap-3">
+    <div class="flex min-w-72 flex-col gap-1">
+    <p class="text-[#111418] dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">Admin Branch Management</p>
+    <p class="text-[#617589] dark:text-[#a0aec0] text-base font-normal leading-normal">Manage and assign departments to enquired students.</p>
+    </div>
+    </div>
+
+    <!-- Server-render-debug and core branch-management content -->
+    <div id="server-render-debug" class="mt-3 p-3 rounded border border-yellow-200 bg-yellow-50 text-sm text-yellow-900">
+        <strong>Client data:</strong>
+        <div id="client-data-summary">Loading...</div>
+        <pre id="client-data-json" class="mt-2 text-xs overflow-auto" style="max-height:160px;">{}</pre>
+    </div>
+
+    <!-- Include admin client script (still JS only) and inline data loader -->
+    <script id="admin-api-script" src="/static/js/admin_api.js"></script>
+    <script>
+    (function(){
+        const SUPABASE_URL = 'https://izxxhnrkcsnnabdhvixh.supabase.co';
+        const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6eHhobnJrY3NubmFiZGh2aXhoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1NzkzMDYsImV4cCI6MjA4NTE1NTMwNn0.mVPXk2XF9DzGsZo_SJuTHcXPArdWywxLWJZw3DD9gkE';
+
+        function el(sel, ctx=document){ return ctx.querySelector(sel); }
+        function log(...args){ try{ console.log.apply(console,args); }catch(e){} }
+
+        async function getJson(path){
+            const headers = { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` };
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { headers });
+            if(!res.ok) return [];
+            return res.json();
+        }
+
+        async function loadData(){
+            const data = { pending: [], assigned: [], accepted: [] };
+            try{
+                // Prefer server-populated data (admin_api) if available to avoid duplicate REST calls
+                let admissions = null, students = null, departments = null;
+                if(window.__SERVER_DATA && (window.__SERVER_DATA.admissions || window.__SERVER_DATA.students || window.__SERVER_DATA.departments)){
+                    admissions = window.__SERVER_DATA.admissions || [];
+                    students = window.__SERVER_DATA.students || [];
+                    departments = window.__SERVER_DATA.departments || [];
+                } else {
+                    [admissions, students, departments] = await Promise.all([
+                        getJson('admissions?select=*'),
+                        getJson('students?select=*'),
+                        getJson('departments?select=*')
+                    ]);
+                }
+
+                const deptMap = new Map();
+                if(Array.isArray(departments)) departments.forEach(d => deptMap.set(d.id, d.dept_code || d.name || d.id));
+
+                let adminIdent = null;
+                try{
+                    if(window.AdminAPI && typeof window.AdminAPI.getCurrentUser === 'function'){
+                        const cu = await window.AdminAPI.getCurrentUser().catch(()=>null);
+                        adminIdent = cu && (cu.email || cu.username || cu.id);
+                    } else if(window.__SERVER_DATA && window.__SERVER_DATA.current_user){
+                        const cu = window.__SERVER_DATA.current_user; adminIdent = cu.email || cu.username || cu.id;
+                    }
+                }catch(e){ log('admin detect failed', e); }
+
+                let scopedAdmissions = Array.isArray(admissions) ? admissions : [];
+                if(adminIdent){ const idLower = String(adminIdent).toLowerCase(); scopedAdmissions = scopedAdmissions.filter(a => a.processed_by && String(a.processed_by).toLowerCase().includes(idLower)); }
+
+                const findStudent = (id) => (Array.isArray(students) ? students.find(s => String(s.id) === String(id)) : null) || {};
+
+                data.accepted = scopedAdmissions.filter(a => a.allotted_dept_id).map(a => {
+                    const stud = findStudent(a.student_id) || {};
+                    return {
+                        name: stud.full_name || '',
+                        unique_id: stud.unique_id || '',
+                        accepted_at: a.processed_at || a.accepted_at || a.created_at || null,
+                        cutoff: stud.plus2_percentage ?? stud.tenth_percentage ?? null,
+                        student_id: stud.id || a.student_id,
+                        allotted_dept_code: deptMap.get(a.allotted_dept_id) || a.allotted_dept_id,
+                        has_admission: true
+                    };
+                });
+
+                data.assigned = scopedAdmissions.filter(a => a.status && a.status !== 'branch_selection_pending').map(a => {
+                    const stud = findStudent(a.student_id) || {};
+                    const optionalArr = Array.isArray(a.optional_dept_ids) ? a.optional_dept_ids.map(id => ({ dept_code: deptMap.get(id) || id })) : [];
+                    return {
+                        app_id: a.id,
+                        name: stud.full_name || '',
+                        unique_id: stud.unique_id || '',
+                        preferred_dept_code: deptMap.get(a.preferred_dept_id) || a.preferred_dept_id,
+                        optional_depts: optionalArr,
+                        allotted_dept_code: a.allotted_dept_id ? (deptMap.get(a.allotted_dept_id) || a.allotted_dept_id) : '-',
+                        cutoff: stud.plus2_percentage ?? stud.tenth_percentage ?? null
+                    };
+                });
+
+                const admittedStudentIds = new Set((Array.isArray(admissions) ? admissions.map(a=>String(a.student_id)) : []));
+                const pendingFromAdmissions = (Array.isArray(admissions) ? admissions.filter(a => !a.allotted_dept_id && (!a.status || a.status === 'branch_selection_pending')).map(a => {
+                    const stud = findStudent(a.student_id) || {};
+                    return { name: stud.full_name||'', unique_id: stud.unique_id||'', cutoff: stud.plus2_percentage ?? stud.tenth_percentage ?? null, community: stud.community||'General', student_id: stud.id || a.student_id };
+                }) : [] ) ;
+
+                const pendingStudents = (Array.isArray(students) ? students.filter(s => !admittedStudentIds.has(String(s.id))).map(s => ({ name: s.full_name||'', unique_id: s.unique_id||'', cutoff: s.plus2_percentage ?? s.tenth_percentage ?? null, community: s.community||'General', student_id: s.id })) : []);
+
+                const pendingMap = new Map();
+                pendingStudents.concat(pendingFromAdmissions).forEach(p => { if(p && p.student_id) pendingMap.set(String(p.student_id), p); });
+                data.pending = Array.from(pendingMap.values());
+
+            }catch(err){ log('loadData error', err); }
+            return data;
+        }
+
+        function renderSummary(data){ const sum = el('#client-data-summary'); if(sum) sum.textContent = `Pending: ${data.pending.length}, Assigned: ${data.assigned.length}, Accepted: ${data.accepted.length}`; const pre = el('#client-data-json'); if(pre) pre.textContent = JSON.stringify(data, null, 2); }
+
+        function ensureSection(labelText, sectionId, tableColsHtml){
+            const main = document.querySelector('main');
+            if(!main) return null;
+            let section = document.getElementById(sectionId);
+            if(section) return section.querySelector('table');
+            const wrapper = document.createElement('div');
+            wrapper.id = sectionId;
+            wrapper.className = 'mb-6 rounded-xl shadow-sm border border-[#f0f2f4] dark:border-gray-800 overflow-hidden bg-white dark:bg-[#1a202c] mt-6';
+            wrapper.innerHTML = `\n                <div class="px-6 py-4 border-b border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#0f1419]"><div class="flex items-center justify-between"><h2 class="text-[#111418] dark:text-white text-xl font-bold leading-tight flex items-center gap-3"><span class="material-symbols-outlined text-primary text-2xl">verified_user</span>${labelText}</h2><span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">&nbsp;</span></div></div>\n                <div class="overflow-x-auto"><table class="w-full">` + tableColsHtml + `</table></div>`;
+            const pendingContainer = main.querySelector('table')?.closest('div');
+            if(pendingContainer && pendingContainer.parentNode === main){ pendingContainer.parentNode.insertBefore(wrapper, pendingContainer.nextSibling); }
+            else { main.appendChild(wrapper); }
+            return wrapper.querySelector('table');
+        }
+
+        function renderTables(data){
+            const pendingTable = document.querySelectorAll('main table')[0];
+            if(pendingTable){ const tbody = pendingTable.querySelector('tbody'); tbody.innerHTML = ''; if(!data.pending || data.pending.length===0){ const tr = document.createElement('tr'); tr.innerHTML = '<td colspan="5" class="px-6 py-12 text-center text-slate-500"><span class="material-symbols-outlined text-4xl mb-2">check_circle</span><p class="text-sm font-medium">All students have been assigned branches</p><p class="text-xs text-slate-400 mt-1">No pending branch selections at this time</p></td>'; tbody.appendChild(tr); } else { data.pending.forEach(s=>{ const tr = document.createElement('tr'); tr.className='hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors group'; tr.innerHTML = `<td class="px-6 py-4"><div class="text-sm font-semibold text-[#111418] dark:text-white">${s.name}</div><div class="text-xs text-[#617589]">Enquired</div></td><td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${s.unique_id||'N/A'}</td><td class="px-6 py-4">${s.cutoff?('<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold">'+Number(s.cutoff).toFixed(2)+'</span>'):'<span class="text-xs text-slate-400">Pending</span>'}</td><td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">${s.community||'General'}</td><td class="px-6 py-4 text-right"><a href="#" data-action="assign_branch" data-student-id="${s.student_id||''}" class="inline-flex items-center gap-2 bg-primary text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-primary/90 shadow-sm transition-all active:scale-95"><span class="material-symbols-outlined text-sm">assignment</span>Assign Branch</a></td>`; tbody.appendChild(tr); }); } }
+
+            const acceptedCols = '<thead class="bg-gray-50 dark:bg-gray-800"><tr class="border-b border-[#e5e7eb] dark:border-[#2d3748]"><th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Name</th><th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Unique ID</th><th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Accepted At</th><th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Cut-off</th><th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Actions</th></tr></thead><tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">';
+            let acceptedTable = Array.from(document.querySelectorAll('main table')).find(t => t.previousElementSibling && t.previousElementSibling.textContent && t.previousElementSibling.textContent.includes('Accepted Students'));
+            if(!acceptedTable) acceptedTable = ensureSection('Accepted Students', 'accepted-students-section', acceptedCols + '</tbody>');
+            if(acceptedTable){ const tbody = acceptedTable.querySelector('tbody'); tbody.innerHTML = ''; if(!data.accepted || data.accepted.length===0){ tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-6 text-center text-slate-500">No accepted students</td></tr>'; } else { data.accepted.forEach(s=>{ const tr = document.createElement('tr'); tr.className='hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors'; tr.innerHTML = `<td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">${s.name}</td><td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${s.unique_id||'N/A'}</td><td class="px-6 py-4 text-sm text-[#617589]">${s.accepted_at||'-'}</td><td class="px-6 py-4 text-sm text-[#111418] dark:text-white">${s.cutoff?Number(s.cutoff).toFixed(2):'-'}</td><td class="px-6 py-4 text-sm text-right">${s.has_admission?'<span class="inline-flex items-center gap-2 bg-green-600 text-white text-xs font-bold py-2 px-3 rounded-lg animate-pulse opacity-95"><span class="material-symbols-outlined text-sm">check_circle</span>Branch Assigned</span>':'<a href="#" data-action="assign_branch" data-student-id="'+(s.student_id||'')+'" class="inline-flex items-center gap-2 bg-primary text-white text-xs font-bold py-2 px-3 rounded-lg hover:bg-primary/90">Department Allocation</a>'}</td>`; tbody.appendChild(tr); }); } }
+
+            const assignedCols = '<thead class="bg-gray-50 dark:bg-gray-800"><tr class="border-b border-[#e5e7eb] dark:border-[#2d3748]"><th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">App #</th><th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Name</th><th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Unique ID</th><th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Preferred Dept</th><th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Optional Dept</th><th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Allotted Dept</th><th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Cutoff</th></tr></thead><tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">';
+            let assignedTable = Array.from(document.querySelectorAll('main table')).find(t => t.previousElementSibling && t.previousElementSibling.textContent && t.previousElementSibling.textContent.includes('Assigned Branches'));
+            if(!assignedTable) assignedTable = ensureSection('Assigned Branches', 'assigned-branches-section', assignedCols + '</tbody>');
+            if(assignedTable){ const tbody = assignedTable.querySelector('tbody'); tbody.innerHTML = ''; if(!data.assigned || data.assigned.length===0){ tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-slate-500"><span class="material-symbols-outlined text-4xl mb-2">assignment_late</span><p class="text-sm font-medium">No branches assigned yet</p><p class="text-xs text-slate-400 mt-1">Start assigning branches to students from the pending list above</p></td></tr>'; } else { data.assigned.forEach(st=>{ const tr = document.createElement('tr'); tr.className='hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors'; tr.innerHTML = `<td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono font-bold">${st.app_id?('#'+st.app_id):'<span class="text-xs text-slate-400">N/A</span>'}</td><td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">${st.name}</td><td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${st.unique_id||'N/A'}</td><td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">${st.preferred_dept_code||''}</span></td><td class="px-6 py-4">${(st.optional_depts||[]).map(d=>'<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">'+(d.dept_code||d||'')+'</span>').join('')||'<span class="text-xs text-[#617589] dark:text-gray-500">-</span>'}</td><td class="px-6 py-4">${st.allotted_dept_code && st.allotted_dept_code!=='-'?('<div class="flex items-center gap-2"><span class="material-symbols-outlined text-green-600 text-sm">check</span><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">'+st.allotted_dept_code+'</span></div>'):'<span class="text-xs text-[#617589] dark:text-gray-500">Pending</span>'}</td><td class="px-6 py-4">${st.cutoff?Number(st.cutoff).toFixed(2):'-'}</td>`; tbody.appendChild(tr); }); } }
+
+        }
+
+        document.addEventListener('click', function(ev){ const a = ev.target.closest && ev.target.closest('[data-action="assign_branch"]'); if(!a) return; ev.preventDefault(); const sid = a.dataset.studentId; if(!sid) return alert('No student id'); window.location.href = '/admin/assign-branch/' + sid; });
+
+        (async function(){ const data = await loadData(); renderSummary(data); renderTables(data); })();
+
+        // If admin_api populates data later, re-render when it fires the event
+        window.addEventListener('admin_api:populated', async function(){
+            try{ const data = await loadData(); renderSummary(data); renderTables(data); }catch(e){ log('re-render error', e); }
+        });
+    })();
+    </script>
+    </div>
+
+    <!-- Client-only tables: pending table is rendered by client JS; Accepted/Assigned sections are created dynamically -->
+    <div class="flex flex-col bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden mt-4">
+        <div class="flex items-center justify-between px-6 py-5 border-b border-[#e5e7eb] dark:border-[#2d3748]">
+            <h2 class="text-[#111418] dark:text-white text-xl font-bold leading-tight">Pending Branch Selection</h2>
+            <button class="text-primary text-sm font-bold flex items-center gap-1 hover:underline"><span class="material-symbols-outlined text-sm">download</span> Export List</button>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                <tr class="bg-[#f8fafc] dark:bg-[#2d3748] border-b border-[#e5e7eb] dark:border-[#2d3748]">
+                    <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Student Name</th>
+                    <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Unique ID</th>
+                    <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Cut-off</th>
+                    <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Community</th>
+                    <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider text-right">Actions</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">
+                <!-- populated by client JS -->
+                </tbody>
+            </table>
+        </div>
+        <div class="px-6 py-4 flex items-center justify-between border-t border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c]"><p class="text-sm text-[#617589]">Showing <span id="pending-count">0</span> pending students</p><div class="flex gap-2"><button class="px-3 py-1 text-sm border border-[#e5e7eb] dark:border-[#2d3748] rounded hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors disabled:opacity-50">Previous</button><button class="px-3 py-1 text-sm border border-primary bg-primary text-white rounded">1</button><button class="px-3 py-1 text-sm border border-[#e5e7eb] dark:border-[#2d3748] rounded hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors">Next</button></div></div>
+    </div>
+
+    <!-- Guidance Note -->
+    <div class="bg-primary/5 border border-primary/20 rounded-xl p-4 flex gap-4 mt-8"><div class="text-primary"><span class="material-symbols-outlined">info</span></div><div><p class="text-sm font-semibold text-[#111418] dark:text-white">Administration Tip</p><p class="text-xs text-[#617589] mt-1">Students with cut-off marks above 190 are highlighted for immediate counseling. Priority allocation is recommended for scholarship eligible candidates.</p></div></div>
+
+    </div>
+    </main>
+</div>
+
+<!-- Client-side injector: populate tables from server JSON if placeholders present -->
+<!-- Client-side injector intentionally removed to avoid double-loading admin_api.js -->
+
+</body>
+</html>

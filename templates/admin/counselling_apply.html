@@ -9,7 +9,6 @@
   <style>
     body { font-family: 'Lexend', sans-serif; }
     .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-    .active-nav { background-color: #137fec; color: white !important; }
   </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white min-h-screen flex flex-col">
@@ -23,35 +22,22 @@
     <h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Er. Perumal Manimekalai College of Engineering</h2>
   </div>
   <div class="flex items-center gap-4">
-    <a href="{{ url_for('auth.logout') }}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">Logout</a>
+    <a href="#" onclick="location.href='counselling_list.html'" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">Logout</a>
   </div>
 </header>
 
 <div class="flex flex-1">
   <aside class="w-56 border-r border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#111827] hidden md:flex flex-col">
     <nav class="flex-1 overflow-y-auto px-2 py-6 flex flex-col gap-2">
-      <a href="{{ url_for('admin.counselling_list') }}" class="flex items-center gap-3 px-4 py-2 text-white bg-primary rounded-lg transition-colors active-nav">
+      <a href="#" data-route="counselling_list" class="flex items-center gap-3 px-4 py-2 text-white bg-primary rounded-lg transition-colors active-nav">
         <span class="material-symbols-outlined text-xl">how_to_vote</span>
         <span class="text-sm font-medium">Counselling</span>
       </a>
     </nav>
-    <div class="border-t border-[#e5e7eb] dark:border-[#2d3748] px-4 py-4">
-      <p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">{{ user.name }}</p>
-      <p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">{{ user.role }}</p>
-    </div>
   </aside>
 
   <main class="flex-1 overflow-y-auto">
     <div class="max-w-[900px] mx-auto p-6 flex flex-col gap-6">
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          {% for category, message in messages %}
-            <div class="bg-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-50 border border-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-200 text-{% if category == 'success' %}green{% elif category == 'error' %}red{% else %}blue{% endif %}-800 px-4 py-3 rounded-lg">
-              {{ message }}
-            </div>
-          {% endfor %}
-        {% endif %}
-      {% endwith %}
 
       <div class="flex items-center justify-between">
         <div>
@@ -65,7 +51,7 @@
 
       <div class="bg-gradient-to-tr from-white to-sky-50 dark:from-[#071029] dark:to-[#071019] rounded-xl border border-transparent p-1 shadow-2xl">
         <div class="bg-white dark:bg-[#071019] rounded-xl p-6">
-          <form method="post" action="{{ url_for('admin.counselling_apply', app_id=app.get('app_id') or app.get('id')) }}">
+          <form id="applyForm" onsubmit="return false;">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
               <!-- Left: Student / step info -->
               <div class="md:col-span-1 flex flex-col gap-4">
@@ -74,8 +60,10 @@
                     <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">AP</div>
                     <div>
                       <div class="text-sm text-slate-600 dark:text-slate-300">Application</div>
-                      <div class="text-lg font-semibold text-[#0f172a] dark:text-white">#{{ app.get('app_id') or app.get('id') }}</div>
-                      <div class="text-xs text-slate-500 dark:text-slate-400">Registered: {{ app.get('created_at') or 'N/A' }}</div>
+                      <div id="appIdDisplay" class="text-lg font-semibold text-[#0f172a] dark:text-white">#</div>
+                      <div id="appCreatedAt" class="text-xs text-slate-500 dark:text-slate-400">Registered: N/A</div>
+                      <div id="studentNameDisplay" class="text-sm font-medium mt-2 text-[#111827] dark:text-slate-200">Name: -</div>
+                      <div id="studentUniqueDisplay" class="text-xs text-slate-500 mt-1">Unique ID: -</div>
                     </div>
                   </div>
                 </div>
@@ -90,7 +78,7 @@
               <div class="md:col-span-2">
                 <div class="flex items-center gap-6 mb-4">
                   <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-transparent hover:border-primary/20 transition">
-                    <input type="checkbox" name="applied_gq" id="applied_gq" class="h-5 w-5 text-green-600 ring-1 ring-green-200 rounded-sm" {% if app.get('applied_gq') %}checked{% endif %} />
+                    <input type="checkbox" name="applied_gq" id="applied_gq" class="h-5 w-5 text-green-600 ring-1 ring-green-200 rounded-sm" />
                     <div class="ml-2">
                       <div class="font-semibold text-green-700">General Quota (GQ)</div>
                       <div class="text-xs text-slate-500">Select if applied for General Quota counselling</div>
@@ -98,7 +86,7 @@
                   </label>
 
                   <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-transparent hover:border-indigo-200 transition">
-                    <input type="checkbox" name="applied_mq" id="applied_mq" class="h-5 w-5 text-indigo-600 ring-1 ring-indigo-200 rounded-sm" {% if app.get('applied_mq') %}checked{% endif %} />
+                    <input type="checkbox" name="applied_mq" id="applied_mq" class="h-5 w-5 text-indigo-600 ring-1 ring-indigo-200 rounded-sm" />
                     <div class="ml-2">
                       <div class="font-semibold text-indigo-700">Management Quota (MQ)</div>
                       <div class="text-xs text-slate-500">Select if applied for Management Quota counselling</div>
@@ -109,21 +97,21 @@
                 <div id="gq_section" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3 opacity-0 max-h-0 overflow-hidden transform transition-all duration-300">
                   <div class="col-span-1">
                     <label class="block text-sm font-medium mb-2 text-green-800">GQ Application Number</label>
-                    <input name="gq_application_number" type="text" value="{{ app.get('gq_application_number') or app.get('counselling_application_number') or '' }}" class="w-full border rounded px-3 py-2 bg-white dark:bg-[#071019] focus:ring-2 focus:ring-green-200" placeholder="Enter GQ application number" />
+                    <input id="gq_application_number" name="gq_application_number" type="text" class="w-full border rounded px-3 py-2 bg-white dark:bg-[#071019] focus:ring-2 focus:ring-green-200" placeholder="Enter GQ application number" />
                   </div>
                   <div>
                     <label class="block text-sm font-medium mb-2 text-green-800">GQ Applied Date</label>
-                    <input name="gq_applied_at" type="datetime-local" value="{% if app.get('gq_applied_at') %}{{ app.get('gq_applied_at') }}{% endif %}" class="w-full border rounded px-3 py-2 bg-white dark:bg-[#071019] focus:ring-2 focus:ring-green-200" />
+                    <input id="gq_applied_at" name="gq_applied_at" type="datetime-local" class="w-full border rounded px-3 py-2 bg-white dark:bg-[#071019] focus:ring-2 focus:ring-green-200" />
                   </div>
                   <div>
                     <label class="block text-sm font-medium mb-2 text-green-800">GQ Round</label>
                     <select name="gq_round" id="gq_round" class="w-full border rounded px-3 py-2 bg-white dark:bg-[#071019] focus:ring-2 focus:ring-green-200">
                       <option value="">Select round</option>
-                      <option value="1" {% if app.get('gq_round') == '1' %}selected{% endif %}>1</option>
-                      <option value="2" {% if app.get('gq_round') == '2' %}selected{% endif %}>2</option>
-                      <option value="3" {% if app.get('gq_round') == '3' %}selected{% endif %}>3</option>
-                      <option value="4" {% if app.get('gq_round') == '4' %}selected{% endif %}>4</option>
-                      <option value="supplementary" {% if app.get('gq_round') == 'supplementary' %}selected{% endif %}>Supplementary</option>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                      <option value="supplementary">Supplementary</option>
                     </select>
                   </div>
                 </div>
@@ -131,17 +119,30 @@
                 <div id="mq_section" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 opacity-0 max-h-0 overflow-hidden transform transition-all duration-300">
                   <div>
                     <label class="block text-sm font-medium mb-2 text-indigo-800">MQ Consortium Number</label>
-                    <input name="mq_consortium_number" type="text" value="{{ app.get('mq_consortium_number') or '' }}" class="w-full border rounded px-3 py-2 bg-white dark:bg-[#071019] focus:ring-2 focus:ring-indigo-200" placeholder="Enter MQ consortium number" />
+                    <input id="mq_consortium_number" name="mq_consortium_number" type="text" class="w-full border rounded px-3 py-2 bg-white dark:bg-[#071019] focus:ring-2 focus:ring-indigo-200" placeholder="Enter MQ consortium number" />
                   </div>
                   <div>
                     <label class="block text-sm font-medium mb-2 text-indigo-800">MQ Applied Date</label>
-                    <input name="mq_applied_at" type="datetime-local" value="{% if app.get('mq_applied_at') %}{{ app.get('mq_applied_at') }}{% endif %}" class="w-full border rounded px-3 py-2 bg-white dark:bg-[#071019] focus:ring-2 focus:ring-indigo-200" />
+                    <input id="mq_applied_at" name="mq_applied_at" type="datetime-local" class="w-full border rounded px-3 py-2 bg-white dark:bg-[#071019] focus:ring-2 focus:ring-indigo-200" />
                   </div>
                 </div>
 
                 <div class="flex justify-end gap-3 mt-6">
-                  <a href="{{ url_for('admin.counselling_list') }}" class="px-4 py-2 rounded-md border border-transparent bg-gray-100 hover:bg-gray-200 text-sm">Cancel</a>
-                  <button type="submit" class="px-4 py-2 rounded-md bg-gradient-to-r from-green-600 to-primary text-white font-semibold shadow-lg">Save</button>
+                  <button id="saveBtn" type="button" class="px-4 py-2 rounded-md bg-gradient-to-r from-green-600 to-primary text-white font-semibold shadow-lg">Save</button>
+                  <a href="counselling_list.html" class="px-4 py-2 rounded-md border border-transparent bg-gray-100 hover:bg-gray-200 text-sm">Cancel</a>
+                </div>
+                <div id="allotmentPreview" class="mt-6 p-4 rounded-lg border border-dashed border-slate-200 bg-slate-50 dark:bg-[#071019] hidden">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <div class="text-sm font-semibold">Allotment Preview</div>
+                      <div id="apv_dept" class="text-sm text-slate-600 mt-1">Dept: -</div>
+                      <div id="apv_order" class="text-sm text-slate-600 mt-1">Order: -</div>
+                      <div id="apv_cons" class="text-sm text-slate-600 mt-1">Consortium: -</div>
+                    </div>
+                    <div>
+                      <a id="apv_edit" href="#" class="inline-flex items-center gap-2 bg-primary text-white px-3 py-2 rounded-lg">Edit Allotment</a>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -151,44 +152,122 @@
     </div>
   </main>
 </div>
-</body>
+
 <script>
-  (function(){
-    function toggleSections() {
-      const gq = document.getElementById('applied_gq');
-      const mq = document.getElementById('applied_mq');
-      const gqSection = document.getElementById('gq_section');
-      const mqSection = document.getElementById('mq_section');
+(() => {
+  function toggleSections() {
+    const gq = document.getElementById('applied_gq');
+    const mq = document.getElementById('applied_mq');
+    const gqSection = document.getElementById('gq_section');
+    const mqSection = document.getElementById('mq_section');
 
-      if (gq && gq.checked) {
-        gqSection.style.opacity = '1';
-        gqSection.style.maxHeight = '200px';
-        gqSection.style.paddingTop = '0.5rem';
-      } else {
-        gqSection.style.opacity = '0';
-        gqSection.style.maxHeight = '0';
-        gqSection.style.paddingTop = '0';
-      }
+    if (gq && gq.checked) { gqSection.style.opacity = '1'; gqSection.style.maxHeight = '200px'; gqSection.style.paddingTop = '0.5rem'; }
+    else { gqSection.style.opacity = '0'; gqSection.style.maxHeight = '0'; gqSection.style.paddingTop = '0'; }
 
-      if (mq && mq.checked) {
-        mqSection.style.opacity = '1';
-        mqSection.style.maxHeight = '200px';
-        mqSection.style.paddingTop = '0.5rem';
-      } else {
-        mqSection.style.opacity = '0';
-        mqSection.style.maxHeight = '0';
-        mqSection.style.paddingTop = '0';
-      }
+    if (mq && mq.checked) { mqSection.style.opacity = '1'; mqSection.style.maxHeight = '200px'; mqSection.style.paddingTop = '0.5rem'; }
+    else { mqSection.style.opacity = '0'; mqSection.style.maxHeight = '0'; mqSection.style.paddingTop = '0'; }
+  }
+
+  function qs(name) { return new URLSearchParams(location.search).get(name); }
+
+  async function fetchAppAndStudent(appId) {
+    if (!appId) return {};
+    const appsRes = await fetch('/api/_admission_applications').then(r=>r.json()).catch(()=>({ok:false, items:[]}));
+    const apps = Array.isArray(appsRes) ? appsRes : (appsRes && appsRes.ok && Array.isArray(appsRes.items) ? appsRes.items : []);
+    const app = apps.find(a=>String(a.app_id)===String(appId) || String(a.id)===String(appId));
+    let student = null;
+    if (app && app.student_id) {
+      const studentsRes = await fetch('/api/students').then(r=>r.json()).catch(()=>({ok:false, items:[]}));
+      const students = Array.isArray(studentsRes) ? studentsRes : (studentsRes && studentsRes.ok && Array.isArray(studentsRes.items) ? studentsRes.items : []);
+      student = students.find(s=>String(s.id)===String(app.student_id));
+    }
+    return { app, student };
+  }
+
+  async function load() {
+    const appId = qs('app_id');
+    const { app, student } = await fetchAppAndStudent(appId);
+    document.getElementById('appIdDisplay').textContent = app ? ('#'+(app.app_id||app.id)) : ('#'+(appId||''));
+    document.getElementById('appCreatedAt').textContent = app && app.created_at ? ('Registered: '+new Date(app.created_at).toLocaleString()) : 'Registered: N/A';
+
+    // fill student info (if available: update the heading area)
+    if (student) {
+      // populate student name and unique id in the left info panel
+      const sn = document.getElementById('studentNameDisplay');
+      const su = document.getElementById('studentUniqueDisplay');
+      if(sn) sn.textContent = 'Name: ' + (student.full_name || student.student_name || '-');
+      if(su) su.textContent = 'Unique ID: ' + (student.unique_id || '-');
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
-      const gq = document.getElementById('applied_gq');
-      const mq = document.getElementById('applied_mq');
-      if (gq) gq.addEventListener('change', toggleSections);
-      if (mq) mq.addEventListener('change', toggleSections);
-      toggleSections();
-      setTimeout(toggleSections, 50);
+    // load existing counselling record if present
+    const cRes = await fetch('/api/counselling_records?app_id=' + encodeURIComponent(appId)).then(r=>r.json()).catch(()=>({ok:false, items:[]}));
+    const c = Array.isArray(cRes) ? cRes[0] : (cRes && cRes.ok && Array.isArray(cRes.items) ? cRes.items[0] : null);
+
+    // load departments map for allotment preview
+    const deptsRes = await fetch('/api/departments').then(r=>r.json()).catch(()=>({ok:false, items:[]}));
+    const depts = Array.isArray(deptsRes) ? deptsRes : (deptsRes && deptsRes.ok && Array.isArray(deptsRes.items) ? deptsRes.items : []);
+    const deptMap = {};
+    if(Array.isArray(depts)) depts.forEach(d=>{ if(d && d.id) deptMap[String(d.id)] = d; });
+
+    if (c) {
+      document.getElementById('applied_gq').checked = !!c.applied_gq;
+      document.getElementById('applied_mq').checked = !!c.applied_mq;
+      document.getElementById('gq_application_number').value = c.gq_application_number || c.counselling_application_number || '';
+      if (c.gq_applied_at) document.getElementById('gq_applied_at').value = new Date(c.gq_applied_at).toISOString().slice(0,16);
+      if (c.gq_round) document.getElementById('gq_round').value = c.gq_round;
+      // autofill consortium number in the form: prefer canonical `consortium_number`, fall back to `mq_consortium_number`
+      const consVal = (c.consortium_number && String(c.consortium_number).trim()) ? c.consortium_number : (c.mq_consortium_number && String(c.mq_consortium_number).trim() ? c.mq_consortium_number : '');
+      if(consVal) document.getElementById('mq_consortium_number').value = consVal;
+      if (c.mq_applied_at) document.getElementById('mq_applied_at').value = new Date(c.mq_applied_at).toISOString().slice(0,16);
+    }
+
+    function updateAllotmentPreview() {
+      const preview = document.getElementById('allotmentPreview');
+      const apvDept = document.getElementById('apv_dept');
+      const apvOrder = document.getElementById('apv_order');
+      const apvCons = document.getElementById('apv_cons');
+      const apvEdit = document.getElementById('apv_edit');
+      const gqChecked = document.getElementById('applied_gq').checked;
+      if(!gqChecked) { preview.classList.add('hidden'); return; }
+      if(!c) { preview.classList.add('hidden'); return; }
+      // show preview when GQ selected — prefer department name, order number, consortium
+      const deptName = c.allotted_dept_id ? (deptMap[String(c.allotted_dept_id)] && (deptMap[String(c.allotted_dept_id)].dept_name || deptMap[String(c.allotted_dept_id)].dept_code)) : '-';
+      apvDept.textContent = 'Dept: ' + (deptName || '-');
+      apvOrder.textContent = 'Order: ' + (c.allotment_order_number || (c.allotment_order_url ? 'Uploaded PDF' : '-') );
+      apvCons.textContent = 'Consortium: ' + (c.consortium_number || ' - ');
+      apvEdit.href = 'counselling_form.html?app_id=' + encodeURIComponent(appId);
+      preview.classList.remove('hidden');
+    }
+
+    // run once to set preview if relevant
+    updateAllotmentPreview();
+
+    toggleSections();
+    document.getElementById('applied_gq').addEventListener('change', ()=>{ toggleSections(); updateAllotmentPreview(); });
+    document.getElementById('applied_mq').addEventListener('change', toggleSections);
+
+    document.getElementById('saveBtn').addEventListener('click', async () => {
+      const payload = {
+        app_id: appId,
+        applied_gq: !!document.getElementById('applied_gq').checked,
+        applied_mq: !!document.getElementById('applied_mq').checked,
+        gq_application_number: document.getElementById('gq_application_number').value || null,
+        gq_applied_at: document.getElementById('gq_applied_at').value || null,
+        gq_round: document.getElementById('gq_round').value || null,
+        mq_consortium_number: document.getElementById('mq_consortium_number').value || null,
+        mq_applied_at: document.getElementById('mq_applied_at').value || null
+      };
+      try {
+        const r = await fetch('/api/counselling_records', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
+        const j = await r.json();
+        if (j && j.ok) { alert('Saved'); location.href = 'counselling_list.html'; }
+        else { alert('Error saving: ' + (j && j.error || JSON.stringify(j))); }
+      } catch (err) { console.error(err); alert('Error saving'); }
     });
-  })();
+  }
+
+  document.addEventListener('DOMContentLoaded', load);
+})();
 </script>
+</body>
 </html>

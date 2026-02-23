@@ -16,11 +16,11 @@
                 <p class="text-sm text-indigo-200 mt-1">{{ user.role|title }}</p>
             </div>
             <nav class="mt-6">
-                <a href="{{ url_for('admin.dashboard') }}" class="flex items-center px-6 py-3 text-indigo-100 hover:bg-indigo-700">
+                <a href="#" data-route="dashboard" class="flex items-center px-6 py-3 text-indigo-100 hover:bg-indigo-700">
                     <span class="material-symbols-outlined mr-3">dashboard</span>
                     Dashboard
                 </a>
-                <a href="{{ url_for('admin.applications') }}" class="flex items-center px-6 py-3 bg-indigo-900 text-white">
+                <a href="#" data-route="applications" class="flex items-center px-6 py-3 bg-indigo-900 text-white">
                     <span class="material-symbols-outlined mr-3">description</span>
                     Applications
                 </a>
@@ -137,7 +137,7 @@
                     <!-- Actions -->
                     <div class="flex gap-4 mt-6">
                         {% if application.application_status == 'submitted' %}
-                        <form action="{{ url_for('admin.allocate_department', application_id=application.application_id) }}" method="GET">
+                        <form data-action="allocate_department" data-application-id="{{ application.application_id }}" method="GET" onsubmit="return false;">
                             <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
                                 Allocate Department
                             </button>

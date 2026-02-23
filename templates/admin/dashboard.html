@@ -50,19 +50,19 @@
 <nav class="flex-1 p-4 overflow-y-auto">
 <ul class="space-y-2">
 <li>
-<a href="{{ url_for('admin.dashboard') }}" class="flex items-center gap-3 px-4 py-2 rounded-lg bg-primary text-white">
+<a href="#" data-route="dashboard" class="flex items-center gap-3 px-4 py-2 rounded-lg bg-primary text-white">
 <span class="material-symbols-outlined">dashboard</span>
 <span class="font-semibold">Dashboard</span>
 </a>
 </li>
 <li>
-<a href="{{ url_for('admin.applications') }}" class="flex items-center gap-3 px-4 py-2 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<a href="#" data-route="applications" class="flex items-center gap-3 px-4 py-2 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
 <span class="material-symbols-outlined">description</span>
 <span>Applications</span>
 </a>
 </li>
 <li>
-<a href="{{ url_for('admin.enquiries') }}" class="flex items-center gap-3 px-4 py-2 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<a href="#" data-route="enquiries" class="flex items-center gap-3 px-4 py-2 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
 <span class="material-symbols-outlined">mail</span>
 <span>Enquiries</span>
 </a>
@@ -199,10 +199,10 @@ View All Applications
 <a href="{{ url_for('admin.enquiries') }}" class="block px-4 py-3 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 transition-colors font-semibold">
 View Enquiries
 </a>
-            <a href="{{ url_for('admin.reports') }}" class="block px-4 py-3 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-lg hover:bg-green-200 transition-colors font-semibold">
+            <a href="#" data-route="reports" class="block px-4 py-3 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-lg hover:bg-green-200 transition-colors font-semibold">
             View Reports
             </a>
-<a href="{{ url_for('admin.staff_management') }}" class="block px-4 py-3 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-200 transition-colors font-semibold">
+<a href="#" data-route="staff_management" class="block px-4 py-3 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-lg hover:bg-purple-200 transition-colors font-semibold">
 Manage Staff
 </a>
 </div>
