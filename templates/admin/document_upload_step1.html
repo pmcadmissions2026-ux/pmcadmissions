@@ -53,14 +53,31 @@
 			if(pendingEl) pendingEl.innerHTML = loadingHtml;
 			if(uploadedEl) uploadedEl.innerHTML = '';
 			try{
-				// Fetch admissions
-				const admRes = await fetch('/api/admissions');
-				if(!admRes.ok) throw new Error('Failed to fetch admissions');
-				const admissions = await admRes.json();
-				// Fetch students
-				const stRes = await fetch('/api/students');
-				if(!stRes.ok) throw new Error('Failed to fetch students');
-				const students = await stRes.json();
+				// Fetch admissions and students (avoid cached 304 responses)
+				const fetchOpts = { cache: 'no-store', headers: { 'Accept': 'application/json' } };
+				const admRes = await fetch('/api/admissions', fetchOpts);
+				let admissions = [];
+				if(admRes.status >= 200 && admRes.status < 300){
+					admissions = await admRes.json();
+				} else if(admRes.status === 304 || admRes.status === 204){
+					const txt = await admRes.text().catch(()=> '');
+					admissions = txt ? JSON.parse(txt) : [];
+				} else {
+					const body = await admRes.text().catch(()=> admRes.statusText || '');
+					throw new Error('Admissions fetch failed: ' + admRes.status + ' ' + body);
+				}
+
+				const stRes = await fetch('/api/students', fetchOpts);
+				let students = [];
+				if(stRes.status >= 200 && stRes.status < 300){
+					students = await stRes.json();
+				} else if(stRes.status === 304 || stRes.status === 204){
+					const txt = await stRes.text().catch(()=> '');
+					students = txt ? JSON.parse(txt) : [];
+				} else {
+					const body = await stRes.text().catch(()=> stRes.statusText || '');
+					throw new Error('Students fetch failed: ' + stRes.status + ' ' + body);
+				}
 				// Build lookup by student_id
 				const studentById = {};
 				students.forEach(s => { studentById[String(s.id)] = s; });
@@ -131,7 +148,9 @@
 					});
 				}
 			}catch(e){
-				listEl.innerHTML = '<div class="col-span-2 text-center text-red-500 py-8">Error loading admissions</div>';
+				if(pendingEl) pendingEl.innerHTML = '<div class="col-span-2 text-center text-red-500 py-8">Error loading admissions</div>';
+				if(uploadedEl) uploadedEl.innerHTML = '';
+				console.error('loadStudents error', e);
 			}
 		}
 		document.getElementById('refresh-btn').addEventListener('click', loadStudents);

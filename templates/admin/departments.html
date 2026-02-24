@@ -72,54 +72,30 @@
       </div>
     </div>
 
-  <div class="bg-white/80 shadow rounded p-4">
-    <h2 class="font-semibold mb-3 text-indigo-700">Existing Departments</h2>
-    <div class="overflow-x-auto">
-      <table class="w-full text-left text-sm border-collapse">
-        <thead>
-          <tr class="bg-indigo-600 text-white">
-            <th class="p-3">ID</th>
-            <th class="p-3">Code</th>
-            <th class="p-3">Name</th>
-            <th class="p-3">GQ Seats</th>
-            <th class="p-3">MQ Seats</th>
-            <th class="p-3">Admitted (GQ)</th>
-            <th class="p-3">Admitted (MQ)</th>
-            <th class="p-3">Active</th>
-            <th class="p-3">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for d in departments %}
-          <tr class="border-t hover:bg-indigo-50 transition-colors">
-            <td class="p-3">{{ d.id }}</td>
-            <td class="p-3 font-mono">{{ d.dept_code }}</td>
-            <td class="p-3">{{ d.dept_name }}</td>
-            <td class="p-3">{{ d.gq_seats or d.gq or 0 }}</td>
-            <td class="p-3">{{ d.mq_seats or d.mq or 0 }}</td>
-            <td class="p-3">{{ d.admitted_gq or d.admitted_count or d.adm_gq_upto or 0 }}</td>
-            <td class="p-3">{{ d.admitted_mq or d.adm_mq_upto or 0 }}</td>
-            <td class="p-3">
-              {% if d.is_active %}
-                <span class="inline-block px-2 py-1 text-xs bg-emerald-100 text-emerald-800 rounded">Active</span>
-              {% else %}
-                <span class="inline-block px-2 py-1 text-xs bg-rose-100 text-rose-800 rounded">Inactive</span>
-              {% endif %}
-            </td>
-            <td class="p-3">
-              <a href="#" data-action="edit_department" data-dept-id="{{ d.id }}" class="px-3 py-1 bg-indigo-500 text-white rounded text-xs">Edit</a>
-              <form method="POST" data-action="delete_department" data-dept-id="{{ d.id }}" style="display:inline" onsubmit="return confirm('Delete dept?')">
-                <button type="submit" class="px-3 py-1 bg-rose-500 text-white rounded text-xs ml-2">Delete</button>
-              </form>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <div class="bg-white/80 shadow rounded p-4">
+      <h2 class="font-semibold mb-3 text-indigo-700">Existing Departments</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm border-collapse">
+          <thead>
+            <tr class="bg-indigo-600 text-white">
+              <th class="p-3">ID</th>
+              <th class="p-3">Code</th>
+              <th class="p-3">Name</th>
+              <th class="p-3">GQ Seats</th>
+              <th class="p-3">MQ Seats</th>
+              <th class="p-3">Admitted (GQ)</th>
+              <th class="p-3">Admitted (MQ)</th>
+              <th class="p-3">Active</th>
+              <th class="p-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="departments-tbody"></tbody>
+        </table>
+      </div>
     </div>
-  </div>
 </div>
   <script>
+    // Department admin client logic
     function openDeptModal(){
       const modal = document.getElementById('dept-modal');
       if(modal){ modal.classList.remove('hidden'); modal.classList.add('flex'); }
@@ -127,12 +103,118 @@
     function closeDeptModal(){
       const modal = document.getElementById('dept-modal');
       if(modal){ modal.classList.remove('flex'); modal.classList.add('hidden'); }
+      // clear edit state
+      const form = document.querySelector('form[data-action="create_department"]');
+      if(form){ form.removeAttribute('data-edit-id'); form.reset(); }
     }
+
+    async function fetchDepartments(){
+      const tbody = document.getElementById('departments-tbody');
+      tbody.innerHTML = '<tr><td colspan="9" class="p-6 text-center text-sm text-slate-500">Loading…</td></tr>';
+      try{
+        const res = await fetch('/api/departments');
+        if(!res.ok) throw new Error('Failed to load');
+        const rows = await res.json();
+        if(!Array.isArray(rows) || rows.length===0){ tbody.innerHTML = '<tr><td colspan="9" class="p-6 text-center text-sm text-slate-500">No departments</td></tr>'; return; }
+        tbody.innerHTML = '';
+        rows.forEach(d => {
+          const tr = document.createElement('tr');
+          tr.className = 'border-t hover:bg-indigo-50 transition-colors';
+          const admittedGQ = d.admitted_gq || d.admitted_count || d.adm_gq_upto || 0;
+          const admittedMQ = d.admitted_mq || d.adm_mq_upto || 0;
+          tr.innerHTML = `
+            <td class="p-3">${d.id}</td>
+            <td class="p-3 font-mono">${escapeHtml(d.dept_code)}</td>
+            <td class="p-3">${escapeHtml(d.dept_name)}</td>
+            <td class="p-3">${d.gq_seats||0}</td>
+            <td class="p-3">${d.mq_seats||0}</td>
+            <td class="p-3">${admittedGQ}</td>
+            <td class="p-3">${admittedMQ}</td>
+            <td class="p-3">${d.is_active ? '<span class="inline-block px-2 py-1 text-xs bg-emerald-100 text-emerald-800 rounded">Active</span>' : '<span class="inline-block px-2 py-1 text-xs bg-rose-100 text-rose-800 rounded">Inactive</span>'}</td>
+            <td class="p-3">
+              <button data-edit-id="${d.id}" class="px-3 py-1 bg-indigo-500 text-white rounded text-xs">Edit</button>
+              <button data-delete-id="${d.id}" class="px-3 py-1 bg-rose-500 text-white rounded text-xs ml-2">Delete</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }catch(e){ tbody.innerHTML = '<tr><td colspan="9" class="p-6 text-center text-sm text-red-600">Error loading departments</td></tr>'; console.error(e); }
+    }
+
+    function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // open modal for create or edit
+    function openCreateModal(){
+      openDeptModal();
+    }
+
+    document.addEventListener('click', async function(e){
+      const edit = e.target && e.target.getAttribute && e.target.getAttribute('data-edit-id');
+      const del = e.target && e.target.getAttribute && e.target.getAttribute('data-delete-id');
+      if(edit){
+        // fetch dept and fill form
+        const id = edit;
+        try{
+          const r = await fetch('/api/departments');
+          const arr = await r.json();
+          const d = arr.find(x=>String(x.id)===String(id));
+          if(!d) return alert('Department not found');
+          const form = document.querySelector('form[data-action="create_department"]');
+          if(!form) return;
+          form.dept_code.value = d.dept_code||'';
+          form.dept_name.value = d.dept_name||'';
+          form.short_name.value = d.short_name||'';
+          form.description.value = d.description||'';
+          form.gq_seats.value = d.gq_seats||0;
+          form.mq_seats.value = d.mq_seats||0;
+          form.setAttribute('data-edit-id', String(d.id));
+          openDeptModal();
+        }catch(err){ console.error(err); alert('Failed to load department'); }
+      }
+      if(del){
+        if(!confirm('Delete dept?')) return;
+        const id = del;
+        try{
+          const resp = await fetch('/api/departments/' + encodeURIComponent(id), { method:'DELETE' });
+          if(!resp.ok){ const txt = await resp.text(); throw new Error(txt||'delete failed'); }
+          await fetchDepartments();
+        }catch(err){ console.error(err); alert('Delete failed'); }
+      }
+    });
+
+    // form submit handler for create/update
+    document.addEventListener('submit', async function(e){
+      const form = e.target;
+      if(!(form && form.getAttribute && form.getAttribute('data-action')==='create_department')) return;
+      e.preventDefault();
+      const fd = new FormData(form);
+      const payload = {
+        dept_code: fd.get('dept_code'),
+        dept_name: fd.get('dept_name'),
+        short_name: fd.get('short_name'),
+        description: fd.get('description'),
+        gq_seats: fd.get('gq_seats') ? Number(fd.get('gq_seats')) : 0,
+        mq_seats: fd.get('mq_seats') ? Number(fd.get('mq_seats')) : 0,
+      };
+      const editId = form.getAttribute('data-edit-id');
+      try{
+        let resp;
+        if(editId){
+          resp = await fetch('/api/departments/' + encodeURIComponent(editId), { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+        } else {
+          resp = await fetch('/api/departments', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+        }
+        if(!resp.ok){ const txt = await resp.text(); throw new Error(txt||'save failed'); }
+        closeDeptModal();
+        await fetchDepartments();
+      }catch(err){ console.error(err); alert('Save failed: ' + (err && err.message)); }
+    });
+
     document.addEventListener('DOMContentLoaded', function(){
-      const btn = document.getElementById('open-dept-modal');
-      if(btn) btn.addEventListener('click', openDeptModal);
-      // close modal on ESC
+      // attach modal openers (there are two buttons with same id in template)
+      document.querySelectorAll('#open-dept-modal').forEach(b=>b.addEventListener('click', openCreateModal));
       document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeDeptModal(); });
+      fetchDepartments();
     });
   </script>
   </body>

@@ -8,6 +8,39 @@ const cookieSession = require('cookie-session');
 const { createClient } = require('@supabase/supabase-js');
 const multer = require('multer');
 const uploadMemory = multer({ storage: multer.memoryStorage() });
+const fs = require('fs');
+const nodemailer = require('nodemailer');
+
+// Helper to create SMTP transporter using .env settings
+function createSmtpTransporter(){
+  const smtpHost = process.env.SMTP_HOST;
+  const smtpPort = Number(process.env.SMTP_PORT) || 587;
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+  const useTls = String(process.env.SMTP_USE_TLS || 'true').toLowerCase() === 'true';
+
+  if(!smtpHost || !smtpUser || !smtpPass) return null;
+
+  const transportOptions = {
+    host: smtpHost,
+    port: smtpPort,
+    secure: smtpPort === 465, // use TLS for 465
+    auth: { user: smtpUser, pass: smtpPass }
+  };
+
+  // If TLS is required (587), enforce STARTTLS
+  if(useTls && smtpPort !== 465){
+    transportOptions.requireTLS = true;
+    transportOptions.tls = transportOptions.tls || { rejectUnauthorized: false };
+  }
+
+  try{
+    return nodemailer.createTransport(transportOptions);
+  }catch(e){
+    console.error('createSmtpTransporter error', e);
+    return null;
+  }
+}
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY;
@@ -20,31 +53,42 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 // Helper: generate unique student id with 'PMC' prefix and year-based sequence, e.g. PMC25000326
 async function generateUniqueStudentId(){
   try{
-    const yy = new Date().getFullYear().toString().slice(-2); // '25'
-    // fetch recent students that look like they have our prefix or numeric start
-    const { data: rows, error } = await supabase.from('students').select('unique_id').ilike('unique_id', `%${yy}%`).order('id', { ascending: false }).limit(500);
-    if(error) {
-      console.warn('generateUniqueStudentId lookup error', error.message);
+    // Determine academic year start/end two-digit values. Prefer ACADEMIC_YEAR env like "2025-2026".
+    let yyStart, yyEnd;
+    if(process.env.ACADEMIC_YEAR && process.env.ACADEMIC_YEAR.match(/^(\d{4})-(\d{4})$/)){
+      const m = process.env.ACADEMIC_YEAR.match(/^(\d{4})-(\d{4})$/);
+      yyStart = String(m[1]).slice(-2);
+      yyEnd = String(m[2]).slice(-2);
+    } else {
+      const now = new Date();
+      const startYear = now.getFullYear();
+      const endYear = startYear + 1;
+      yyStart = String(startYear).slice(-2);
+      yyEnd = String(endYear).slice(-2);
     }
+
+    // Find existing IDs that match the pattern PMC{yyStart}{digits}{yyEnd}
+    const likePattern = `PMC${yyStart}%${yyEnd}`;
+    const { data: rows, error } = await supabase.from('students').select('unique_id').ilike('unique_id', likePattern).order('id', { ascending: false }).limit(2000);
+    if(error){ console.warn('generateUniqueStudentId lookup error', error.message); }
+
     let maxSeq = 0;
     if(Array.isArray(rows)){
       for(const r of rows){
         if(!r || !r.unique_id) continue;
-        // remove non-digits and look for a sequence that starts with yy
-        const digits = (r.unique_id.match(/(\d+)/) || [])[0];
-        if(!digits) continue;
-        if(digits.startsWith(yy)){
-          const seq = parseInt(digits.slice(yy.length), 10);
-          if(!isNaN(seq) && seq > maxSeq) maxSeq = seq;
-        }
-        // also support values like PMC25xxxx where digits may follow after prefix
-        const m = r.unique_id.match(/PMC(\d{2})(\d+)/);
-        if(m){ const seq2 = parseInt(m[2],10); if(!isNaN(seq2) && seq2 > maxSeq) maxSeq = seq2; }
+        const m = r.unique_id.match(new RegExp(`^PMC(${yyStart})(\\d+)(${yyEnd})$`));
+        if(!m) continue;
+        const seqStr = m[2];
+        const seq = parseInt(seqStr, 10);
+        if(!isNaN(seq) && seq > maxSeq) maxSeq = seq;
       }
     }
+
     const next = maxSeq + 1;
-    const padded = String(next).padStart(6, '0');
-    return `PMC${yy}${padded}`;
+    // Default padding to 3 digits as requested (001). If sequence grows, expand padding automatically.
+    const padLength = next <= 999 ? 3 : (next <= 99999 ? 5 : 8);
+    const padded = String(next).padStart(padLength, '0');
+    return `PMC${yyStart}${padded}${yyEnd}`;
   }catch(e){ console.warn('generateUniqueStudentId error', e); const yy = new Date().getFullYear().toString().slice(-2); return `PMC${yy}` + String(Date.now()).slice(-6); }
 }
 
@@ -225,6 +269,31 @@ app.get('/api/enquiries', async (req, res) => {
   }catch(e){ res.status(500).json({ error: String(e) }); }
 });
 
+// Get single enquiry by id
+app.get('/api/enquiries/:id', async (req, res) => {
+  try{
+    const id = Number(req.params.id);
+    if(isNaN(id)) return res.status(400).json({ error: 'invalid id' });
+    const { data, error } = await supabase.from('enquiries').select('*').eq('id', id).maybeSingle();
+    if(error) return res.status(500).json({ error: error.message });
+    if(!data) return res.status(404).json({ error: 'not found' });
+    return res.json(data);
+  }catch(e){ return res.status(500).json({ error: String(e) }); }
+});
+
+// Get academics rows for a student
+app.get('/api/academics', async (req, res) => {
+  try{
+    const studentId = req.query.student_id || req.query.studentId;
+    if(!studentId) return res.status(400).json({ error: 'student_id required' });
+    const sid = Number(studentId);
+    if(isNaN(sid)) return res.status(400).json({ error: 'invalid student_id' });
+    const { data, error } = await supabase.from('academics').select('*').eq('student_id', sid).order('id', { ascending: false }).limit(50);
+    if(error) return res.status(500).json({ error: error.message });
+    return res.json(Array.isArray(data) ? data : []);
+  }catch(e){ return res.status(500).json({ error: String(e) }); }
+});
+
 // Create student + academics + enquiry in sequence
 app.post('/api/enquiries', async (req, res) => {
   try{
@@ -252,10 +321,84 @@ app.post('/api/enquiries', async (req, res) => {
       createdAcademic = acadData;
     }
 
-    // Insert enquiry
-    const enquiryRow = Object.assign({}, enquiry || {}, { student_id: studentId, student_name: student.full_name, whatsapp_number: student.whatsapp_number || student.phone || null });
+    // Insert enquiry (include student email so enquiries table has a recipient)
+    const enquiryRow = Object.assign({}, enquiry || {}, { student_id: studentId, student_name: student.full_name, whatsapp_number: student.whatsapp_number || student.phone || null, email: (student && student.email) ? student.email : (enquiry && enquiry.email ? enquiry.email : null) });
     const { data: createdEnquiry, error: enquiryErr } = await supabase.from('enquiries').insert(enquiryRow).select().maybeSingle();
     if(enquiryErr) return res.status(500).json({ error: enquiryErr.message });
+
+    // Debug log candidate emails to help diagnose delivery issues
+    try{ console.log('enquiry created emails', { enquiryRowEmail: enquiryRow.email, createdEnquiryEmail: createdEnquiry && createdEnquiry.email, createdStudentEmail: createdStudent && createdStudent.email }); }catch(e){}
+
+    // Attempt to send an acknowledgement email to the enquirer using nodemailer.
+    (async () => {
+      try{
+        const smtpHost = process.env.SMTP_HOST;
+        const smtpPort = Number(process.env.SMTP_PORT) || 587;
+        const smtpUser = process.env.SMTP_USER;
+        const smtpPass = process.env.SMTP_PASS;
+        const fromName = process.env.SENDGRID_FROM_NAME || process.env.COLLEGE_NAME || smtpUser || 'Admissions';
+        const fromEmail = process.env.SENDGRID_FROM_EMAIL || smtpUser || smtpUser;
+
+        if(!smtpHost || !smtpUser || !smtpPass){
+          console.warn('SMTP not configured fully; skipping enquiry email send');
+          return;
+        }
+
+        const transporter = createSmtpTransporter();
+        if(!transporter){ console.warn('No SMTP transporter available; skipping send'); return; }
+
+        // Prepare template rendering data (prefer student/enquiry fields)
+        const tplData = Object.assign({}, createdStudent || {}, createdAcademic || {}, createdEnquiry || {}, enquiryRow || {});
+        tplData.college_name = tplData.college_name || process.env.COLLEGE_NAME || '';
+
+        // helper to render simple Jinja-like {{ key }} and "{{ key or 'fallback' }}"
+        function renderTemplate(tpl, data){
+          if(!tpl || typeof tpl !== 'string') return '';
+          return tpl.replace(/\{\{\s*([a-zA-Z0-9_]+)(?:\s+or\s+'([^']*)')?\s*\}\}/g, (m, key, fallback) => {
+            const val = data && (key in data) ? data[key] : undefined;
+            if(val === undefined || val === null || val === '') return (fallback !== undefined ? fallback : '');
+            return String(val);
+          }).replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (m, key) => {
+            const val = data && (key in data) ? data[key] : '';
+            return (val === undefined || val === null) ? '' : String(val);
+          });
+        }
+
+        // Read templates (HTML and text) if they exist
+        let htmlTpl = null;
+        let textTpl = null;
+        try{
+          const htmlPath = path.join(__dirname, 'templates', 'emails', 'enquiry.html');
+          const txtPath = path.join(__dirname, 'templates', 'emails', 'enquiry.txt');
+          if(fs.existsSync(htmlPath)) htmlTpl = fs.readFileSync(htmlPath, 'utf8');
+          if(fs.existsSync(txtPath)) textTpl = fs.readFileSync(txtPath, 'utf8');
+        }catch(e){ console.warn('read email template error', e); }
+
+        const htmlBody = renderTemplate(htmlTpl || '', tplData);
+        const textBody = renderTemplate(textTpl || '', tplData) || (htmlBody ? htmlBody.replace(/<[^>]+>/g,'') : '');
+
+        // Determine recipient: prefer enquiry row/email, then createdEnquiry, then createdStudent
+        const toEmail = (enquiryRow && (enquiryRow.email || enquiryRow.contact_email)) || (createdEnquiry && (createdEnquiry.email || createdEnquiry.contact_email)) || (createdStudent && (createdStudent.email || createdStudent.contact_email)) || null;
+        if(!toEmail){
+          console.warn('No recipient email found for enquiry; skipping send', { enquiryRowEmail: enquiryRow && enquiryRow.email, createdEnquiryEmail: createdEnquiry && createdEnquiry.email, createdStudentEmail: createdStudent && createdStudent.email });
+          return;
+        }
+
+        const mailOptions = {
+          from: `${fromName} <${fromEmail}>`,
+          to: toEmail,
+          subject: `${tplData.college_name || 'Admissions'} - Enquiry received`,
+          text: textBody,
+          html: htmlBody
+        };
+
+        transporter.sendMail(mailOptions).then(info => {
+          console.log('Enquiry email sent', info && info.messageId, 'to', toEmail);
+        }).catch(err => {
+          console.error('Error sending enquiry email', err && err.message ? err.message : err);
+        });
+      }catch(e){ console.error('enquiry email background error', e); }
+    })();
 
     res.json({ ok: true, student: createdStudent, academic: createdAcademic, enquiry: createdEnquiry });
   }catch(e){
@@ -279,6 +422,57 @@ app.get('/api/departments', async (req, res) => {
     if(error) return res.status(500).json({ error: error.message });
     res.json(data);
   }catch(e){ res.status(500).json({ error: String(e) }); }
+});
+
+// Create department
+app.post('/api/departments', async (req, res) => {
+  try{
+    const body = req.body || {};
+    const row = {
+      dept_code: (body.dept_code || '').toString().trim(),
+      dept_name: (body.dept_name || '').toString().trim(),
+      short_name: body.short_name || null,
+      description: body.description || null,
+      is_active: body.is_active === undefined ? true : Boolean(body.is_active),
+      seats: body.seats ? Number(body.seats) : (body.gq_seats && body.mq_seats ? Number(body.gq_seats) + Number(body.mq_seats) : (body.seats || 0)),
+      gq_seats: body.gq_seats ? Number(body.gq_seats) : (body.gq_seats === 0 ? 0 : (body.gq_seats || 0)),
+      mq_seats: body.mq_seats ? Number(body.mq_seats) : (body.mq_seats === 0 ? 0 : (body.mq_seats || 0)),
+    };
+    if(!row.dept_code || !row.dept_name) return res.status(400).json({ error: 'dept_code and dept_name required' });
+    const { data, error } = await supabase.from('departments').insert(row).select().maybeSingle();
+    if(error) return res.status(500).json({ error: error.message });
+    return res.json(data);
+  }catch(e){ return res.status(500).json({ error: String(e) }); }
+});
+
+// Update department
+app.put('/api/departments/:id', async (req, res) => {
+  try{
+    const id = Number(req.params.id);
+    if(isNaN(id)) return res.status(400).json({ error: 'invalid id' });
+    const body = req.body || {};
+    const updates = {};
+    ['dept_code','dept_name','short_name','description'].forEach(k=>{ if(body[k]!==undefined) updates[k]=body[k]; });
+    if(body.is_active!==undefined) updates.is_active = Boolean(body.is_active);
+    if(body.gq_seats!==undefined) updates.gq_seats = Number(body.gq_seats);
+    if(body.mq_seats!==undefined) updates.mq_seats = Number(body.mq_seats);
+    if(body.seats!==undefined) updates.seats = Number(body.seats);
+    if(Object.keys(updates).length===0) return res.status(400).json({ error: 'no updates provided' });
+    const { data, error } = await supabase.from('departments').update(updates).eq('id', id).select().maybeSingle();
+    if(error) return res.status(500).json({ error: error.message });
+    return res.json(data);
+  }catch(e){ return res.status(500).json({ error: String(e) }); }
+});
+
+// Delete department
+app.delete('/api/departments/:id', async (req, res) => {
+  try{
+    const id = Number(req.params.id);
+    if(isNaN(id)) return res.status(400).json({ error: 'invalid id' });
+    const { data, error } = await supabase.from('departments').delete().eq('id', id);
+    if(error) return res.status(500).json({ error: error.message });
+    return res.json({ ok: true });
+  }catch(e){ return res.status(500).json({ error: String(e) }); }
 });
 
 // Student endpoints
@@ -325,6 +519,109 @@ app.post('/api/admissions', async (req, res) => {
     if(error) return res.status(500).json({ error: error.message });
     res.json(data);
   }catch(e){ res.status(500).json({ error: String(e) }); }
+});
+
+// Debug endpoint: send a test email and report result (useful for diagnosing SMTP issues)
+app.post('/api/_debug/send_test_email', async (req, res) => {
+  try{
+    const to = req.body && (req.body.to || req.query.to);
+    if(!to) return res.status(400).json({ error: 'to is required (body.to or ?to=)' });
+
+    const transporter = createSmtpTransporter();
+    if(!transporter) return res.status(500).json({ error: 'SMTP not configured on server' });
+
+    // Compose simple test message
+    const fromName = process.env.SENDGRID_FROM_NAME || process.env.COLLEGE_NAME || process.env.SMTP_USER || 'Admissions';
+    const fromEmail = process.env.SENDGRID_FROM_EMAIL || process.env.SMTP_USER || process.env.SMTP_USER;
+    const subject = 'Test email from PMC Admissions';
+    const text = 'This is a test email sent from the PMC Admissions server to verify SMTP configuration.';
+    const html = `<p>${text}</p><p>If you received this, SMTP is working.</p>`;
+
+    const info = await transporter.sendMail({ from: `${fromName} <${fromEmail}>`, to, subject, text, html });
+    return res.json({ ok: true, messageId: info && info.messageId, accepted: info && info.accepted });
+  }catch(e){
+    console.error('test email error', e);
+    return res.status(500).json({ error: String(e) });
+  }
+});
+
+// Debug: resend an enquiry email for an existing enquiry_id and return send result
+app.post('/api/_debug/resend_enquiry_email', async (req, res) => {
+  try{
+    const enquiryId = (req.body && req.body.enquiry_id) || req.query.enquiry_id;
+    if(!enquiryId) return res.status(400).json({ error: 'enquiry_id required' });
+
+    // load enquiry
+    const { data: enqRow, error: enqErr } = await supabase.from('enquiries').select('*').eq('id', Number(enquiryId)).maybeSingle();
+    if(enqErr) return res.status(500).json({ error: enqErr.message });
+    if(!enqRow) return res.status(404).json({ error: 'enquiry not found' });
+
+    // load student (if present)
+    let student = null;
+    if(enqRow.student_id){
+      const { data: s, error: sErr } = await supabase.from('students').select('*').eq('id', Number(enqRow.student_id)).maybeSingle();
+      if(sErr) console.warn('resend_enquiry_email student lookup error', sErr.message);
+      student = s || null;
+    }
+
+    // load academic if any
+    let academic = null;
+    if(enqRow.student_id){
+      const { data: a, error: aErr } = await supabase.from('academics').select('*').eq('student_id', Number(enqRow.student_id)).order('id', { ascending: false }).limit(1).maybeSingle();
+      if(aErr) console.warn('resend_enquiry_email academic lookup error', aErr.message);
+      academic = a || null;
+    }
+
+    const transporter = createSmtpTransporter();
+    if(!transporter) return res.status(500).json({ error: 'SMTP not configured' });
+
+    // build tplData
+    const tplData = Object.assign({}, student || {}, academic || {}, enqRow || {});
+    tplData.college_name = tplData.college_name || process.env.COLLEGE_NAME || '';
+
+    function renderTemplate(tpl, data){
+      if(!tpl || typeof tpl !== 'string') return '';
+      return tpl.replace(/\{\{\s*([a-zA-Z0-9_]+)(?:\s+or\s+'([^']*)')?\s*\}\}/g, (m, key, fallback) => {
+        const val = data && (key in data) ? data[key] : undefined;
+        if(val === undefined || val === null || val === '') return (fallback !== undefined ? fallback : '');
+        return String(val);
+      }).replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (m, key) => {
+        const val = data && (key in data) ? data[key] : '';
+        return (val === undefined || val === null) ? '' : String(val);
+      });
+    }
+
+    let htmlTpl = null;
+    let textTpl = null;
+    try{
+      const htmlPath = path.join(__dirname, 'templates', 'emails', 'enquiry.html');
+      const txtPath = path.join(__dirname, 'templates', 'emails', 'enquiry.txt');
+      if(fs.existsSync(htmlPath)) htmlTpl = fs.readFileSync(htmlPath, 'utf8');
+      if(fs.existsSync(txtPath)) textTpl = fs.readFileSync(txtPath, 'utf8');
+    }catch(e){ console.warn('read email template error', e); }
+
+    const htmlBody = renderTemplate(htmlTpl || '', tplData);
+    const textBody = renderTemplate(textTpl || '', tplData) || (htmlBody ? htmlBody.replace(/<[^>]+>/g,'') : '');
+
+    const toEmail = (enqRow.email || enqRow.contact_email) || (student && (student.email || student.contact_email)) || null;
+    if(!toEmail) return res.status(400).json({ error: 'no recipient email available', candidates: { enquiryEmail: enqRow.email, studentEmail: student && student.email } });
+
+    const fromName = process.env.SENDGRID_FROM_NAME || process.env.COLLEGE_NAME || process.env.SMTP_USER || 'Admissions';
+    const fromEmail = process.env.SENDGRID_FROM_EMAIL || process.env.SMTP_USER || process.env.SMTP_USER;
+    const mailOptions = { from: `${fromName} <${fromEmail}>`, to: toEmail, subject: `${tplData.college_name || 'Admissions'} - Enquiry received`, text: textBody, html: htmlBody };
+
+    try{
+      const info = await transporter.sendMail(mailOptions);
+      console.log('Resend enquiry email sent', info && info.messageId, 'to', toEmail);
+      return res.json({ ok: true, messageId: info && info.messageId, accepted: info && info.accepted });
+    }catch(e){
+      console.error('Resend enquiry send error', e);
+      return res.status(500).json({ error: String(e) });
+    }
+  }catch(e){
+    console.error('resend_enquiry_email error', e);
+    return res.status(500).json({ error: String(e) });
+  }
 });
 
 // Assign a branch to an admission (admin required)

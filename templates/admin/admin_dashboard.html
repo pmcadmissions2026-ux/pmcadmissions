@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function(){
                 // If 'dashboard' is not explicitly present, still show it for all users
                 if(!allowed.has('dashboard')) allowed.add('dashboard');
                 // Render in a preferred order
-                const order = ['dashboard','enquiries','applications','branch_selection','counselling','payments','documents','reports','staff'];
+                const order = ['enquiries','applications','branch_selection','counselling','payments','documents','reports','staff'];
                 order.forEach(key => {
                   if(!allowed.has(key)) return;
                   const spec = navMap[key] || { label: key, href: `/templates/admin/${key}.html`, icon: 'circle' };
@@ -277,23 +277,39 @@ document.addEventListener('DOMContentLoaded', function(){
               if(uniq) admissionByUnique.set(String(uniq), a);
             });
 
+            // Filter accepted students to only those accepted by the current admin
             if(listA.length===0){
               acceptedTbody.innerHTML = '<tr><td colspan="5" class="px-6 py-12 text-center text-slate-500">No accepted students loaded</td></tr>';
             } else {
-              listA.forEach(s=>{
-                const cutoff = s.cutoff ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${s.cutoff>=190? 'bg-green-100 text-green-800' : (s.cutoff>=180? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800')}">${Number(s.cutoff).toFixed(2)}</span>` : '<span class="text-xs text-slate-400">-</span>';
-                const row = document.createElement('tr');
-                row.className='hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors group';
+              // current admin identity (email/name)
+              const adminWrapper = document.getElementById('assigned-modules-wrapper');
+              const adminEmail = (adminWrapper && adminWrapper.dataset && adminWrapper.dataset.userEmail) ? String(adminWrapper.dataset.userEmail).toLowerCase() : (function(){ try{ const u = JSON.parse(sessionStorage.getItem('pmc_user')||'null'); return u && u.email ? String(u.email).toLowerCase() : ''; }catch(e){ return ''; } })();
+              const adminName = (window.__SERVER_DATA && window.__SERVER_DATA.current_user && (window.__SERVER_DATA.current_user.name || window.__SERVER_DATA.current_user.full_name)) ? String(window.__SERVER_DATA.current_user.name || window.__SERVER_DATA.current_user.full_name).toLowerCase() : '';
 
+              listA.forEach(s=>{
                 const studentIdKey = String(s.id || s.student_id || '');
                 const studentUniqueKey = String(s.unique_id || s.uniqueId || s.unique || '');
                 // Prefer admission by student_id, fallback to matching by unique id
                 let admission = admissionByStudent.get(studentIdKey) || null;
                 if(!admission && studentUniqueKey){ admission = admissionByUnique.get(studentUniqueKey) || null; }
-                // Consider a student Assigned if there is an admission row present
-                // (some workflows treat presence in admissions as 'assigned' even before allotment)
-                const isAssigned = !!admission;
+                if(!admission){
+                  // No admission row to attribute acceptance to — skip
+                  return;
+                }
+                // normalize accepted_by fields
+                const acceptedByRaw = (admission.accepted_by || admission.accepted_by_email || admission.accepted_admin || admission.accepted_by_name || '') + '';
+                const acceptedBy = acceptedByRaw.toLowerCase();
+                const acceptedMatchesAdmin = (adminEmail && acceptedBy.includes(adminEmail)) || (adminName && acceptedBy.includes(adminName));
+                if(!acceptedMatchesAdmin){
+                  return; // not accepted by current admin
+                }
 
+                const cutoff = s.cutoff ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${s.cutoff>=190? 'bg-green-100 text-green-800' : (s.cutoff>=180? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800')}">${Number(s.cutoff).toFixed(2)}</span>` : '<span class="text-xs text-slate-400">-</span>';
+                const row = document.createElement('tr');
+                row.className='hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors group';
+
+                // Consider a student Assigned if there is an admission row present
+                const isAssigned = !!admission;
                 let actionHtml = '';
                 if(isAssigned){
                   actionHtml = `<button disabled class="inline-flex items-center gap-2 bg-green-600 text-white text-xs font-bold py-2 px-4 rounded-lg"><span class="material-symbols-outlined">check</span>Assigned</button>`;
@@ -304,6 +320,10 @@ document.addEventListener('DOMContentLoaded', function(){
                 row.innerHTML = `<td class="px-6 py-4"><div class="text-sm font-semibold text-[#111418] dark:text-white">${s.full_name||s.name||''}</div><div class="text-xs text-[#617589]">Accepted</div></td><td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${s.unique_id||'N/A'}</td><td class="px-6 py-4">${cutoff}</td><td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">${s.community||'General'}</td><td class="px-6 py-4 text-right">${actionHtml}</td>`;
                 acceptedTbody.appendChild(row);
               });
+              // if nothing appended, show placeholder
+              if(acceptedTbody.children.length === 0){
+                acceptedTbody.innerHTML = '<tr><td colspan="5" class="px-6 py-12 text-center text-slate-500">No accepted students for you</td></tr>';
+              }
             }
           }
 
