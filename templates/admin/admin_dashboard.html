@@ -127,13 +127,53 @@
 // Lightweight client injector: populate debug email and wire AdminAPI-populated data to tables.
 function safeJsonParse(s){ try{ return JSON.parse(s); }catch(e){ return null; } }
 function setText(id, txt){ const el = document.getElementById(id); if(el) el.textContent = txt; }
+function normalizeText(v){ return String(v||'').trim().toLowerCase().replace(/\s+/g,' '); }
+
+let CURRENT_USER = null;
+let STUDENT_BY_ID = new Map();
+let STUDENT_BY_UNIQUE = new Map();
+
+function indexStudents(rows){
+  STUDENT_BY_ID = new Map();
+  STUDENT_BY_UNIQUE = new Map();
+  (rows||[]).forEach(s => {
+    if(!s) return;
+    if(s.id !== undefined && s.id !== null) STUDENT_BY_ID.set(String(s.id), s);
+    if(s.unique_id) STUDENT_BY_UNIQUE.set(String(s.unique_id), s);
+  });
+}
+
+function isSuperAdmin(){
+  const rid = CURRENT_USER && CURRENT_USER.role_id !== undefined ? Number(CURRENT_USER.role_id) : NaN;
+  return rid === 1;
+}
+
+function getStudentForRecord(rec){
+  if(!rec) return null;
+  const sid = rec.student_id ?? rec.id;
+  const uid = rec.unique_id || rec.student_unique_id || rec.studentUniqueId;
+  if(sid !== undefined && sid !== null && STUDENT_BY_ID.has(String(sid))) return STUDENT_BY_ID.get(String(sid));
+  if(uid && STUDENT_BY_UNIQUE.has(String(uid))) return STUDENT_BY_UNIQUE.get(String(uid));
+  return null;
+}
+
+function isOwnedByCurrentAdmin(rec){
+  if(isSuperAdmin()) return true;
+  const s = getStudentForRecord(rec);
+  if(!s) return false;
+  const acceptedBy = normalizeText(s.accepted_by);
+  if(!acceptedBy) return false;
+  const email = normalizeText(CURRENT_USER && CURRENT_USER.email);
+  const fullName = normalizeText(((CURRENT_USER && CURRENT_USER.first_name) || '') + ' ' + ((CURRENT_USER && CURRENT_USER.last_name) || ''));
+  return (email && acceptedBy.includes(email)) || (fullName && acceptedBy.includes(fullName));
+}
 
 document.addEventListener('DOMContentLoaded', function(){
   // Populate debug email from sessionStorage or window.__SERVER_DATA
     try{
   let email = '';
   const stored = sessionStorage.getItem('pmc_user');
-  if(stored){ try{ const u = JSON.parse(stored); if(u && u.email) email = u.email; }catch(_){} }
+  if(stored){ try{ const u = JSON.parse(stored); if(u){ CURRENT_USER = u; if(u.email) email = u.email; } }catch(_){} }
   if(!email && window.__SERVER_DATA && window.__SERVER_DATA.current_user && window.__SERVER_DATA.current_user.email) email = window.__SERVER_DATA.current_user.email;
   if(!email && window.ADMIN_USER_EMAIL) email = window.ADMIN_USER_EMAIL;
   const wrapper = document.getElementById('assigned-modules-wrapper'); if(wrapper) wrapper.dataset.userEmail = email || '';
@@ -263,7 +303,7 @@ document.addEventListener('DOMContentLoaded', function(){
           const acceptedTbody = document.getElementById('accepted-tbody');
           if(acceptedTbody){
             acceptedTbody.innerHTML = '';
-            const listA = data.accepted || [];
+            const listA = (data.accepted || []).filter(isOwnedByCurrentAdmin);
 
             // Prefer authoritative admissions array if provided by AdminAPI
             const admissionsArr = Array.isArray(data.admissions) ? data.admissions : (Array.isArray(data.assigned) ? data.assigned : []);
@@ -312,7 +352,7 @@ document.addEventListener('DOMContentLoaded', function(){
       const assignedTbody = document.getElementById('assigned-tbody');
       if(assignedTbody){
         assignedTbody.innerHTML = '';
-        const list = data.assigned || [];
+        const list = (data.assigned || []).filter(isOwnedByCurrentAdmin);
         setText('assigned-count', (list.length||0) + ' Assigned');
         if(list.length===0){
           assignedTbody.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-slate-500">No assigned students</td></tr>';
@@ -323,9 +363,7 @@ document.addEventListener('DOMContentLoaded', function(){
             const row = document.createElement('tr');
             row.className = 'hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-colors';
             const appCell = st.app_id ? `<a class="text-primary font-mono font-bold" href="/templates/admin/document_upload.html?app_id=${encodeURIComponent(st.app_id)}">#${st.app_id}</a>` : '<span class="text-xs text-slate-400">N/A</span>';
-            // Add icon for document upload step
-            const docUploadIcon = st.app_id ? `<a href="/templates/admin/document_upload_step1.html?app_id=${encodeURIComponent(st.app_id)}" class="inline-flex items-center gap-1 text-blue-600 hover:underline"><span class="material-symbols-outlined">upload_file</span>Upload Docs</a>` : '';
-            row.innerHTML = `<td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono font-bold">${appCell}<br/>${docUploadIcon}</td><td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">${st.name||''}</td><td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${st.unique_id||'N/A'}</td><td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">${st.preferred_dept_code||''}</span></td><td class="px-6 py-4">${optional||'<span class="text-xs text-[#617589] dark:text-gray-500">-</span>'}</td><td class="px-6 py-4">${st.allotted_dept_code?('<div class="flex items-center gap-2"><span class="material-symbols-outlined text-green-600 text-sm">check</span><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400>'+st.allotted_dept_code+'</span></div>'):'<span class="text-xs text-[#617589] dark:text-gray-500">Pending</span>'}</td><td class="px-6 py-4">${cutoffLabel}</td>`;
+            row.innerHTML = `<td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono font-bold">${appCell}</td><td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">${st.name||''}</td><td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${st.unique_id||'N/A'}</td><td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">${st.preferred_dept_code||''}</span></td><td class="px-6 py-4">${optional||'<span class="text-xs text-[#617589] dark:text-gray-500">-</span>'}</td><td class="px-6 py-4">${st.allotted_dept_code?('<div class="flex items-center gap-2"><span class="material-symbols-outlined text-green-600 text-sm">check</span><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400>'+st.allotted_dept_code+'</span></div>'):'<span class="text-xs text-[#617589] dark:text-gray-500">Pending</span>'}</td><td class="px-6 py-4">${cutoffLabel}</td>`;
             assignedTbody.appendChild(row);
           });
         }
@@ -345,14 +383,24 @@ document.addEventListener('DOMContentLoaded', function(){
   async function fetchAdmissionsAndRefresh(){
     const url = '/api/admissions';
     try{
-      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-      if(res.ok){
-        const arr = await res.json();
+      const [resAdm, resStu] = await Promise.all([
+        fetch(url, { headers: { 'Accept': 'application/json' } }),
+        fetch('/api/students', { headers: { 'Accept': 'application/json' } })
+      ]);
+
+      if(resAdm.ok){
+        const arr = await resAdm.json();
         window.__SERVER_DATA = window.__SERVER_DATA || {};
-        // store admissions so renderFromServerData can use it to mark assigned students
         window.__SERVER_DATA.admissions = Array.isArray(arr) ? arr : [];
       } else {
-        console.warn('fetchAdmissions failed', res.status);
+        console.warn('fetchAdmissions failed', resAdm.status);
+      }
+
+      if(resStu.ok){
+        const studentsArr = await resStu.json();
+        indexStudents(Array.isArray(studentsArr) ? studentsArr : []);
+      } else {
+        console.warn('fetchStudents failed', resStu.status);
       }
     }catch(err){ console.warn('fetchAdmissions error', err); }
     renderFromServerData();

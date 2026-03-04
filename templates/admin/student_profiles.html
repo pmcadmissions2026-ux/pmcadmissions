@@ -24,7 +24,7 @@
   <span class="material-symbols-outlined text-sm">file_download</span>
   Export to Excel
 </button>
-<a href="#" data-route="super_admin_dashboard" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">Back to Dashboard</a>
+<a href="/admin/admin_dashboard" id="backDashboardBtn" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">Back to Dashboard</a>
 <a href="#" id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">Logout</a>
 </div>
 </header>
@@ -487,6 +487,14 @@ if (logoutBtn) logoutBtn.addEventListener('click', (e) => { e.preventDefault(); 
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
+  try{
+    const u = JSON.parse(sessionStorage.getItem('pmc_user')||'null');
+    const backBtn = document.getElementById('backDashboardBtn');
+    if(backBtn){
+      const isSuper = u && Number(u.role_id) === 1;
+      backBtn.href = isSuper ? '/admin/super_admin_dashboard' : '/admin/admin_dashboard';
+    }
+  }catch(e){ console.warn('back dashboard route setup failed', e); }
   if (supabaseClient) loadData().catch(err => console.error('loadData error', err));
   else showConfigError();
 });

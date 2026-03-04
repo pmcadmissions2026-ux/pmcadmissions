@@ -33,16 +33,16 @@
         }
     </style>
 </head>
-<body class="bg-background-light dark:bg-background-dark font-display min-h-screen text-[#111418] dark:text-white">
+<body class="bg-gradient-to-b from-background-light to-white dark:from-background-dark dark:to-[#0b1118] font-display min-h-screen text-[#111418] dark:text-white">
 
 <!-- Navigation -->
-<div class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+<div class="bg-white/95 dark:bg-gray-900/95 backdrop-blur border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10">
     <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
             <span class="material-symbols-outlined text-primary text-2xl">assignment</span>
             <h1 class="text-lg font-bold">Admin - Branch Assignment</h1>
         </div>
-        <a href="#" data-route="admin_dashboard" class="text-sm text-gray-600 hover:text-primary">← Back to Dashboard</a>
+        <a href="/admin/admin_dashboard" id="backDashboardTop" class="text-sm text-gray-600 hover:text-primary">← Back to Dashboard</a>
     </div>
 </div>
 
@@ -50,12 +50,12 @@
     <div id="flash-container" class="mb-6"></div>
 
     <!-- Student Information Card -->
-    <div class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm mb-6 p-6">
+    <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-lg shadow-gray-200/50 dark:shadow-black/30 mb-6 p-6">
         <div class="flex items-start justify-between">
             <div class="flex-1">
                 <h2 id="student-fullname" class="text-2xl font-bold text-[#111418] dark:text-white mb-4">Student</h2>
                 
-                <div class="grid grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <p class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Unique ID</p>
                         <p id="student-unique-id" class="text-lg font-mono font-semibold text-primary">N/A</p>
@@ -65,14 +65,8 @@
                         <p id="student-community" class="text-lg font-semibold">General</p>
                     </div>
                     <div id="academic-block" style="display:none">
-                        <div>
-                            <p class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Cutoff Score</p>
-                            <p id="student-cutoff" class="text-lg font-semibold text-green-600">0.00</p>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Category</p>
-                            <p id="student-category" class="text-lg font-semibold">General</p>
-                        </div>
+                        <p class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Cutoff Score</p>
+                        <p id="student-cutoff" class="text-lg font-semibold text-green-600">0.00</p>
                     </div>
                 </div>
             </div>
@@ -86,7 +80,7 @@
     </div>
 
     <!-- Branch Assignment Form -->
-    <form id="assign-branch-form" onsubmit="return false;" class="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+    <form id="assign-branch-form" onsubmit="return false;" class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-lg shadow-gray-200/50 dark:shadow-black/30 overflow-hidden">
         <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-800">
             <h3 class="font-bold text-[#111418] dark:text-white flex items-center gap-2">
                 <span class="material-symbols-outlined text-primary">domain</span>
@@ -96,12 +90,30 @@
 
         <div class="p-6 space-y-6">
             <!-- Acceptance Step -->
-            <div id="acceptance-step" class="p-4 border rounded">
-                <p class="text-sm font-semibold mb-2">Acceptance</p>
-                <div id="acceptance-area" class="flex items-center gap-3">
-                    <div id="accept-status" class="text-sm text-gray-600">Loading status…</div>
-                    <input id="accept-name" placeholder="Enter your name to accept" class="rounded-lg border px-3 py-2" />
-                    <button id="accept-btn" class="px-4 py-2 bg-green-600 text-white rounded">Accept Student</button>
+            <div id="acceptance-step" class="p-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50/80 dark:bg-gray-800/50">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <p class="text-sm font-semibold">Acceptance</p>
+                    <div id="accept-status-badge" class="text-xs px-3 py-1 rounded-full bg-gray-200 text-gray-700">Loading…</div>
+                </div>
+                <div id="acceptance-area" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="sm:col-span-1">
+                        <label class="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">Status</label>
+                        <input id="accept-status" type="text" readonly class="w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-sm" value="Loading status..." />
+                    </div>
+                    <div class="sm:col-span-1">
+                        <label class="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">Accepted By</label>
+                        <input id="accepted-by" type="text" readonly class="w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-sm" value="—" />
+                    </div>
+                    <div class="sm:col-span-1">
+                        <label class="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">Accepted At</label>
+                        <input id="accepted-at" type="text" readonly class="w-full rounded-lg border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-sm" value="—" />
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button id="accept-btn" type="button" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors">
+                        <span class="material-symbols-outlined text-sm">check_circle</span>
+                        Accept Student
+                    </button>
                 </div>
             </div>
 
@@ -152,7 +164,7 @@
 
         <!-- Footer -->
         <div class="bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-800 px-6 py-4 flex justify-between items-center gap-4">
-            <a href="#" data-route="admin_dashboard" class="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-primary font-semibold transition-colors">
+            <a href="/admin/admin_dashboard" id="backDashboardBottom" class="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-primary font-semibold transition-colors">
                 <span class="material-symbols-outlined text-sm">arrow_back</span>
                 Cancel
             </a>
@@ -194,6 +206,18 @@ async function fetchJSON(url){ const r = await fetch(url); if(!r.ok) throw new E
 
 function qparam(name){ const u = new URL(location.href); return u.searchParams.get(name); }
 
+function setBackDashboardLinks(){
+    try{
+        const user = JSON.parse(sessionStorage.getItem('pmc_user')||'null');
+        const isSuper = user && Number(user.role_id) === 1;
+        const href = isSuper ? '/admin/super_admin_dashboard' : '/admin/admin_dashboard';
+        const top = document.getElementById('backDashboardTop');
+        const bottom = document.getElementById('backDashboardBottom');
+        if(top) top.href = href;
+        if(bottom) bottom.href = href;
+    }catch(e){ console.warn('setBackDashboardLinks error', e); }
+}
+
 async function loadDepartments(){
     const dest1 = document.getElementById('departments-preferred');
     const dest2 = document.getElementById('departments-optional');
@@ -224,6 +248,12 @@ async function loadContext(){
             const list = await fetchJSON('/api/enquiries');
             const en = list.find(x=>String(x.id)===String(enquiryId));
             if(en){ fillFromEnquiry(en); }
+            if(en && en.student_id){
+                try{
+                    const s = await fetchJSON('/api/students/' + encodeURIComponent(en.student_id));
+                    if(s){ fillFromStudent(s); }
+                }catch(e){ console.warn('student load by enquiry failed', e); }
+            }
         }catch(e){ console.error(e); }
     }else if(studentId){
         try{
@@ -237,7 +267,7 @@ function fillFromEnquiry(en){
     document.getElementById('student-fullname').textContent = en.full_name || en.student_full_name || 'Student';
     document.getElementById('student-unique-id').textContent = en.unique_id || 'N/A';
     document.getElementById('student-community').textContent = en.community || 'General';
-    if('cutoff' in en){ document.getElementById('student-cutoff').textContent = Number(en.cutoff||0).toFixed(2); document.getElementById('student-category').textContent = en.category_7_5? '7.5':'General'; document.getElementById('academic-block').style.display='flex'; }
+    if('cutoff' in en){ document.getElementById('student-cutoff').textContent = Number(en.cutoff||0).toFixed(2); document.getElementById('academic-block').style.display='block'; }
     if(en.student_id) document.getElementById('assign-branch-form').dataset.studentId = en.student_id;
 }
 
@@ -245,21 +275,70 @@ function fillFromStudent(s){
     document.getElementById('student-fullname').textContent = s.full_name || 'Student';
     document.getElementById('student-unique-id').textContent = s.unique_id || 'N/A';
     document.getElementById('student-community').textContent = s.community || 'General';
-    // acceptance status
+    // show cutoff from academics table
+    const sid = s.id;
+    if(sid){
+        fetchJSON('/api/academics?student_id=' + encodeURIComponent(sid)).then(arr => {
+            const a = Array.isArray(arr) && arr.length ? arr[0] : null;
+            if(a){
+                const cutoff = a.cutoff !== undefined && a.cutoff !== null ? Number(a.cutoff).toFixed(2) : 'N/A';
+                document.getElementById('student-cutoff').textContent = cutoff;
+                document.getElementById('academic-block').style.display='block';
+            }
+        }).catch(e => console.warn('academics load failed', e));
+    }
+    renderAcceptance(s);
+}
+
+function renderAcceptance(student){
+    const isAccepted = !!(student && student.status && String(student.status).toLowerCase() === 'accepted');
     const statusEl = document.getElementById('accept-status');
-    const acceptBtn = document.getElementById('accept-btn');
-    const acceptName = document.getElementById('accept-name');
-    if(s.status && s.status.toLowerCase() === 'accepted'){
-        statusEl.textContent = `Accepted by: ${s.accepted_by || '—'} at ${s.accepted_at || '—'}`;
-        acceptName.style.display = 'none';
-        if(acceptBtn) acceptBtn.style.display = 'none';
-        // enable department selection
-        enableDepartmentControls(true);
-    } else {
-        statusEl.textContent = 'Not accepted yet';
-        // prefill accept name from sessionStorage if available
-        try{ const u = JSON.parse(sessionStorage.getItem('pmc_user')||'null'); if(u){ acceptName.value = (u.first_name? (u.first_name + ' ' + (u.last_name||'')) : (u.email||'')).toUpperCase(); } }catch(e){}
-        enableDepartmentControls(false);
+    const byEl = document.getElementById('accepted-by');
+    const atEl = document.getElementById('accepted-at');
+    const badge = document.getElementById('accept-status-badge');
+    const btn = document.getElementById('accept-btn');
+
+    if(statusEl) statusEl.value = isAccepted ? 'Accepted' : 'Pending Acceptance';
+    if(byEl) byEl.value = (student && student.accepted_by) ? student.accepted_by : '—';
+    if(atEl) atEl.value = (student && student.accepted_at) ? student.accepted_at : '—';
+
+    if(badge){
+        badge.className = `text-xs px-3 py-1 rounded-full ${isAccepted ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`;
+        badge.textContent = isAccepted ? 'Accepted' : 'Pending';
+    }
+
+    if(btn){
+        btn.disabled = isAccepted;
+        btn.className = `inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white font-semibold transition-colors ${isAccepted ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`;
+    }
+
+    enableDepartmentControls(isAccepted);
+}
+
+async function acceptStudent(){
+    const form = document.getElementById('assign-branch-form');
+    const studentId = form && form.dataset ? form.dataset.studentId : null;
+    if(!studentId){
+        showFlash('error', 'Student record is not loaded yet.');
+        return;
+    }
+    try{
+        const user = JSON.parse(sessionStorage.getItem('pmc_user')||'null') || {};
+        const acceptedBy = user.email || user.username || user.name || user.full_name || 'Admin';
+        const r = await fetch('/api/students/' + encodeURIComponent(studentId) + '/accept', {
+            method: 'POST',
+            headers: { 'Content-Type':'application/json' },
+            body: JSON.stringify({ accepted_by: acceptedBy })
+        });
+        if(!r.ok){
+            showFlash('error', 'Accept failed: ' + await r.text());
+            return;
+        }
+        const updated = await r.json();
+        renderAcceptance(updated || {});
+        showFlash('success', 'Student accepted successfully. You can now assign branch.');
+    }catch(e){
+        showFlash('error', 'Accept failed: ' + String(e));
     }
 }
 
@@ -298,22 +377,7 @@ document.getElementById('assign-submit').addEventListener('click', async ()=>{
     }catch(e){ showFlash('error', 'Error: '+String(e)); }
 });
 
-// Accept student handler
-document.getElementById('accept-btn').addEventListener('click', async function(){
-    const form = document.getElementById('assign-branch-form');
-    const studentId = form.dataset.studentId;
-    if(!studentId){ alert('No student selected'); return; }
-    const name = (document.getElementById('accept-name').value || '').trim();
-    if(!name){ alert('Please enter your name to accept'); return; }
-    try{
-        const r = await fetch(`/api/students/${encodeURIComponent(studentId)}/accept`, { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ accepted_by: name }) });
-        if(!r.ok){ const txt = await r.text(); showFlash('error','Accept failed: '+txt); return; }
-        const updated = await r.json();
-        showFlash('success','Student accepted by ' + name);
-        // refresh student info
-        fillFromStudent(updated);
-    }catch(e){ showFlash('error', 'Accept error: '+String(e)); }
-});
+document.getElementById('accept-btn').addEventListener('click', acceptStudent);
 
 // After creating admission, allow immediate allotment
 async function showAllotmentUI(admission){
@@ -346,6 +410,6 @@ function showFlash(kind, text){
     c.innerHTML = `<div class="mb-6 p-4 rounded-lg ${kind==='success'?'bg-green-100 text-green-800 border border-green-300':'bg-red-100 text-red-800 border border-red-300'}"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-sm">${kind==='success'?'check_circle':'error'}</span>${escapeHtml(text)}</div></div>`;
 }
 
-(async function(){ await loadDepartments(); await loadContext(); })();
+(async function(){ setBackDashboardLinks(); await loadDepartments(); await loadContext(); })();
 </script>
 </html>
