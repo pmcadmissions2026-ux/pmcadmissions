@@ -318,6 +318,35 @@
 <input id="cutoff" class="rounded-lg border-primary/30 bg-primary/10 text-primary font-bold h-12 px-4" readonly="" type="text" value="0.00"/>
 </label>
 </div>
+
+<h3 class="text-lg font-bold mt-8 mb-4 text-gray-700 dark:text-gray-300">Additional Subject Entry</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Language Subject Name</p>
+<input name="language_subject_name" class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="e.g. Tamil / English" type="text"/>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Language Subject Marks</p>
+<input name="language_subject_marks" class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="0-100" type="number" step="0.01"/>
+</label>
+<div class="md:col-span-2">
+<p class="text-sm font-semibold mb-2">Other Subjects</p>
+<div class="overflow-x-auto rounded-lg border border-[#dbe0e6] dark:border-[#2d3748]">
+<table class="w-full text-sm">
+<thead class="bg-gray-50 dark:bg-background-dark/40">
+<tr>
+<th class="text-left px-3 py-2">Subject</th>
+<th class="text-left px-3 py-2">Marks</th>
+<th class="text-left px-3 py-2">Action</th>
+</tr>
+</thead>
+<tbody id="other-subjects-rows"></tbody>
+</table>
+</div>
+<button type="button" id="add-subject-row" class="mt-3 px-3 py-2 rounded-lg border border-[#dbe0e6] dark:border-[#2d3748] text-sm hover:bg-gray-50 dark:hover:bg-gray-800">+ Add Subject</button>
+<p class="text-xs text-gray-500 mt-1">Enter each subject and marks in separate rows.</p>
+</div>
+</div>
 </div>
 <!-- Social Details Section -->
 <div class="p-8 section">
@@ -341,6 +370,7 @@
 <option value="">Select Community</option>
 <option value="OC">OC</option>
 <option value="BC">BC</option>
+<option value="MBC">MBC</option>
 <option value="SC">SC</option>
 <option value="ST">ST</option>
 <option value="SCA">SCA</option>
@@ -530,17 +560,68 @@
         function saveDraft() {
             alert('Draft save functionality will be implemented soon!');
         }
+
+        function addOtherSubjectRow(subjectName = '', marks = '') {
+            const tbody = document.getElementById('other-subjects-rows');
+            if (!tbody) return;
+            const tr = document.createElement('tr');
+            tr.className = 'other-subject-row border-t border-[#eef2f7] dark:border-[#2d3748]';
+            tr.innerHTML = `
+                <td class="px-3 py-2"><input type="text" class="other-subject-name rounded-lg border-[#dbe0e6] h-10 px-3 dark:bg-background-dark dark:border-[#2d3748]" placeholder="e.g. Biology" value="${String(subjectName).replace(/"/g,'&quot;')}"></td>
+                <td class="px-3 py-2"><input type="number" step="0.01" class="other-subject-marks rounded-lg border-[#dbe0e6] h-10 px-3 dark:bg-background-dark dark:border-[#2d3748]" placeholder="0-100" value="${marks}"></td>
+                <td class="px-3 py-2"><button type="button" class="remove-subject-row px-2 py-1 rounded border border-red-200 text-red-600 hover:bg-red-50">Remove</button></td>
+            `;
+            tbody.appendChild(tr);
+        }
     </script>
     <script>
         // New client submit handler: post student + academic + enquiry to server
         document.addEventListener('DOMContentLoaded', function(){
             try{ const u = JSON.parse(sessionStorage.getItem('pmc_user')||'null'); if(u){ document.getElementById('staff-name').textContent = (u.first_name||u.email||'Staff Member'); } }catch(e){}
+
+            const addBtn = document.getElementById('add-subject-row');
+            if(addBtn){
+                addBtn.addEventListener('click', function(){ addOtherSubjectRow('', ''); });
+            }
+            const rowsRoot = document.getElementById('other-subjects-rows');
+            if(rowsRoot){
+                rowsRoot.addEventListener('click', function(ev){
+                    const btn = ev.target.closest('.remove-subject-row');
+                    if(!btn) return;
+                    const row = btn.closest('.other-subject-row');
+                    if(row) row.remove();
+                });
+            }
+            addOtherSubjectRow('', '');
+
             const form = document.querySelector('form[method="POST"]');
             if(!form) return;
             form.addEventListener('submit', async function(e){
                 e.preventDefault();
                 calculateCutoff();
                 const fd = new FormData(form);
+                let otherSubjectsJson = null;
+                const subjectRows = Array.from(document.querySelectorAll('.other-subject-row'));
+                const tempObj = {};
+                for (const row of subjectRows) {
+                    const nameEl = row.querySelector('.other-subject-name');
+                    const marksEl = row.querySelector('.other-subject-marks');
+                    const subjectName = (nameEl && nameEl.value ? nameEl.value : '').trim();
+                    const marksRaw = marksEl && marksEl.value !== '' ? Number(marksEl.value) : null;
+                    if(!subjectName && (marksRaw === null || Number.isNaN(marksRaw))) continue;
+                    if(!subjectName){
+                        const flash = document.getElementById('flash-area');
+                        if(flash) flash.innerHTML = '<div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">Please enter subject name for all added rows.</div>';
+                        return;
+                    }
+                    if(marksRaw === null || Number.isNaN(marksRaw)){
+                        const flash = document.getElementById('flash-area');
+                        if(flash) flash.innerHTML = '<div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">Please enter valid marks for all added rows.</div>';
+                        return;
+                    }
+                    tempObj[subjectName] = marksRaw;
+                }
+                if(Object.keys(tempObj).length > 0) otherSubjectsJson = tempObj;
                 const student = {
                     full_name: fd.get('full_name')||'',
                     email: fd.get('email')||null,
@@ -577,6 +658,9 @@
                     maths_marks: fd.get('maths_marks')? Number(fd.get('maths_marks')): null,
                     physics_marks: fd.get('physics_marks')? Number(fd.get('physics_marks')): null,
                     chemistry_marks: fd.get('chemistry_marks')? Number(fd.get('chemistry_marks')): null,
+                    language_subject_name: fd.get('language_subject_name') || null,
+                    language_subject_marks: fd.get('language_subject_marks') ? Number(fd.get('language_subject_marks')) : null,
+                    other_subjects_json: otherSubjectsJson,
                     cutoff: document.getElementById('cutoff') ? Number(document.getElementById('cutoff').value || 0) : null,
                     tnea_average: document.getElementById('tnea_average') ? Number(document.getElementById('tnea_average').value || 0) : null,
                     tnea_eligible: (function(){ try{ const el = document.getElementById('tnea_eligibility'); return el && el.className && el.className.indexOf('green') !== -1 ? true : (el && el.className && el.className.indexOf('red') !== -1 ? false : null);}catch(e){return null;} })()

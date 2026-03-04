@@ -93,6 +93,10 @@
 <th class="px-4 py-4 text-xs font-bold text-[#1f2937] dark:text-[#e2e8f0] uppercase tracking-wider">Status</th>
 <th class="px-4 py-4 text-xs font-bold text-[#1f2937] dark:text-[#e2e8f0] uppercase tracking-wider">School</th>
 <th class="px-4 py-4 text-xs font-bold text-[#1f2937] dark:text-[#e2e8f0] uppercase tracking-wider">HSC %</th>
+<th class="px-4 py-4 text-xs font-bold text-[#1f2937] dark:text-[#e2e8f0] uppercase tracking-wider">Maths</th>
+<th class="px-4 py-4 text-xs font-bold text-[#1f2937] dark:text-[#e2e8f0] uppercase tracking-wider">Physics</th>
+<th class="px-4 py-4 text-xs font-bold text-[#1f2937] dark:text-[#e2e8f0] uppercase tracking-wider">Chemistry</th>
+<th class="px-4 py-4 text-xs font-bold text-[#1f2937] dark:text-[#e2e8f0] uppercase tracking-wider">Language</th>
 <th class="px-4 py-4 text-xs font-bold text-[#1f2937] dark:text-[#e2e8f0] uppercase tracking-wider">Cutoff</th>
 <th class="px-4 py-4 text-xs font-bold text-[#1f2937] dark:text-[#e2e8f0] uppercase tracking-wider">TNEA Elig.</th>
 <th class="px-4 py-4 text-xs font-bold text-[#1f2937] dark:text-[#e2e8f0] uppercase tracking-wider">TNEA Avg</th>
@@ -231,7 +235,7 @@ async function loadData() {
 
 function showConfigError() {
   const tbody = document.getElementById('students-rows');
-  tbody.innerHTML = '<tr><td colspan="23" class="px-6 py-12 text-center"><div class="flex flex-col items-center gap-3"><span class="material-symbols-outlined text-6xl text-slate-300">error</span><p class="text-base font-semibold text-slate-600 dark:text-slate-400">Supabase is not configured. Please set SUPABASE_URL and SUPABASE_ANON_KEY in the script.</p></div></td></tr>';
+  tbody.innerHTML = '<tr><td colspan="27" class="px-6 py-12 text-center"><div class="flex flex-col items-center gap-3"><span class="material-symbols-outlined text-6xl text-slate-300">error</span><p class="text-base font-semibold text-slate-600 dark:text-slate-400">Supabase is not configured. Please set SUPABASE_URL and SUPABASE_ANON_KEY in the script.</p></div></td></tr>';
 }
 
 function renderTable(students) {
@@ -261,6 +265,10 @@ function renderTable(students) {
     const uniqueId = pick(student, 'unique_id', 'id') || 'N/A';
     const plus2 = pick(student, 'plus2_percentage', 'plus2_percent', 'hsc_percentage') || 'N/A';
     const schoolName = pick(academic, 'school_name', 'school', 'institute_name') || 'N/A';
+    const mathsMarks = pick(academic, 'maths_marks') || 'N/A';
+    const physicsMarks = pick(academic, 'physics_marks') || 'N/A';
+    const chemistryMarks = pick(academic, 'chemistry_marks') || 'N/A';
+    const languageName = pick(academic, 'language_subject_name') || 'N/A';
 
     // resolve preferred department names from applications (map ids to names when necessary)
     // Resolve preferred departments from multiple sources: application rows, admissions table, academics
@@ -342,6 +350,10 @@ function renderTable(students) {
       <td class="px-4 py-3"><span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">${student.status || 'N/A'}</span></td>
       <td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1] truncate">${schoolName}</td>
       <td class="px-4 py-3 text-xs font-semibold text-[#1f2937] dark:text-[#f0f9ff] bg-amber-50 dark:bg-amber-900/20">${plus2}</td>
+      <td class="px-4 py-3 text-xs font-semibold text-[#1f2937] dark:text-[#f0f9ff]">${mathsMarks}</td>
+      <td class="px-4 py-3 text-xs font-semibold text-[#1f2937] dark:text-[#f0f9ff]">${physicsMarks}</td>
+      <td class="px-4 py-3 text-xs font-semibold text-[#1f2937] dark:text-[#f0f9ff]">${chemistryMarks}</td>
+      <td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1]">${languageName}</td>
       <td class="px-4 py-3 text-xs font-bold text-[#7c2d12] dark:text-[#fed7aa] bg-orange-100 dark:bg-orange-900/30 rounded px-2">${academic.cutoff || academic.cutoff_score || 'N/A'}</td>
       <td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1]">${academic.tnea_eligible || academic.tnea || 'N/A'}</td>
       <td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1]">${academic.tnea_average || academic.tnea_avg || 'N/A'}</td>
@@ -371,12 +383,19 @@ function renderTable(students) {
 
 // Export modal helpers
 const EXPORT_COLUMNS = ['full_name','unique_id','email','phone','gender','dob','community','religion','status','school_name','plus2_percentage','cutoff','tnea_eligible','tnea_average','preferred_depts','quota','allotted_dept','order','consortium_number','counsel_status','payments','documents'];
+const EXPORT_COLUMNS_EXT = ['maths_marks','physics_marks','chemistry_marks','language_subject_name'];
 
 function populateExportFields() {
   const container = document.getElementById('exportFieldsContainer');
   if (!container) return;
   container.innerHTML = '';
   EXPORT_COLUMNS.forEach(col => {
+    const lbl = document.createElement('label');
+    lbl.className = 'inline-flex items-center gap-2 text-sm';
+    lbl.innerHTML = `<input type="checkbox" class="export-field-checkbox" value="${col}" onchange="updateSelectedCount()" checked /> <span>${col}</span>`;
+    container.appendChild(lbl);
+  });
+  EXPORT_COLUMNS_EXT.forEach(col => {
     const lbl = document.createElement('label');
     lbl.className = 'inline-flex items-center gap-2 text-sm';
     lbl.innerHTML = `<input type="checkbox" class="export-field-checkbox" value="${col}" onchange="updateSelectedCount()" checked /> <span>${col}</span>`;
@@ -412,17 +431,21 @@ function submitExport() {
     data.status = tds[8]?.textContent.trim() || '';
     data.school_name = tds[9]?.textContent.trim() || '';
     data.plus2_percentage = tds[10]?.textContent.trim() || '';
-    data.cutoff = tds[11]?.textContent.trim() || '';
-    data.tnea_eligible = tds[12]?.textContent.trim() || '';
-    data.tnea_average = tds[13]?.textContent.trim() || '';
-    data.preferred_depts = tds[14]?.textContent.trim() || '';
-    data.quota = tds[15]?.textContent.trim() || '';
-    data.allotted_dept = tds[16]?.textContent.trim() || '';
-    data.order = tds[17]?.textContent.trim() || '';
-    data.consortium_number = tds[18]?.textContent.trim() || '';
-    data.counsel_status = tds[19]?.textContent.trim() || '';
-    data.payments = tds[20]?.textContent.trim() || '';
-    data.documents = tds[21]?.textContent.trim() || '';
+    data.maths_marks = tds[11]?.textContent.trim() || '';
+    data.physics_marks = tds[12]?.textContent.trim() || '';
+    data.chemistry_marks = tds[13]?.textContent.trim() || '';
+    data.language_subject_name = tds[14]?.textContent.trim() || '';
+    data.cutoff = tds[15]?.textContent.trim() || '';
+    data.tnea_eligible = tds[16]?.textContent.trim() || '';
+    data.tnea_average = tds[17]?.textContent.trim() || '';
+    data.preferred_depts = tds[18]?.textContent.trim() || '';
+    data.quota = tds[19]?.textContent.trim() || '';
+    data.allotted_dept = tds[20]?.textContent.trim() || '';
+    data.order = tds[21]?.textContent.trim() || '';
+    data.consortium_number = tds[22]?.textContent.trim() || '';
+    data.counsel_status = tds[23]?.textContent.trim() || '';
+    data.payments = tds[24]?.textContent.trim() || '';
+    data.documents = tds[25]?.textContent.trim() || '';
 
     const line = selected.map(k => `"${(data[k]||'').replace(/"/g,'""')}"`).join(',');
     rows.push(line);

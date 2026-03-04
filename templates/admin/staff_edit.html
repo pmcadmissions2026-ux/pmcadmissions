@@ -86,7 +86,7 @@
 
 <script>
 const MODULES = [
-  'dashboard', 'enquiries', 'applications', 'branch_selection', 'counselling', 'payments', 'documents', 'reports', 'staff'
+  'dashboard', 'enquiries', 'applications', 'branch_selection', 'counselling', 'payments', 'documents', 'student_management', 'reports', 'staff'
 ];
 function $(id){ return document.getElementById(id); }
 function showFlash(msg, type='info'){ const fc=$('flashContainer'); if(!fc) return; fc.innerHTML = `<div class="bg-${type==='success'?'green':'red'}-50 border border-${type==='success'?'green':'red'}-200 text-${type==='success'?'green':'red'}-800 px-4 py-3 rounded-lg">${msg}</div>`; setTimeout(()=>{ if(fc) fc.innerHTML=''; },3000);} 

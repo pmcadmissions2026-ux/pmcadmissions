@@ -291,6 +291,51 @@
                     </div>
                 </div>
             </div>
+
+            <div class="mt-8">
+                <h4 class="text-lg font-semibold text-[#111418] dark:text-white mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm text-primary">language</span>
+                    Additional Subjects
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <p class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Language Subject</p>
+                        <p class="text-base font-semibold text-[#111418] dark:text-white">{{ academic.language_subject_name or 'N/A' }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-1">Language Marks</p>
+                        <p class="text-base font-semibold text-[#111418] dark:text-white">{{ academic.language_subject_marks or 'N/A' }}</p>
+                    </div>
+                </div>
+
+                <div>
+                    <p class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wide mb-2">Other Subjects</p>
+                    {% if academic.other_subjects_json and academic.other_subjects_json is mapping %}
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <thead class="bg-gray-50 dark:bg-gray-800">
+                                <tr>
+                                    <th class="text-left px-3 py-2">Subject</th>
+                                    <th class="text-left px-3 py-2">Marks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for subject_name, marks in academic.other_subjects_json.items() %}
+                                <tr class="border-t border-gray-200 dark:border-gray-700">
+                                    <td class="px-3 py-2">{{ subject_name }}</td>
+                                    <td class="px-3 py-2">{{ marks }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% elif academic.other_subjects_json %}
+                    <p class="text-sm text-[#111418] dark:text-white">{{ academic.other_subjects_json }}</p>
+                    {% else %}
+                    <p class="text-sm text-gray-500">N/A</p>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
     {% endif %}

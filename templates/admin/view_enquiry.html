@@ -92,6 +92,32 @@
                 <p id="academics-chemistry_marks" class="text-2xl font-bold text-orange-600">—</p>
               </div>
             </div>
+            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="bg-purple-50 p-3 rounded">
+                <p class="text-xs text-gray-600">Language Subject</p>
+                <p id="academics-language_subject_name" class="text-lg font-bold text-purple-700">—</p>
+              </div>
+              <div class="bg-pink-50 p-3 rounded">
+                <p class="text-xs text-gray-600">Language Marks</p>
+                <p id="academics-language_subject_marks" class="text-lg font-bold text-pink-700">—</p>
+              </div>
+            </div>
+            <div class="mt-4">
+              <p class="text-xs font-semibold text-gray-600 mb-2">Other Subjects</p>
+              <div class="overflow-x-auto rounded border border-gray-200">
+                <table class="w-full text-sm">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="text-left px-3 py-2">Subject</th>
+                      <th class="text-left px-3 py-2">Marks</th>
+                    </tr>
+                  </thead>
+                  <tbody id="academics-other_subjects_rows">
+                    <tr><td colspan="2" class="px-3 py-2 text-gray-500">—</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </section>
 
           <!-- Metadata -->
@@ -130,6 +156,25 @@
       function fmtTime(dt){ if(!dt) return 'N/A'; try{ const d=new Date(dt); return d.toISOString().slice(11,16);}catch(e){return dt;} }
 
       function setText(id, value){ const el=document.getElementById(id); if(el) el.textContent = (value===undefined || value===null || value==='') ? '—' : String(value); }
+      function renderOtherSubjects(value){
+        const tbody = document.getElementById('academics-other_subjects_rows');
+        if(!tbody) return;
+        tbody.innerHTML = '';
+        let obj = value;
+        if(typeof obj === 'string'){
+          try{ obj = JSON.parse(obj); }catch(e){ obj = null; }
+        }
+        if(!obj || typeof obj !== 'object' || Array.isArray(obj) || Object.keys(obj).length === 0){
+          tbody.innerHTML = '<tr><td colspan="2" class="px-3 py-2 text-gray-500">—</td></tr>';
+          return;
+        }
+        Object.entries(obj).forEach(([subject, marks]) => {
+          const tr = document.createElement('tr');
+          tr.className = 'border-t';
+          tr.innerHTML = `<td class="px-3 py-2">${String(subject)}</td><td class="px-3 py-2">${String(marks)}</td>`;
+          tbody.appendChild(tr);
+        });
+      }
 
       async function load(){
         const qp = new URLSearchParams(window.location.search);
@@ -151,7 +196,7 @@
           }
           // academics
           const ares = await fetch('/api/academics?student_id=' + encodeURIComponent(enquiry.student_id));
-          if(ares.ok){ const acad = await ares.json(); if(Array.isArray(acad) && acad.length>0){ const a = acad[0]; setText('academics-maths_marks', a.maths_marks); setText('academics-physics_marks', a.physics_marks); setText('academics-chemistry_marks', a.chemistry_marks); } }
+          if(ares.ok){ const acad = await ares.json(); if(Array.isArray(acad) && acad.length>0){ const a = acad[0]; setText('academics-maths_marks', a.maths_marks); setText('academics-physics_marks', a.physics_marks); setText('academics-chemistry_marks', a.chemistry_marks); setText('academics-language_subject_name', a.language_subject_name); setText('academics-language_subject_marks', a.language_subject_marks); renderOtherSubjects(a.other_subjects_json); } else { renderOtherSubjects(null); } }
         }
 
         // metadata

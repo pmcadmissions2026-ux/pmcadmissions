@@ -315,6 +315,20 @@ app.post('/api/enquiries', async (req, res) => {
     // Insert academics if provided
     let createdAcademic = null;
     if(academic){
+      if(typeof academic.other_subjects_json === 'string'){
+        const raw = academic.other_subjects_json.trim();
+        if(raw){
+          try{
+            const parsed = JSON.parse(raw);
+            if(parsed && typeof parsed === 'object' && !Array.isArray(parsed)) academic.other_subjects_json = parsed;
+            else return res.status(400).json({ error: 'academic.other_subjects_json must be a JSON object' });
+          }catch(e){
+            return res.status(400).json({ error: 'Invalid academic.other_subjects_json JSON' });
+          }
+        } else {
+          academic.other_subjects_json = null;
+        }
+      }
       academic.student_id = studentId;
       const { data: acadData, error: acadErr } = await supabase.from('academics').insert(academic).select().maybeSingle();
       if(acadErr) return res.status(500).json({ error: acadErr.message });

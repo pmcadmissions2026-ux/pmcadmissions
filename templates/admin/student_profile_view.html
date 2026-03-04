@@ -120,6 +120,12 @@ function safeText(value) { return value === null || value === undefined ? 'N/A' 
 let deptMap = {};
 
 function firstDefined(...vals){ for(const v of vals){ if(v!==undefined && v!==null) return v;} return null; }
+function resolveDeptLabel(raw){
+  if(raw === null || raw === undefined || raw === '') return 'N/A';
+  const s = String(raw);
+  if(/^\d+$/.test(s)) return deptMap[s] || s;
+  return deptMap[s] || s;
+}
 
 async function loadProfile() {
   if (!supabaseClient) return showError('Supabase is not configured.');
@@ -190,9 +196,9 @@ async function loadProfile() {
   // debug log fetched blobs to help identify missing fields
   console.debug('fetched profile related data', { applications, documents, counselling, admissions, departments });
 
-  renderAcademic(academic);
-  renderAdmissions(admissions);
-  renderApplications(applications, documents, counselling);
+  renderAcademic(academic, student);
+  renderAdmissions(admissions, applications);
+  renderApplications(applications, documents, counselling, admissions);
   renderCounselling(counselling);
   renderPayments(payments);
 }
@@ -213,9 +219,9 @@ function renderPersonal(st) {
   const fields = [
     ['Full Name', st.full_name || st.name || 'N/A'],
     ['Email', st.email || 'N/A'],
-    ['Phone', st.phone || 'N/A'],
+    ['Phone', st.phone || st.whatsapp_number || st.mobile || 'N/A'],
     ['Gender', st.gender || 'N/A'],
-    ['Date of Birth', st.dob || 'N/A'],
+    ['Date of Birth', st.dob || st.date_of_birth || st.birth_date || 'N/A'],
     ['Status', st.status || 'N/A'],
     ['Community', st.community || 'N/A'],
     ['Religion', st.religion || 'N/A']
@@ -227,17 +233,20 @@ function renderPersonal(st) {
   });
 }
 
-function renderAcademic(ac) {
+function renderAcademic(ac, st) {
   const section = document.getElementById('academic-section');
   const body = document.getElementById('academic-body');
   if (!ac) { section.classList.add('hidden'); return; }
   section.classList.remove('hidden');
   body.innerHTML = '';
+
+  const hscPct = firstDefined(ac.plus2_percentage, ac.hsc_percentage, st && st.plus2_percentage, st && st.plus2_percent, st && st.hsc_percentage);
+  const tneaEligible = ac.tnea_eligible === true ? 'Yes' : (ac.tnea_eligible === false ? 'No' : firstDefined(ac.tnea_eligible, 'N/A'));
   const items = [
     ['School Name', ac.school_name || 'N/A'],
-    ['HSC Percentage', ac.plus2_percentage ? ac.plus2_percentage + '%' : (ac.plus2_percentage || 'N/A')],
+    ['HSC Percentage', hscPct ? (String(hscPct).includes('%') ? hscPct : `${hscPct}%`) : 'N/A'],
     ['Cutoff Score', ac.cutoff || 'N/A'],
-    ['TNEA Eligible', ac.tnea_eligible || 'N/A'],
+    ['TNEA Eligible', tneaEligible],
     ['TNEA Average', ac.tnea_average || 'N/A']
   ];
   items.forEach(it => {
@@ -245,9 +254,51 @@ function renderAcademic(ac) {
     el.innerHTML = `<p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">${it[0]}</p><p class="text-base font-semibold text-[#111418] dark:text-white">${safeText(it[1])}</p>`;
     body.appendChild(el);
   });
+
+  const subjectsWrapper = document.createElement('div');
+  subjectsWrapper.className = 'md:col-span-2 lg:col-span-3 mt-2';
+  subjectsWrapper.innerHTML = `
+    <div class="p-4 rounded-lg border border-[#e5e7eb] dark:border-[#4a5568] bg-gradient-to-br from-slate-50 to-slate-100 dark:from-[#2d3748] dark:to-[#1a202c]">
+      <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Subject Marks</p>
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div class="bg-white dark:bg-[#0f172a] rounded-lg p-3 border border-[#e5e7eb] dark:border-[#334155]"><p class="text-xs text-slate-500">Maths</p><p class="text-lg font-bold text-[#111418] dark:text-white">${safeText(ac.maths_marks)}</p></div>
+        <div class="bg-white dark:bg-[#0f172a] rounded-lg p-3 border border-[#e5e7eb] dark:border-[#334155]"><p class="text-xs text-slate-500">Physics</p><p class="text-lg font-bold text-[#111418] dark:text-white">${safeText(ac.physics_marks)}</p></div>
+        <div class="bg-white dark:bg-[#0f172a] rounded-lg p-3 border border-[#e5e7eb] dark:border-[#334155]"><p class="text-xs text-slate-500">Chemistry</p><p class="text-lg font-bold text-[#111418] dark:text-white">${safeText(ac.chemistry_marks)}</p></div>
+        <div class="bg-white dark:bg-[#0f172a] rounded-lg p-3 border border-[#e5e7eb] dark:border-[#334155]"><p class="text-xs text-slate-500">Language</p><p class="text-lg font-bold text-[#111418] dark:text-white">${safeText(ac.language_subject_name)}</p></div>
+        <div class="bg-white dark:bg-[#0f172a] rounded-lg p-3 border border-[#e5e7eb] dark:border-[#334155]"><p class="text-xs text-slate-500">Language Marks</p><p class="text-lg font-bold text-[#111418] dark:text-white">${safeText(ac.language_subject_marks)}</p></div>
+      </div>
+    </div>
+  `;
+  body.appendChild(subjectsWrapper);
+
+  // Other subjects JSON (subject -> marks), similar to enquiry view
+  let otherSubjects = ac.other_subjects_json;
+  if(typeof otherSubjects === 'string'){
+    try{ otherSubjects = JSON.parse(otherSubjects); }catch(e){ otherSubjects = null; }
+  }
+  if(otherSubjects && typeof otherSubjects === 'object' && !Array.isArray(otherSubjects) && Object.keys(otherSubjects).length){
+    const otherWrap = document.createElement('div');
+    otherWrap.className = 'md:col-span-2 lg:col-span-3 mt-2';
+    let rows = '';
+    Object.entries(otherSubjects).forEach(([subject, marks]) => {
+      rows += `<tr class="border-t border-[#e5e7eb] dark:border-[#334155]"><td class="px-3 py-2 text-sm">${safeText(subject)}</td><td class="px-3 py-2 text-sm">${safeText(marks)}</td></tr>`;
+    });
+    otherWrap.innerHTML = `
+      <div class="p-4 rounded-lg border border-[#e5e7eb] dark:border-[#4a5568] bg-white dark:bg-[#0f172a]">
+        <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Other Subjects</p>
+        <div class="overflow-x-auto rounded border border-[#e5e7eb] dark:border-[#334155]">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-slate-50 dark:bg-[#1e293b]"><tr><th class="px-3 py-2">Subject</th><th class="px-3 py-2">Marks</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>
+    `;
+    body.appendChild(otherWrap);
+  }
 }
 
-function renderAdmissions(adms) {
+function renderAdmissions(adms, apps) {
   const section = document.getElementById('admissions-section');
   const body = document.getElementById('admissions-body');
   if (!adms || !adms.length) { section.classList.add('hidden'); return; }
@@ -257,16 +308,26 @@ function renderAdmissions(adms) {
     const div = document.createElement('div');
     div.className = 'p-4 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-[#2d3748] dark:to-[#1a202c] rounded-lg border border-[#e5e7eb] dark:border-[#4a5568]';
     // resolve preferred and optional branch names (support ids)
-    const pref = adm.preferred_dept_name || adm.preferred_dept || adm.preferred_dept_id || adm.preferred_deptid || adm.preferredDept || adm.preferredDeptId || null;
-    const opt = adm.optional_dept_name || adm.optional_dept || adm.optional_dept_id || adm.optionalDept || null;
-    const prefName = pref && String(pref).match(/^\d+$/) ? (deptMap[String(pref)] || pref) : (deptMap[String(pref)] || pref);
-    const optName = opt && String(opt).match(/^\d+$/) ? (deptMap[String(opt)] || opt) : (deptMap[String(opt)] || opt);
+    const admAppId = String(adm.app_id || adm.application_id || adm.appId || '');
+    const appMatch = (apps || []).find(a => String(a.app_id || a.application_id || a.id || a.appId || '') === admAppId) || (apps || [])[0] || null;
+
+    const pref = firstDefined(adm.preferred_dept_name, adm.preferred_dept, adm.preferred_dept_id, adm.preferred_deptid, adm.preferredDept, adm.preferredDeptId,
+      appMatch && appMatch.preferred_dept_name, appMatch && appMatch.preferred_dept, appMatch && appMatch.preferred_dept_id, appMatch && appMatch.preferredDept);
+
+    let optValue = firstDefined(adm.optional_dept_name, adm.optional_dept, adm.optional_dept_id, adm.optionalDept,
+      appMatch && appMatch.optional_dept_name, appMatch && appMatch.optional_dept, appMatch && appMatch.optional_dept_id, appMatch && appMatch.optionalDept);
+    if(!optValue && appMatch && Array.isArray(appMatch.optional_depts) && appMatch.optional_depts.length){
+      optValue = appMatch.optional_depts.map(o => resolveDeptLabel(o && (o.dept_name || o.dept_code || o.dept_id || o.id || o))).join(', ');
+    }
+
+    const prefName = resolveDeptLabel(pref);
+    const optName = Array.isArray(optValue) ? optValue.map(resolveDeptLabel).join(', ') : resolveDeptLabel(optValue);
     div.innerHTML = `<div class="space-y-3"><div><p class="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Preferred Branch</p><p class="text-base font-bold text-blue-600 dark:text-blue-400">${safeText(prefName || 'N/A')}</p></div><div><p class="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Optional Branches</p><p class="text-base font-semibold text-[#111418] dark:text-white">${safeText(optName || 'N/A')}</p></div></div>`;
     body.appendChild(div);
   });
 }
 
-function renderApplications(apps, docs, counselling) {
+function renderApplications(apps, docs, counselling, admissions) {
   const section = document.getElementById('applications-section');
   const body = document.getElementById('applications-body');
   if (!apps || !apps.length) { section.classList.add('hidden'); return; }
@@ -285,13 +346,17 @@ function renderApplications(apps, docs, counselling) {
       const cApp = c.app_id || c.application_id || c.appId || c.application;
       return cApp && [app.app_id, app.id, app.application_id, app.appId, app.application].filter(Boolean).map(String).includes(String(cApp));
     }) || null;
+    const admRec = (admissions||[]).find(a => {
+      const aApp = a.app_id || a.application_id || a.appId || a.application;
+      return aApp && [app.app_id, app.id, app.application_id, app.appId, app.application].filter(Boolean).map(String).includes(String(aApp));
+    }) || null;
 
-    const appliedGQ = firstDefined(counselRec && counselRec.applied_gq, app.applied_gq, app.gq_applied, app.gqApplied, app.appliedGQ);
-    const gqNo = firstDefined(counselRec && (counselRec.gq_application_number || counselRec.gq_application_no || counselRec.gqAppNo), app.gq_application_number, app.gqApplicationNumber, app.gq_app_no, app.counselling_application_number, app.counsellingAppNo);
-    const gqDate = firstDefined(counselRec && (counselRec.gq_applied_at || counselRec.gq_applied), app.gq_applied_at, app.gq_applied, app.counselling_applied_at, app.gqAppliedAt);
-    const appliedMQ = firstDefined(counselRec && counselRec.applied_mq, app.applied_mq, app.mq_applied, app.appliedMQ, app.mqApplied);
-    const mqConsortium = firstDefined(counselRec && (counselRec.mq_consortium_number || counselRec.mq_consortium || counselRec.mqConsortiumNumber), app.mq_consortium_number, app.mq_consortium, app.mqConsortiumNumber, app.mq_consortium_no);
-    const mqDate = firstDefined(counselRec && (counselRec.mq_applied_at || counselRec.mq_applied), app.mq_applied_at, app.mq_applied, app.mqAppliedAt);
+    const appliedGQ = firstDefined(counselRec && counselRec.applied_gq, app.applied_gq, app.gq_applied, app.gqApplied, app.appliedGQ, admRec && admRec.applied_gq);
+    const gqNo = firstDefined(counselRec && (counselRec.gq_application_number || counselRec.gq_application_no || counselRec.gqAppNo), app.gq_application_number, app.gqApplicationNumber, app.gq_app_no, app.counselling_application_number, app.counsellingAppNo, admRec && (admRec.gq_application_number || admRec.gq_application_no || admRec.application_number));
+    const gqDate = firstDefined(counselRec && (counselRec.gq_applied_at || counselRec.gq_applied || counselRec.gq_applied_date), app.gq_applied_at, app.gq_applied, app.counselling_applied_at, app.gqAppliedAt, app.gq_applied_date, admRec && (admRec.gq_applied_at || admRec.gq_applied_date || admRec.created_at));
+    const appliedMQ = firstDefined(counselRec && counselRec.applied_mq, app.applied_mq, app.mq_applied, app.appliedMQ, app.mqApplied, admRec && admRec.applied_mq);
+    const mqConsortium = firstDefined(counselRec && (counselRec.mq_consortium_number || counselRec.mq_consortium || counselRec.mqConsortiumNumber), app.mq_consortium_number, app.mq_consortium, app.mqConsortiumNumber, app.mq_consortium_no, admRec && (admRec.mq_consortium_number || admRec.mq_consortium_no));
+    const mqDate = firstDefined(counselRec && (counselRec.mq_applied_at || counselRec.mq_applied || counselRec.mq_applied_date), app.mq_applied_at, app.mq_applied, app.mqAppliedAt, app.mq_applied_date, admRec && (admRec.mq_applied_at || admRec.mq_applied_date));
 
     inner += `<div><p class="text-xs text-gray-600">Applied GQ</p><p class="font-semibold text-green-700">${appliedGQ? 'Yes':'No'}</p></div>`;
     inner += `<div><p class="text-xs text-gray-600">GQ Application #</p><p class="font-semibold">${safeText(gqNo)}</p></div>`;
@@ -360,7 +425,7 @@ function renderCounselling(counselling) {
     }
 
     // derive status: prefer explicit status, otherwise mark Completed if allotment exists
-    const statusVal = c.status || ((c.allotment_order_number || c.allotment_order_url || c.consortium_number) ? 'Completed' : 'N/A');
+    const statusVal = c.status || ((c.allotment_order_number || c.allotment_order_url || c.consortium_number || rawDept) ? 'Completed' : 'N/A');
     const statusClass = statusVal==='Registered' ? 'bg-green-100 text-green-700' : (statusVal==='Allotted' || statusVal==='Completed' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700');
 
     table += `<tr class="hover:bg-slate-50 dark:hover:bg-[#2d3748] transition-colors"><td class="px-6 py-3 text-sm font-semibold">${safeText(c.app_id||c.application_id)}</td><td class="px-6 py-3 text-sm">${safeText(c.quota_type)}</td><td class="px-6 py-3 text-sm font-bold text-green-600 dark:text-green-400">${safeText(deptName)}</td><td class="px-6 py-3 text-sm font-mono">${safeText(c.allotment_order_number)}</td><td class="px-6 py-3 text-sm font-mono">${safeText(c.consortium_number)}</td><td class="px-6 py-3 text-sm"><span class="inline-flex px-2 py-1 rounded-full text-xs font-bold ${statusClass}">${safeText(statusVal)}</span></td></tr>`;
