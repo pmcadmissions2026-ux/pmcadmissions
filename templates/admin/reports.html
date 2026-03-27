@@ -80,6 +80,7 @@
 </div>
 </div>
 <div class="flex gap-4">
+<a id="backBtn" href="/admin/admin_dashboard" class="flex items-center gap-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md font-medium text-sm no-print"><span class="material-symbols-outlined text-sm">arrow_back</span> Dashboard</a>
 <button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" onclick="toggleDarkMode()">
 <span class="material-symbols-outlined dark:hidden">dark_mode</span>
 <span class="material-symbols-outlined hidden dark:block">light_mode</span>
@@ -382,6 +383,17 @@
             setTimeout(() => URL.revokeObjectURL(url), 5000);
           }
         }
+    </script>
+    <script>
+      // If opened from super_admin, update back button to point there
+      (function(){
+        const from = new URLSearchParams(location.search).get('from') || '';
+        const btn = document.getElementById('backBtn');
+        if(btn && from === 'super_admin'){
+          btn.href = '/admin/super_admin_dashboard';
+          btn.innerHTML = '<span class="material-symbols-outlined text-sm">arrow_back</span> Super Admin';
+        }
+      })();
     </script>
 
 </body></html>

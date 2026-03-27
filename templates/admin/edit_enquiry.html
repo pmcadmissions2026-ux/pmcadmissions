@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Edit Enquiry - PMC Admission</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: { "primary": "#137fec", "background-light": "#f6f7f8", "background-dark": "#101922" },
+          fontFamily: { "display": ["Lexend", "sans-serif"] }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Lexend', sans-serif; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen flex flex-col">
+
+<!-- Header -->
+<header class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-6 py-3 sticky top-0 z-50 shadow-sm">
+  <div class="flex items-center gap-3">
+    <div class="text-primary">
+      <svg fill="none" height="28" viewBox="0 0 48 48" width="28" xmlns="http://www.w3.org/2000/svg">
+        <path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"/>
+      </svg>
+    </div>
+    <h2 class="text-base font-bold">Er. Perumal Manimekalai College of Engineering</h2>
+  </div>
+  <div class="flex items-center gap-3">
+    <a href="/templates/admin/enquiries.html" class="flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
+      <span class="material-symbols-outlined text-lg">arrow_back</span> Back to Enquiries
+    </a>
+    <a href="/auth/logout" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium">Logout</a>
+  </div>
+</header>
+
+<main class="flex-1 max-w-5xl mx-auto w-full px-4 py-8">
+  <div id="flash-area" class="mb-4"></div>
+
+  <div class="flex items-center gap-3 mb-6">
+    <span class="material-symbols-outlined text-primary text-3xl">edit_note</span>
+    <div>
+      <h1 class="text-2xl font-bold">Edit Enquiry</h1>
+      <p id="subtitle" class="text-sm text-gray-500">Loading…</p>
+    </div>
+  </div>
+
+  <form id="enquiry-form" class="flex flex-col gap-6" onsubmit="return false;">
+    <input type="hidden" id="enquiry-id"/>
+    <input type="hidden" id="student-id"/>
+
+    <!-- Personal Details -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
+      <div class="flex items-center gap-2 mb-5">
+        <span class="material-symbols-outlined text-primary">person</span>
+        <h2 class="text-lg font-bold">Personal Details</h2>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Full Name <span class="text-red-500">*</span></span>
+          <input id="full_name" name="full_name" type="text" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="Full name"/>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">+2 Register Number</span>
+          <input id="plus2_register_number" name="plus2_register_number" type="text" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. 26000127"/>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">WhatsApp Number</span>
+          <input id="whatsapp_number" name="whatsapp_number" type="tel" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="+91 00000 00000"/>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Email</span>
+          <input id="email" name="email" type="email" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="student@example.com"/>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Father's Name</span>
+          <input id="father_name" name="father_name" type="text" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="Father's name"/>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Mother's Name</span>
+          <input id="mother_name" name="mother_name" type="text" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="Mother's name"/>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Gender</span>
+          <select id="gender" name="gender" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+            <option value="">Select</option><option>Male</option><option>Female</option><option>Other</option>
+          </select>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Date of Birth</span>
+          <input id="date_of_birth" name="date_of_birth" type="date" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"/>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Community</span>
+          <select id="community" name="community" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+            <option value="">Select</option>
+            <option>OC</option><option>BC</option><option>MBC</option><option>SC</option><option>ST</option><option>SCA</option><option>BCM</option><option>Other</option>
+          </select>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">General Quota</span>
+          <select id="general_quota" name="general_quota" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+            <option value="">Select</option>
+            <option>Government Quota (GQ)</option><option>Management Quota (MQ)</option><option>NRI Quota</option><option>Sports Quota</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <!-- Academic Details -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
+      <div class="flex items-center gap-2 mb-5">
+        <span class="material-symbols-outlined text-primary">school</span>
+        <h2 class="text-lg font-bold">Academic Details</h2>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">+2 School Name</span>
+          <input id="plus2_school_name" name="plus2_school_name" type="text" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="+2 school name"/>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Board of Examination</span>
+          <select id="board" name="board" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+            <option value="">Select</option><option>State Board</option><option>CBSE</option><option>ICSE</option><option>Matriculation</option><option>Others</option>
+          </select>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">+2 Marks</span>
+          <input id="plus2_marks" name="plus2_marks" type="number" step="0.01" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="Total marks obtained"/>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">+2 Percentage</span>
+          <input id="plus2_percentage" name="plus2_percentage" type="number" step="0.01" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="%"/>
+        </label>
+        <label class="flex flex-col gap-1 sm:col-span-2">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Group Studied <span class="text-red-500">*</span></span>
+          <select id="group_studied" name="group_studied" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" onchange="onGroupChange()">
+            <option value="">-- Select Group --</option>
+            <option>MPCB (Maths, Physics, Chemistry, Biology)</option>
+            <option>MPCC (Maths, Physics, Chemistry, Computer Science)</option>
+            <option>Vocational</option>
+            <option>Others</option>
+          </select>
+        </label>
+      </div>
+
+      <!-- Standard subject marks -->
+      <div id="subject-marks-section">
+        <h3 class="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3">Subject-wise Marks (for Cutoff)</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <label class="flex flex-col gap-1">
+            <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Maths</span>
+            <input id="maths" name="maths_marks" type="number" step="0.01" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="0-100" oninput="calculateCutoff()"/>
+          </label>
+          <label class="flex flex-col gap-1">
+            <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Physics</span>
+            <input id="physics" name="physics_marks" type="number" step="0.01" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="0-100" oninput="calculateCutoff()"/>
+          </label>
+          <label class="flex flex-col gap-1">
+            <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Chemistry</span>
+            <input id="chemistry" name="chemistry_marks" type="number" step="0.01" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="0-100" oninput="calculateCutoff()"/>
+          </label>
+          <label class="flex flex-col gap-1">
+            <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Cut-off</span>
+            <input id="cutoff" readonly class="rounded-lg border border-primary/30 bg-primary/10 text-primary font-bold h-11 px-4 text-sm" type="text" value="0.00"/>
+          </label>
+        </div>
+      </div>
+
+      <!-- Vocational section -->
+      <div id="vocational-section" class="mt-4 p-5 border border-blue-200 dark:border-gray-600 rounded-xl bg-blue-50/60 dark:bg-gray-700" style="display:none;">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="material-symbols-outlined text-primary">engineering</span>
+          <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Vocational Subjects</h3>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 items-end">
+          <label class="flex flex-col gap-1">
+            <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Practical 1</span>
+            <input id="practical1" name="practical1" type="number" step="0.01" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="0-100" oninput="calculateCutoff()"/>
+          </label>
+          <label class="flex flex-col gap-1">
+            <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Practical 2</span>
+            <input id="practical2" name="practical2" type="number" step="0.01" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="0-100" oninput="calculateCutoff()"/>
+          </label>
+          <label class="flex flex-col gap-1">
+            <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Theory</span>
+            <input id="theory" name="theory" type="number" step="0.01" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="0-100" oninput="calculateCutoff()"/>
+          </label>
+          <label class="flex flex-col gap-1">
+            <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Maths (Vocational)</span>
+            <input id="maths_voc" name="maths_voc" type="number" step="0.01" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="0-100" oninput="calculateCutoff()"/>
+          </label>
+          <div class="flex flex-col gap-1">
+            <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Calculated Cut-off</span>
+            <div class="flex items-center justify-center rounded-lg bg-primary/10 text-primary font-bold h-11 text-base">
+              <span id="cutoff_voc_display">0.00</span>
+            </div>
+            <input type="hidden" id="cutoff_voc" name="cutoff_voc"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Language / additional -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Language Subject</span>
+          <input id="language_subject_name" name="language_subject_name" type="text" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. Tamil"/>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Language Mark</span>
+          <input id="language_subject_marks" name="language_subject_marks" type="number" step="0.01" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="0-100"/>
+        </label>
+      </div>
+    </div>
+
+    <!-- Enquiry Status -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
+      <div class="flex items-center gap-2 mb-5">
+        <span class="material-symbols-outlined text-primary">assignment</span>
+        <h2 class="text-lg font-bold">Enquiry Status</h2>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Status</span>
+          <select id="status" name="status" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+            <option value="open">Open</option>
+            <option value="in_progress">In Progress</option>
+            <option value="converted">Converted</option>
+            <option value="closed">Closed</option>
+          </select>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Source</span>
+          <input id="source" name="source" type="text" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. Walk-in, Website"/>
+        </label>
+        <label class="flex flex-col gap-1 sm:col-span-2">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Notes</span>
+          <textarea id="notes" name="notes" rows="3" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none resize-none" placeholder="Any notes…"></textarea>
+        </label>
+      </div>
+    </div>
+
+    <!-- TNEA Eligibility -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+        <div class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">TNEA Average</span>
+          <input id="tnea_average" readonly class="rounded-lg border border-primary/30 bg-primary/10 text-primary font-bold h-11 px-4 text-sm" type="text" value="0.00"/>
+        </div>
+        <div class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Eligibility</span>
+          <div id="tnea_eligibility" class="text-sm font-bold text-gray-600 dark:text-gray-300">Not calculated</div>
+        </div>
+        <p class="text-xs text-gray-400">OC ≥ 45%, Others ≥ 40% (Maths, Physics, Chemistry average)</p>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center justify-between gap-4 flex-wrap pb-4">
+      <a href="/templates/admin/enquiries.html" class="flex items-center gap-1 px-5 h-11 rounded-lg border border-gray-200 hover:bg-gray-100 font-semibold text-sm text-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700">
+        <span class="material-symbols-outlined text-lg">arrow_back</span> Cancel
+      </a>
+      <button type="button" id="save-btn" class="flex items-center gap-2 px-8 h-11 bg-primary hover:bg-blue-700 text-white rounded-lg font-bold text-sm transition-colors">
+        <span class="material-symbols-outlined">save</span> Save Changes
+      </button>
+    </div>
+  </form>
+</main>
+
+<footer class="py-6 text-center text-xs text-gray-400">© 2024 College Admission System. All rights reserved.</footer>
+
+<script>
+  function calculateCutoff() {
+    const group = (document.getElementById('group_studied') || {}).value || '';
+    if (group.toLowerCase().includes('vocational')) {
+      const m  = parseFloat(document.getElementById('maths_voc')?.value || 0);
+      const p1 = parseFloat(document.getElementById('practical1')?.value || 0);
+      const p2 = parseFloat(document.getElementById('practical2')?.value || 0);
+      const th = parseFloat(document.getElementById('theory')?.value || 0);
+      const val = m + (p1 + p2 + th) / 3;
+      const disp = document.getElementById('cutoff_voc_display');
+      const hid  = document.getElementById('cutoff_voc');
+      if (disp) disp.innerText = isFinite(val) ? val.toFixed(2) : '0.00';
+      if (hid)  hid.value = isFinite(val) ? val.toFixed(2) : '';
+      const tavg = document.getElementById('tnea_average');
+      if (tavg) tavg.value = isFinite(val) ? val.toFixed(2) : '';
+      updateEligibility(val, true);
+      return;
+    }
+    const m = parseFloat(document.getElementById('maths')?.value || 0);
+    const p = parseFloat(document.getElementById('physics')?.value || 0);
+    const c = parseFloat(document.getElementById('chemistry')?.value || 0);
+    const val = m + (p + c) / 2;
+    const cutEl = document.getElementById('cutoff');
+    if (cutEl) cutEl.value = isFinite(val) ? val.toFixed(2) : '';
+    const avg = (m + p + c) / 3;
+    const tavg = document.getElementById('tnea_average');
+    if (tavg) tavg.value = isFinite(avg) ? avg.toFixed(2) : '';
+    updateEligibility(avg, false);
+  }
+
+  function updateEligibility(score, isVocational) {
+    const el = document.getElementById('tnea_eligibility');
+    if (!el) return;
+    if (isVocational) {
+      el.innerText = (isFinite(score) && score > 0) ? 'Eligible (Vocational)' : 'Not calculated';
+      el.className = (isFinite(score) && score > 0) ? 'text-sm font-bold text-green-600' : 'text-sm font-bold text-gray-600';
+      return;
+    }
+    const community = (document.getElementById('community') || {}).value || '';
+    const threshold = community.trim().toUpperCase() === 'OC' ? 45 : 40;
+    const m = parseFloat(document.getElementById('maths')?.value || 0);
+    const p = parseFloat(document.getElementById('physics')?.value || 0);
+    const c = parseFloat(document.getElementById('chemistry')?.value || 0);
+    if (!isFinite(score) || (m === 0 && p === 0 && c === 0)) {
+      el.innerText = 'Not calculated'; el.className = 'text-sm font-bold text-gray-600'; return;
+    }
+    el.innerText = score >= threshold ? 'Eligible' : 'Not Eligible';
+    el.className = score >= threshold ? 'text-sm font-bold text-green-600' : 'text-sm font-bold text-red-600';
+  }
+
+  function onGroupChange() {
+    const group = (document.getElementById('group_studied') || {}).value || '';
+    const voc  = document.getElementById('vocational-section');
+    const subj = document.getElementById('subject-marks-section');
+    const isVoc = group.toLowerCase().includes('vocational');
+    if (voc)  voc.style.display  = isVoc ? '' : 'none';
+    if (subj) subj.style.display = isVoc ? 'none' : '';
+    calculateCutoff();
+  }
+
+  function setVal(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.value = (value != null) ? value : '';
+  }
+
+  async function loadEnquiry() {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('enquiry_id') || params.get('id');
+    if (!id) { showFlash('error', 'No enquiry ID in URL. Go back and try again.'); return; }
+    document.getElementById('enquiry-id').value = id;
+    try {
+      const res = await fetch('/api/enquiries/' + id);
+      if (!res.ok) throw new Error('Failed to load enquiry (' + res.status + ')');
+      const enq = await res.json();
+      document.getElementById('subtitle').textContent = 'Enquiry #' + id + (enq.student_name ? ' — ' + enq.student_name : '');
+      setVal('full_name', enq.student_name || enq.full_name || '');
+      setVal('whatsapp_number', enq.whatsapp_number || '');
+      setVal('email', enq.email || '');
+      setVal('status', enq.status || 'open');
+      setVal('source', enq.source || '');
+      setVal('notes', enq.notes || '');
+      const studentId = enq.student_id;
+      if (studentId) {
+        document.getElementById('student-id').value = studentId;
+        const sRes = await fetch('/api/students/' + studentId);
+        if (sRes.ok) {
+          const s = await sRes.json();
+          if (s) {
+            setVal('full_name', s.full_name || enq.student_name || '');
+            setVal('whatsapp_number', s.whatsapp_number || enq.whatsapp_number || '');
+            setVal('email', s.email || enq.email || '');
+            setVal('plus2_register_number', s.plus2_register_number || '');
+            setVal('father_name', s.father_name || '');
+            setVal('mother_name', s.mother_name || '');
+            setVal('gender', s.gender || '');
+            setVal('date_of_birth', s.date_of_birth ? String(s.date_of_birth).substring(0, 10) : '');
+            setVal('community', s.community || '');
+            setVal('general_quota', s.general_quota || '');
+            setVal('plus2_school_name', s.plus2_school_name || '');
+            setVal('plus2_marks', s.plus2_marks != null ? s.plus2_marks : '');
+            setVal('plus2_percentage', s.plus2_percentage != null ? s.plus2_percentage : '');
+            setVal('board', s.board || '');
+            setVal('group_studied', s.group_studied || '');
+          }
+        }
+        const aRes = await fetch('/api/academics?student_id=' + studentId);
+        if (aRes.ok) {
+          const acadArr = await aRes.json();
+          const acad = Array.isArray(acadArr) ? acadArr[0] : (acadArr || null);
+          if (acad) {
+            setVal('maths', acad.maths_marks != null ? acad.maths_marks : '');
+            setVal('physics', acad.physics_marks != null ? acad.physics_marks : '');
+            setVal('chemistry', acad.chemistry_marks != null ? acad.chemistry_marks : '');
+            setVal('language_subject_name', acad.language_subject_name || '');
+            setVal('language_subject_marks', acad.language_subject_marks != null ? acad.language_subject_marks : '');
+            setVal('practical1', acad.practical1 != null ? acad.practical1 : '');
+            setVal('practical2', acad.practical2 != null ? acad.practical2 : '');
+            setVal('theory', acad.theory != null ? acad.theory : '');
+            setVal('maths_voc', acad.maths_voc != null ? acad.maths_voc : '');
+          }
+        }
+      }
+      onGroupChange();
+    } catch (err) {
+      showFlash('error', err.message || String(err));
+      console.error(err);
+    }
+  }
+
+  async function saveEnquiry() {
+    const id = document.getElementById('enquiry-id').value;
+    if (!id) { showFlash('error', 'No enquiry ID found.'); return; }
+    calculateCutoff();
+    const group = (document.getElementById('group_studied') || {}).value || '';
+    const isVoc = group.toLowerCase().includes('vocational');
+    const payload = {
+      full_name: document.getElementById('full_name')?.value || '',
+      whatsapp_number: document.getElementById('whatsapp_number')?.value || null,
+      email: document.getElementById('email')?.value || null,
+      plus2_register_number: document.getElementById('plus2_register_number')?.value || null,
+      father_name: document.getElementById('father_name')?.value || null,
+      mother_name: document.getElementById('mother_name')?.value || null,
+      gender: document.getElementById('gender')?.value || null,
+      date_of_birth: document.getElementById('date_of_birth')?.value || null,
+      community: document.getElementById('community')?.value || null,
+      general_quota: document.getElementById('general_quota')?.value || null,
+      plus2_school_name: document.getElementById('plus2_school_name')?.value || null,
+      plus2_marks: document.getElementById('plus2_marks')?.value ? Number(document.getElementById('plus2_marks').value) : null,
+      plus2_percentage: document.getElementById('plus2_percentage')?.value ? Number(document.getElementById('plus2_percentage').value) : null,
+      board: document.getElementById('board')?.value || null,
+      group_studied: group || null,
+      maths_marks: document.getElementById('maths')?.value ? Number(document.getElementById('maths').value) : null,
+      physics_marks: document.getElementById('physics')?.value ? Number(document.getElementById('physics').value) : null,
+      chemistry_marks: document.getElementById('chemistry')?.value ? Number(document.getElementById('chemistry').value) : null,
+      language_subject_name: document.getElementById('language_subject_name')?.value || null,
+      language_subject_marks: document.getElementById('language_subject_marks')?.value ? Number(document.getElementById('language_subject_marks').value) : null,
+      practical1: document.getElementById('practical1')?.value ? Number(document.getElementById('practical1').value) : null,
+      practical2: document.getElementById('practical2')?.value ? Number(document.getElementById('practical2').value) : null,
+      theory: document.getElementById('theory')?.value ? Number(document.getElementById('theory').value) : null,
+      maths_voc: document.getElementById('maths_voc')?.value ? Number(document.getElementById('maths_voc').value) : null,
+      cutoff: isVoc
+        ? (document.getElementById('cutoff_voc')?.value ? Number(document.getElementById('cutoff_voc').value) : null)
+        : (document.getElementById('cutoff')?.value ? Number(document.getElementById('cutoff').value) : null),
+      tnea_average: document.getElementById('tnea_average')?.value ? Number(document.getElementById('tnea_average').value) : null,
+      status: document.getElementById('status')?.value || 'open',
+      source: document.getElementById('source')?.value || null,
+      notes: document.getElementById('notes')?.value || null,
+    };
+    const btn = document.getElementById('save-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+    try {
+      const res = await fetch('/api/enquiries/' + id, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+      });
+      const ct = res.headers.get('content-type') || '';
+      const body = ct.includes('application/json') ? await res.json() : await res.text();
+      if (!res.ok) throw new Error((body && body.error) || String(body) || res.statusText || 'Save failed');
+      showFlash('success', 'Saved successfully — redirecting…');
+      setTimeout(() => { window.location.href = '/templates/admin/enquiries.html'; }, 1200);
+    } catch (err) {
+      showFlash('error', err.message || String(err));
+      console.error(err);
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined">save</span> Save Changes'; }
+    }
+  }
+
+  function showFlash(type, msg) {
+    const area = document.getElementById('flash-area');
+    if (!area) return;
+    const c = type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800';
+    area.innerHTML = `<div class="border ${c} px-4 py-3 rounded-lg text-sm">${String(msg).replace(/</g,'&lt;')}</div>`;
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('save-btn').addEventListener('click', saveEnquiry);
+    loadEnquiry();
+  });
+</script>
+</body>
+</html>

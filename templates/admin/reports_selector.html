@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Choose Report - Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#1e40af",
+              "background-light": "#f8fafc",
+              "background-dark": "#0f172a",
+            },
+            fontFamily: {
+              display: ["Inter", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.5rem",
+            },
+          },
+        },
+      };
+      function toggleDarkMode() { document.documentElement.classList.toggle('dark'); }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-sans text-slate-800 dark:text-slate-200">
+<nav class="bg-white dark:bg-slate-900 border-b px-6 py-4 flex justify-between items-center sticky top-0 z-10 shadow-sm">
+  <div class="flex items-center gap-3">
+    <span class="material-symbols-outlined text-primary text-3xl">school</span>
+    <div>
+      <h1 class="text-lg font-bold">Admin Reports</h1>
+      <p class="text-xs text-slate-500">Choose Pre/Post Counselling Report</p>
+    </div>
+  </div>
+  <div>
+    <a id="backLink" href="/admin/admin_dashboard" class="text-sm text-primary hover:underline">Back to Dashboard</a>
+  </div>
+</nav>
+<main class="max-w-3xl mx-auto p-6">
+  <div class="bg-white dark:bg-slate-900 p-8 rounded-xl shadow-lg">
+    <h2 class="text-2xl font-bold mb-4">Select Report Type</h2>
+    <p class="text-sm text-slate-600 mb-6">Choose whether you want the Pre-Counselling (preferred dept) or Post-Counselling (allotments) report.</p>
+    <div class="flex gap-4">
+      <a id="preLink" href="/templates/admin/reports_precounseling.html" class="px-4 py-3 bg-primary text-white rounded-md hover:bg-blue-700">Pre-Counselling Report</a>
+      <a id="postLink" href="/templates/admin/reports.html" class="px-4 py-3 bg-emerald-600 text-white rounded-md hover:bg-emerald-700">Post-Counselling Report</a>
+    </div>
+  </div>
+</main>
+<script>
+  (function(){
+    const from = new URLSearchParams(location.search).get('from') || '';
+    if(from === 'super_admin'){
+      document.getElementById('backLink').href = '/admin/super_admin_dashboard';
+      document.getElementById('backLink').textContent = 'Back to Super Admin';
+      // pass from param forward so reports page also knows where to go back
+      document.getElementById('preLink').href += '?from=super_admin';
+      document.getElementById('postLink').href += '?from=super_admin';
+    }
+  })();
+</script>
+</body>
+</html>

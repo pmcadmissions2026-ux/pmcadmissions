@@ -101,7 +101,7 @@ Live - Read Only
 <span class="text-sm font-medium">Departments</span>
 </a>
 <div class="my-2 border-t border-[#e5e7eb] dark:border-[#2d3748]"></div>
-<a href="/templates/admin/reports.html" class="flex items-center gap-3 px-4 py-2 text-[#111418] dark:text:white hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] rounded-lg transition-colors">
+<a href="/templates/admin/reports_selector.html?from=super_admin" class="flex items-center gap-3 px-4 py-2 text-[#111418] dark:text:white hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] rounded-lg transition-colors">
 <span class="material-symbols-outlined text-xl">analytics</span>
 <span class="text-sm font-medium">Reports</span>
 </a>
@@ -178,9 +178,6 @@ Live - Read Only
 <button class="tab-btn active text-primary" onclick="showTab('enquiries')">
 <span class="material-symbols-outlined inline text-lg">mail</span> Enquiries
 </button>
-<button class="tab-btn text-[#111418] dark:text-white" onclick="showTab('applications')">
-<span class="material-symbols-outlined inline text-lg">how_to_reg</span> Document Upload
-</button>
 <button class="tab-btn text-[#111418] dark:text-white" onclick="showTab('admissions')">
 <span class="material-symbols-outlined inline text-lg">verified_user</span> Branch Selection
 </button>
@@ -189,9 +186,6 @@ Live - Read Only
 </button>
 <button class="tab-btn text-[#111418] dark:text-white" onclick="showTab('payments')">
 <span class="material-symbols-outlined inline text-lg">payments</span> Payments
-</button>
-<button class="tab-btn text-[#111418] dark:text-white" onclick="showTab('flow_summary')">
-<span class="material-symbols-outlined inline text-lg">hub</span> Flow Summary
 </button>
 <button class="tab-btn text-[#111418] dark:text-white" onclick="showTab('documents')">
 <span class="material-symbols-outlined inline text-lg">description</span> Documents
@@ -229,31 +223,7 @@ Live - Read Only
 <div class="flex justify-center gap-2 mt-4" id="enquiries_pagination"></div>
 </div>
 
-<!-- APPLICATIONS Tab -->
-<div id="applications" class="tab-pane">
-<div class="flex justify-between items-center mb-4 gap-4">
-<h3 class="text-lg font-bold text-[#111418] dark:text-white">Document Upload (<span id="count-documents">0</span>)</h3>
-<div class="flex gap-2">
-<input type="text" placeholder="Search document uploads..." id="search_applications" class="px-3 py-2 border border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] rounded-lg text-sm text-[#111418] dark:text-white" />
-<button onclick="filterTableLocal('applications')" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-blue-600">Search</button>
-</div>
-</div>
-<div class="data-table" id="applications_data">
-<table class="w-full border-collapse">
-<thead class="sticky top-0 bg-[#f0f2f4] dark:bg-[#111827]">
-<tr>
-<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Application ID</th>
-<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Student Name</th>
-<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Unique ID</th>
-<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Documents</th>
-<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Status</th>
-<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Submitted</th>
-</tr>
-</thead>
-<tbody id="applications-rows" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"></tbody>
-</table>
-</div>
-</div>
+
 
 <!-- STUDENTS Tab -->
 <div id="students" class="tab-pane">
@@ -364,32 +334,7 @@ Live - Read Only
 <div class="flex justify-center gap-2 mt-4" id="payments_pagination"></div>
 </div>
 
-<!-- FLOW SUMMARY Tab -->
-<div id="flow_summary" class="tab-pane">
-<div class="flex justify-between items-center mb-4 gap-4">
-<h3 class="text-lg font-bold text-[#111418] dark:text-white">Flow Summary (<span id="count-flow-summary">0</span>)</h3>
-<div class="flex gap-2">
-<input type="text" placeholder="Search flow summary..." id="search_flow_summary" class="px-3 py-2 border border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] rounded-lg text-sm text-[#111418] dark:text-white" />
-<button onclick="filterFlowSummary()" class="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-blue-600">Search</button>
-</div>
-</div>
-<div class="data-table" id="flow_summary_data">
-<table class="w-full border-collapse">
-<thead class="sticky top-0 bg-[#f0f2f4] dark:bg-[#111827]">
-<tr>
-<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Student Name</th>
-<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Unique ID</th>
-<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Enquiry</th>
-<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Branch</th>
-<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Documents</th>
-<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Counselling</th>
-<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Payment</th>
-</tr>
-</thead>
-<tbody id="flow-summary-rows" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"></tbody>
-</table>
-</div>
-</div>
+
 
 <!-- DOCUMENTS Tab -->
 <div id="documents" class="tab-pane">
@@ -404,7 +349,6 @@ Live - Read Only
 <table class="w-full border-collapse">
 <thead class="sticky top-0 bg-[#f0f2f4] dark:bg-[#111827]">
 <tr>
-<th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Document ID</th>
 <th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Student Name</th>
 <th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Unique ID</th>
 <th class="border border-[#e5e7eb] dark:border-[#2d3748] px-4 py-2 text-left text-xs font-bold text-[#617589] dark:text-[#a0aec0] uppercase">Application ID</th>
@@ -771,7 +715,6 @@ function renderRow(tabName, item) {
             const docUrl = item.document_url || item.file_url || item.public_url || item.documentUrl || '';
             const appIdCell = item.app_id || item.application_id || item.appId || 'N/A';
             return `<tr class="table-row hover:bg-[#f9fafb] dark:hover:bg-[#111827]/50">
-                <td class="${baseClass}">${item.id || item.document_id || ''}</td>
                 <td class="${baseClass}">${enrDoc.student_name || item.student_name || ''}</td>
                 <td class="${baseClass}">${enrDoc.unique_id || item.unique_id || item.uniq_id || ''}</td>
                 <td class="${baseClass}">${appIdCell}</td>

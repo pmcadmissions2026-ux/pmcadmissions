@@ -59,7 +59,7 @@
       <!-- Branch Management heading -->
       <div id="branch-management" class="flex flex-wrap justify-between items-end gap-3"><div class="flex min-w-72 flex-col gap-1"><p class="text-[#111418] dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">Admin Branch Management</p><p class="text-[#617589] dark:text-[#a0aec0] text-base font-normal leading-normal">Manage and assign departments to enquired students.</p></div>
         <div class="flex items-center gap-3">
-          <label class="inline-flex items-center gap-2 text-sm text-[#617589]"><input id="branch-visibility-toggle" type="checkbox" class="h-4 w-4"/> <span>Always show Branch Management</span></label>
+          <!-- Branch visibility always enabled; toggle removed -->
         </div>
       </div>
       <!-- Accepted table (new) -->
@@ -247,7 +247,7 @@ document.addEventListener('DOMContentLoaded', function(){
                 'payments': { label: 'Payments', href: '/templates/admin/payments_list.html', icon: 'payments' },
                 'documents': { label: 'Documents', href: '/templates/admin/documents_management.html', icon: 'description' },
                 'student_management': { label: 'Student Management', href: '/templates/admin/student_profiles.html', icon: 'school' },
-                'reports': { label: 'Reports', href: '/templates/admin/reports.html', icon: 'insights' },
+                'reports': { label: 'Reports', href: '/templates/admin/reports_selector.html', icon: 'insights' },
                 'staff': { label: 'Staff', href: '/templates/admin/staff_management.html', icon: 'groups' }
               };
 
@@ -271,15 +271,9 @@ document.addEventListener('DOMContentLoaded', function(){
                   a.innerHTML = `<span class="material-symbols-outlined">${spec.icon}</span><p class="text-sm font-medium">${spec.label}</p>`;
                   sidebar.appendChild(a);
                 });
-                // determine branch visibility preference and apply
+                // Always show branch management sections (toggle removed)
                 try{
-                  const pref = localStorage.getItem('branchManagementShowPref');
-                  const override = (pref===null) ? null : (pref === 'true');
-                  const shouldShow = (override === null) ? allowed.has('branch_selection') : override;
-                  setBranchSectionsVisibility(shouldShow);
-                  // wire toggle UI
-                  const toggle = document.getElementById('branch-visibility-toggle');
-                  if(toggle){ toggle.checked = (pref==='true'); toggle.addEventListener('change', (e)=>{ localStorage.setItem('branchManagementShowPref', e.target.checked ? 'true' : 'false'); setBranchSectionsVisibility(e.target.checked); }); }
+                  setBranchSectionsVisibility(true);
                 }catch(e){ console.warn('branch visibility', e); }
               }
             }catch(e){ console.warn('render sidebar', e); }

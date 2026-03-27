@@ -99,6 +99,7 @@
 <th class="px-6 py-3 text-left text-xs font-semibold text-[#617589] dark:text-[#a0aec0] uppercase">Cutoff</th>
 <th class="px-6 py-3 text-left text-xs font-semibold text-[#617589] dark:text-[#a0aec0] uppercase">Date</th>
 <th class="px-6 py-3 text-left text-xs font-semibold text-[#617589] dark:text-[#a0aec0] uppercase">TNEA Eligible</th>
+<th class="px-6 py-3 text-left text-xs font-semibold text-[#617589] dark:text-[#a0aec0] uppercase">Actions</th>
 </tr>
 </thead>
 <tbody id="enquiries-tbody" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"></tbody>
@@ -150,7 +151,7 @@ async function fetchEnquiries(){
                 <td class="px-6 py-4 whitespace-nowrap"><p class="text-sm font-medium text-[#111418] dark:text-white">${cutoffDisplay}</p></td>
                 <td class="px-6 py-4 whitespace-nowrap"><p class="text-sm text-[#617589] dark:text-[#a0aec0]">${created}</p></td>
                 <td class="px-6 py-4 whitespace-nowrap">${eligible}</td>
-                <td class="px-6 py-4 whitespace-nowrap"><a href="/templates/admin/view_enquiry.html?enquiry_id=${encodeURIComponent(enq.id)}" class="px-3 py-1 bg-primary text-white rounded-lg text-sm font-medium">View</a></td>
+                <td class="px-6 py-4 whitespace-nowrap"><div class="flex gap-2"><a href="/templates/admin/view_enquiry.html?enquiry_id=${encodeURIComponent(enq.id)}" class="px-3 py-1 bg-primary text-white rounded-lg text-sm font-medium">View</a><a href="/templates/admin/edit_enquiry.html?enquiry_id=${encodeURIComponent(enq.id)}" class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium">Edit</a></div></td>
             `;
             out.appendChild(tr);
         });

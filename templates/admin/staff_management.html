@@ -53,7 +53,8 @@
 <span class="inline-block w-2 h-2 bg-green-600 rounded-full animate-pulse"></span>
 System Live
 </div>
-<a href="{{ url_for('auth.logout') }}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium">Logout</a>
+<a href="/admin/admin_dashboard" class="flex items-center gap-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg text-sm font-medium"><span class="material-symbols-outlined text-sm">arrow_back</span> Dashboard</a>
+<a href="/auth/logout" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium">Logout</a>
 </div>
 </header>
 
@@ -66,8 +67,8 @@ System Live
 </a>
 </nav>
 <div class="border-t border-[#e5e7eb] dark:border-[#2d3748] px-4 py-4">
-<p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">{{ user.name }}</p>
-<p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">{{ user.role|upper }}</p>
+<p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3" id="sidebar-user-name">--</p>
+<p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3" id="sidebar-user-role">STAFF</p>
 </div>
 </aside>
 
@@ -117,21 +118,21 @@ Add Staff Member
 <p class="text-[#617589] dark:text-[#a0aec0] text-xs font-semibold uppercase">Total Staff</p>
 <span class="p-2 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 rounded-lg material-symbols-outlined">people</span>
 </div>
-<p class="text-3xl font-black text-[#111418] dark:text-white">{{ staff_members|length }}</p>
+<p class="text-3xl font-black text-[#111418] dark:text-white" id="stat-total">0</p>
 </div>
 <div class="bg-white dark:bg-[#1a202c] p-6 rounded-lg border border-[#e5e7eb] dark:border-[#2d3748]">
 <div class="flex items-center justify-between mb-2">
 <p class="text-[#617589] dark:text-[#a0aec0] text-xs font-semibold uppercase">Active Members</p>
 <span class="p-2 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300 rounded-lg material-symbols-outlined">check_circle</span>
 </div>
-<p class="text-3xl font-black text-[#111418] dark:text-white">{{ staff_members|selectattr('is_active', 'equalto', True)|list|length }}</p>
+<p class="text-3xl font-black text-[#111418] dark:text-white" id="stat-active">0</p>
 </div>
 <div class="bg-white dark:bg-[#1a202c] p-6 rounded-lg border border-[#e5e7eb] dark:border-[#2d3748]">
 <div class="flex items-center justify-between mb-2">
 <p class="text-[#617589] dark:text-[#a0aec0] text-xs font-semibold uppercase">Super Admins</p>
 <span class="p-2 bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300 rounded-lg material-symbols-outlined">admin_panel_settings</span>
 </div>
-<p class="text-3xl font-black text-[#111418] dark:text-white">{{ staff_members|selectattr('role_id', 'equalto', 1)|list|length }}</p>
+<p class="text-3xl font-black text-[#111418] dark:text-white" id="stat-super">0</p>
 </div>
 </div>
 
@@ -140,7 +141,13 @@ async function fetchJson(url, opts){ const r = await fetch(url, opts); if(!r.ok)
 
 function showFlash(msg, type='info'){ const fc = document.getElementById('flashContainer'); if(!fc) return; fc.innerHTML = `<div class="bg-${type==='success'?'green':'red'}-50 border border-${type==='success'?'green':'red'}-200 text-${type==='success'?'green':'red'}-800 px-4 py-3 rounded-lg">${msg}</div>`; setTimeout(()=>{ if(fc) fc.innerHTML=''; }, 3000); }
 
-function renderUsers(users){ const tbody = document.getElementById('staff-tbody'); tbody.innerHTML=''; if(!Array.isArray(users) || users.length===0){ const tr = document.createElement('tr'); tr.innerHTML = `<td colspan="9" class="px-6 py-8 text-center"><div class="flex flex-col items-center gap-2"><span class="material-symbols-outlined text-5xl text-[#e5e7eb] dark:text-[#2d3748]">people</span><p class="text-[#617589] dark:text-[#a0aec0] font-medium">No staff members found</p><p class="text-xs text-[#617589] dark:text-[#a0aec0]">Create your first staff member to get started</p></div></td>`; tbody.appendChild(tr); return; }
+function renderUsers(users){ const tbody = document.getElementById('staff-tbody'); tbody.innerHTML='';
+    // Update stats
+    const allUsers = Array.isArray(users) ? users : [];
+    const statTotal = document.getElementById('stat-total'); if(statTotal) statTotal.textContent = allUsers.length;
+    const statActive = document.getElementById('stat-active'); if(statActive) statActive.textContent = allUsers.filter(u=>u.is_active).length;
+    const statSuper = document.getElementById('stat-super'); if(statSuper) statSuper.textContent = allUsers.filter(u=>u.role_id==1).length;
+    if(!Array.isArray(users) || users.length===0){ const tr = document.createElement('tr'); tr.innerHTML = `<td colspan="9" class="px-6 py-8 text-center"><div class="flex flex-col items-center gap-2"><span class="material-symbols-outlined text-5xl text-[#e5e7eb] dark:text-[#2d3748]">people</span><p class="text-[#617589] dark:text-[#a0aec0] font-medium">No staff members found</p><p class="text-xs text-[#617589] dark:text-[#a0aec0]">Create your first staff member to get started</p></div></td>`; tbody.appendChild(tr); return; }
     users.forEach(u=>{
         const tr = document.createElement('tr'); tr.className='hover:bg-[#f9fafb] dark:hover:bg-[#111827] transition-colors';
         const emp = u.employee_id || '';
@@ -186,7 +193,19 @@ function renderUsers(users){ const tbody = document.getElementById('staff-tbody'
 
 async function loadUsers(){ try{ const users = await fetchJson('/api/users'); renderUsers(users); }catch(e){ console.error(e); showFlash('Failed to load users'); } }
 
-    document.addEventListener('DOMContentLoaded', ()=>{ loadUsers(); const createBtn = document.querySelector('[data-action="create_staff"]'); if(createBtn) createBtn.addEventListener('click', ()=>{ window.location.href = 'staff_edit.html'; }); });
+    document.addEventListener('DOMContentLoaded', ()=>{
+        loadUsers();
+        // Populate sidebar user info
+        try {
+            const session = JSON.parse(localStorage.getItem('pmc_session') || sessionStorage.getItem('adminSession') || '{}');
+            const nameEl = document.getElementById('sidebar-user-name');
+            const roleEl = document.getElementById('sidebar-user-role');
+            if(nameEl && session.name) nameEl.textContent = session.name;
+            if(roleEl && session.role) roleEl.textContent = String(session.role).toUpperCase();
+        } catch(e) {}
+        const createBtn = document.querySelector('[data-action="create_staff"]');
+        if(createBtn) createBtn.addEventListener('click', ()=>{ window.location.href = 'staff_edit.html'; });
+    });
 </script>
 
 </div>

@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pre-Counselling Admission Report - EPMC</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#1e40af",
+              "background-light": "#f8fafc",
+              "background-dark": "#0f172a",
+            },
+            fontFamily: {
+              display: ["Inter", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.5rem",
+            },
+          },
+        },
+      };
+      function toggleDarkMode() { document.documentElement.classList.toggle('dark'); }
+      function printReport() { window.print(); }
+    </script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background-color: white !important; color: black !important; }
+            .report-container { box-shadow: none !important; border: none !important; margin: 0 !important; padding: 0 !important; max-width: 100% !important; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #000 !important; }
+        }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: center; font-size: 0.875rem; }
+        th, td { border: 1px solid; padding: 8px 4px; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-800 dark:text-slate-200 transition-colors duration-200">
+<nav class="no-print bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center sticky top-0 z-10 shadow-sm">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-3xl">school</span>
+<div>
+<h1 class="text-lg font-bold text-slate-900 dark:text-white leading-tight">Admin Reports</h1>
+<p class="text-xs text-slate-500 dark:text-slate-400">Pre-Counselling Admission Report</p>
+</div>
+</div>
+<div class="flex gap-4">
+<button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" onclick="document.documentElement.classList.toggle('dark')">
+<span class="material-symbols-outlined dark:hidden">dark_mode</span>
+<span class="material-symbols-outlined hidden dark:block">light_mode</span>
+</button>
+<a id="backBtn" href="/admin/admin_dashboard" class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-700 transition-all font-medium text-sm">Back</a>
+<button id="export-pdf" class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-all font-medium text-sm" onclick="printReport()"><span class="material-symbols-outlined text-sm">print</span> Print / PDF</button>
+<button id="export-xls" class="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-all font-medium text-sm"><span class="material-symbols-outlined text-sm">description</span> Export to Excel</button>
+</div>
+</nav>
+<main class="max-w-[1200px] mx-auto p-4 md:p-8">
+<div class="report-container bg-white dark:bg-slate-900 p-8 shadow-xl border border-slate-200 dark:border-slate-800 rounded-xl">
+<header class="text-center mb-8 border-b-2 border-primary pb-6">
+<h2 class="text-2xl md:text-3xl font-extrabold text-primary uppercase tracking-tight">Er. Perumal Manimekalai College of Engineering</h2>
+<h3 class="text-xl font-semibold text-slate-700 dark:text-slate-300 mt-2">Pre-Counselling Admission Status - 2025-2026</h3>
+<div class="flex justify-between items-end mt-6">
+<div class="text-left">
+<span class="bg-primary text-white px-4 py-1 rounded text-sm font-bold uppercase tracking-wider">B.E - First Year</span>
+</div>
+<div class="text-right">
+  <form id="report-form" class="flex items-center gap-3" onsubmit="return false;">
+    <label class="text-sm text-slate-500">Report Date</label>
+    <input id="report-date" type="date" name="date" class="border px-2 py-1 rounded bg-white text-sm" />
+    <button id="load-report" class="px-3 py-1 bg-blue-600 text-white rounded text-sm">Load</button>
+  </form>
+  <p class="text-sm font-semibold text-slate-600 dark:text-slate-400 mt-2">Selected: <span id="selected-date-display" class="text-slate-900 dark:text-white ml-2 border-b border-slate-400"></span></p>
+</div>
+</div>
+</header>
+    <div class="table-container">
+<table class="border-slate-300 dark:border-slate-700">
+<thead class="bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 uppercase text-[11px] font-bold">
+<tr>
+<th class="w-10" rowspan="3">S.No</th>
+<th class="w-20" rowspan="3">Dept</th>
+<th class="py-2" colspan="2">Actual No of Seats</th>
+<th colspan="3">Preferred Dept Selections Upto<br/><span class="selected-date-hdr"></span></th>
+<th colspan="3">Preferred Dept Selections On<br/><span class="selected-date-hdr"></span></th>
+<th colspan="2">Vacancy</th>
+</tr>
+<tr>
+<th class="w-16">MQ</th>
+<th class="w-16">GQ</th>
+<th class="w-16">MQ</th>
+<th class="w-16">GQ</th>
+<th class="w-16">GQ(S)</th>
+<th class="w-16">MQ</th>
+<th class="w-16">GQ</th>
+<th class="w-16">GQ(S)</th>
+<th class="w-16">MQ</th>
+<th class="w-16">GQ</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+            <!-- Rows will be rendered client-side -->
+            <tbody id="report-rows" class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300"></tbody>
+</tbody>
+<tfoot id="report-footer" class="bg-slate-100 dark:bg-slate-800 font-bold text-slate-900 dark:text-white"></tfoot>
+</table>
+</div>
+<div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-3">
+  <div class="flex items-center justify-between p-3 border border-slate-200 dark:border-slate-800 rounded-lg">
+    <div>
+      <div class="text-sm font-medium">MQ - TOTAL SELECTED ON <span id="card-mq-date" class="ml-1 selected-date-hdr"></span></div>
+    </div>
+    <span id="card-mq-total" class="text-lg font-bold text-primary">0</span>
+  </div>
+  <div class="flex items-center justify-between p-3 border border-slate-200 dark:border-slate-800 rounded-lg">
+    <div>
+      <div class="text-sm font-medium">GQ - TOTAL SELECTED ON <span id="card-gq-date" class="ml-1 selected-date-hdr"></span></div>
+    </div>
+    <span id="card-gq-total" class="text-lg font-bold text-primary">0</span>
+  </div>
+  <div class="flex items-center justify-between p-3 border border-slate-200 dark:border-slate-800 rounded-lg">
+    <div>
+      <div class="text-sm font-medium">GQ(S) - TOTAL SELECTED ON <span id="card-gqs-date" class="ml-1 selected-date-hdr"></span></div>
+    </div>
+    <span id="card-gqs-total" class="text-lg font-bold text-primary">0</span>
+  </div>
+</div>
+<div class="flex flex-col justify-center items-center bg-slate-50 dark:bg-slate-800/50 rounded-lg p-6 border-2 border-dashed border-slate-300 dark:border-slate-700">
+  <p id="status-reference-title" class="text-slate-500 dark:text-slate-400 uppercase text-xs font-bold tracking-widest mb-1"></p>
+  <p id="status-date-display" class="text-2xl font-black text-slate-900 dark:text-white"></p>
+</div>
+</div>
+<div class="mt-12 flex justify-between items-end">
+<div class="text-xs text-slate-500 dark:text-slate-400">
+<p>Computer Generated Report</p>
+<p>Generated on: <span id="current-timestamp"></span></p>
+</div>
+<div class="text-center w-48 border-t-2 border-slate-300 dark:border-slate-700 pt-2">
+<p class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Admission Coordinator</p>
+</div>
+</div>
+</div>
+</main>
+<footer class="no-print mt-12 pb-8 text-center text-slate-500 dark:text-slate-400 text-sm">
+<p>© 2025 Er. Perumal Manimekalai College of Engineering. All rights reserved.</p>
+</footer>
+<script>
+        document.getElementById('current-timestamp').innerText = new Date().toLocaleString();
+
+        async function fetchJSON(url){
+          const r = await fetch(url, { cache: 'no-store' });
+          if(!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+          return r.json();
+        }
+
+        function toISODateInput(d){
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth()+1).padStart(2,'0');
+          const dd = String(d.getDate()).padStart(2,'0');
+          return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function formatDisplayDate(d){
+          return d.toLocaleDateString();
+        }
+
+        function endOfDay(date){ const d = new Date(date); d.setHours(23,59,59,999); return d; }
+        function startOfDay(date){ const d = new Date(date); d.setHours(0,0,0,0); return d; }
+
+        // Pre-counselling: use admissions.preferred_dept_id selections
+        async function renderReport(selectedDate){
+          const rowsContainer = document.getElementById('report-rows');
+          const footer = document.getElementById('report-footer');
+          const disp = document.getElementById('selected-date-display');
+          disp.innerText = formatDisplayDate(selectedDate);
+
+          // role check: allow only admin and super admin (role_id 1 or 2)
+          try{
+            const stored = sessionStorage.getItem('pmc_user');
+            if(stored){
+              const u = JSON.parse(stored);
+              const rid = Number(u && u.role_id);
+              if(!(rid === 1 || rid === 2)){
+                rowsContainer.innerHTML = '<tr><td colspan="12" class="px-6 py-12 text-center">You do not have permission to view this report.</td></tr>';
+                return;
+              }
+            }
+          }catch(e){ /* ignore and proceed */ }
+
+          // fetch data
+          const depts = await fetchJSON('/api/departments');
+          const admissions = await fetchJSON('/api/admissions');
+          const adm = Array.isArray(admissions) ? admissions : (admissions && admissions.items ? admissions.items : []);
+          // fetch students to determine quota (students.general_quota)
+          const studentsResp = await fetchJSON('/api/students');
+          const studentsArr = Array.isArray(studentsResp) ? studentsResp : (studentsResp && studentsResp.items ? studentsResp.items : []);
+          const studentById = new Map();
+          studentsArr.forEach(s => { if(s && (s.id!==undefined && s.id!==null)) studentById.set(String(s.id), s); });
+
+          // Prepare date windows used for aggregation
+          const uptoDate = endOfDay(selectedDate);
+          const onStart = startOfDay(selectedDate);
+          const onEnd = endOfDay(selectedDate);
+
+          // Aggregate admissions by preferred_dept_id and quota derived from student.general_quota
+          const counts = {}; // counts[deptId] = { upto: {MQ:0,GQ:0,'GQ(S)':0}, on: {MQ:0,GQ:0,'GQ(S)':0} }
+          adm.forEach(r => {
+            try{
+              const pid = String(r.preferred_dept_id || r.preferred_dept || '');
+              if(!pid) return;
+              if(!counts[pid]) counts[pid] = { upto: { MQ:0, GQ:0, 'GQ(S)':0 }, on: { MQ:0, GQ:0, 'GQ(S)':0 } };
+              const student = studentById.get(String(r.student_id));
+              let quota = null;
+              if(student){
+                const gqRaw = String(student.general_quota || student.quota || '').trim().toUpperCase();
+                if(gqRaw.includes('GOV') || gqRaw === 'GQ' || gqRaw.includes('GQ')) quota = 'GQ';
+                else if(gqRaw.includes('MAN') || gqRaw === 'MQ' || gqRaw.includes('MQ')) quota = 'MQ';
+              }
+              if(!quota && r.quota_type){ const qt = String(r.quota_type||'').toUpperCase(); if(qt.includes('GQ(S)')) quota='GQ(S)'; else if(qt.includes('GQ')) quota='GQ'; else if(qt.includes('MQ')) quota='MQ'; }
+              if(!quota) quota = 'GQ';
+              // Normalize created_at to ISO-like format before parsing (handles 'YYYY-MM-DD HH:MM:SS' strings)
+              let created = null;
+              if(r.created_at){
+                try{
+                  let s = String(r.created_at);
+                  // replace first space between date and time with T if present
+                  s = s.replace(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2}(?:\.\d+)?)(.*)$/, '$1T$2$3');
+                  created = new Date(s);
+                  if(isNaN(created)) created = new Date(s.replace(' ', 'T'));
+                }catch(e){ created = null; }
+              }
+              if(created && !isNaN(created.getTime())){
+                if(created <= uptoDate) counts[pid].upto[quota] = (counts[pid].upto[quota]||0) + 1;
+                if(created >= onStart && created <= onEnd) counts[pid].on[quota] = (counts[pid].on[quota]||0) + 1;
+              }
+            }catch(e){ console.warn('admission agg error', e); }
+          });
+
+
+          let totalMqSeats=0, totalGqSeats=0, totalMqSelUpto=0, totalGqSelUpto=0, totalGqsSelUpto=0, totalMqSelOn=0, totalGqSelOn=0, totalGqsSelOn=0;
+
+          rowsContainer.innerHTML = '';
+          depts.forEach((d, idx) => {
+            const deptId = d.id;
+            const mqSeats = Number(d.mq_seats || d.mq || 0);
+            const gqSeats = Number(d.gq_seats || d.gq || (d.seats ? d.seats : 0));
+            totalMqSeats += mqSeats;
+            totalGqSeats += gqSeats;
+
+            // selections aggregated from counts map (quota derived from students.general_quota)
+            const c = counts[String(deptId)] || { upto: { MQ:0, GQ:0, 'GQ(S)':0 }, on: { MQ:0, GQ:0, 'GQ(S)':0 } };
+            const selUptoMQ = c.upto.MQ || 0;
+            const selUptoGQ = c.upto.GQ || 0;
+            const selUptoGQS = c.upto['GQ(S)'] || 0;
+
+            totalMqSelUpto += selUptoMQ;
+            totalGqSelUpto += selUptoGQ;
+            totalGqsSelUpto += selUptoGQS;
+
+            const selOnMQ = c.on.MQ || 0;
+            const selOnGQ = c.on.GQ || 0;
+            const selOnGQS = c.on['GQ(S)'] || 0;
+
+            totalMqSelOn += selOnMQ;
+            totalGqSelOn += selOnGQ;
+            totalGqsSelOn += selOnGQS;
+
+            const vacMq = Math.max(0, mqSeats - selUptoMQ);
+            const vacGq = Math.max(0, gqSeats - selUptoGQ);
+
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors';
+            tr.innerHTML = `
+              <td class="font-medium">${idx+1}</td>
+              <td class="font-bold text-slate-900 dark:text-white text-left px-4">${escapeHtml(d.dept_code || d.short_name || d.dept_name || '')}</td>
+              <td>${mqSeats}</td>
+              <td>${gqSeats}</td>
+              <td>${selUptoMQ}</td>
+              <td>${selUptoGQ}</td>
+              <td>${selUptoGQS}</td>
+              <td class="bg-slate-50 dark:bg-slate-800/50 font-semibold">${selOnMQ}</td>
+              <td class="bg-slate-50 dark:bg-slate-800/50 font-semibold">${selOnGQ}</td>
+              <td class="bg-slate-50 dark:bg-slate-800/50 font-semibold">${selOnGQS}</td>
+              <td class="text-red-600 dark:text-red-400 font-medium">${vacMq}</td>
+              <td class="text-red-600 dark:text-red-400 font-medium">${vacGq}</td>
+            `;
+            rowsContainer.appendChild(tr);
+          });
+
+          footer.innerHTML = `
+            <tr>
+              <td class="text-right px-4 py-3 uppercase" colspan="2">Total (${totalMqSeats + totalGqSeats})</td>
+              <td>${totalMqSeats}</td>
+              <td>${totalGqSeats}</td>
+              <td>${totalMqSelUpto}</td>
+              <td>${totalGqSelUpto}</td>
+              <td>${totalGqsSelUpto}</td>
+              <td>${totalMqSelOn}</td>
+              <td>${totalGqSelOn}</td>
+              <td>${totalGqsSelOn}</td>
+              <td class="text-red-600 dark:text-red-400">${Math.max(0, totalMqSeats - totalMqSelUpto)}</td>
+              <td class="text-red-600 dark:text-red-400">${Math.max(0, totalGqSeats - totalGqSelUpto)}</td>
+            </tr>
+          `;
+
+          try{
+            const dateStr = formatDisplayDate(selectedDate);
+            document.querySelectorAll('.selected-date-hdr').forEach(el => el.innerText = dateStr);
+            const mqTotalEl = document.getElementById('card-mq-total'); if(mqTotalEl) mqTotalEl.innerText = totalMqSelOn;
+            const gqTotalEl = document.getElementById('card-gq-total'); if(gqTotalEl) gqTotalEl.innerText = totalGqSelOn;
+            const gqsTotalEl = document.getElementById('card-gqs-total'); if(gqsTotalEl) gqsTotalEl.innerText = totalGqsSelOn;
+            const mqDateEl = document.getElementById('card-mq-date'); if(mqDateEl) mqDateEl.innerText = dateStr;
+            const gqDateEl = document.getElementById('card-gq-date'); if(gqDateEl) gqDateEl.innerText = dateStr;
+            const gqsDateEl = document.getElementById('card-gqs-date'); if(gqsDateEl) gqsDateEl.innerText = dateStr;
+            const statusTitle = document.getElementById('status-reference-title'); if(statusTitle) statusTitle.innerText = 'Status Reference Date';
+            const statusDate = document.getElementById('status-date-display'); if(statusDate) statusDate.innerText = dateStr;
+          }catch(e){ console.warn('populate summary cards error', e); }
+
+          // Debug output for diagnostics (visible when troubleshooting)
+          // debug panel removed
+        }
+
+        function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>\\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]||c)); }
+
+        document.addEventListener('DOMContentLoaded', () => {
+          const dateInput = document.getElementById('report-date');
+          const today = new Date();
+          dateInput.value = toISODateInput(today);
+          const selectedDate = new Date(dateInput.value);
+
+          document.getElementById('load-report').addEventListener('click', async (e) => {
+            const val = dateInput.value ? new Date(dateInput.value) : new Date();
+            await renderReport(val);
+          });
+
+          // Export CSV wiring (reuse same exporter)
+          const excelBtn = document.getElementById('export-xls');
+          if(excelBtn){
+            excelBtn.addEventListener('click', () => {
+              try{ exportReportToExcel(); }catch(e){ console.error('export error', e); alert('Export failed: ' + (e && e.message ? e.message : e)); }
+            });
+          }
+          const pdfBtn = document.getElementById('export-pdf');
+          if(pdfBtn){ pdfBtn.addEventListener('click', () => printReport()); }
+
+          // initial render
+          renderReport(selectedDate).catch(err => { console.error('renderReport error', err); alert('Error loading report: ' + err.message); });
+        });
+
+        // Export table data to CSV (simple, Excel-compatible CSV)
+        function exportReportToCSV(){
+          const rowsTbody = document.getElementById('report-rows');
+          if(!rowsTbody) return alert('Report rows not found');
+          const table = document.querySelector('.table-container table');
+          if(!table) return alert('Report table not found');
+
+          let headerCells = [];
+          const theadRows = table.querySelectorAll('thead tr');
+          if(theadRows && theadRows.length >= 2){
+            headerCells = Array.from(theadRows[1].querySelectorAll('th')).map(th => th.innerText.trim());
+          } else if(theadRows.length === 1){
+            headerCells = Array.from(theadRows[0].querySelectorAll('th')).map(th => th.innerText.trim());
+          }
+
+          const csvRows = [];
+          if(headerCells.length) csvRows.push(headerCells.join(','));
+
+          const trs = Array.from(rowsTbody.querySelectorAll('tr'));
+          trs.forEach(tr => {
+            const vals = Array.from(tr.querySelectorAll('td')).map(td => {
+              let v = td.innerText || '';
+              v = v.replace(/"/g, '""');
+              if(v.indexOf(',') !== -1 || v.indexOf('"') !== -1 || v.indexOf('\n') !== -1) v = '"' + v + '"';
+              return v;
+            });
+            csvRows.push(vals.join(','));
+          });
+
+          const csvContent = csvRows.join('\r\n');
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const dateEl = document.getElementById('report-date');
+          const datePart = dateEl && dateEl.value ? dateEl.value.replace(/-/g,'') : toISODateInput(new Date());
+          const filename = `precounselling_report_${datePart}.csv`;
+
+          if(navigator.msSaveBlob){ navigator.msSaveBlob(blob, filename); }
+          else {
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+          }
+        }
+
+        // Export to Excel (HTML-based workbook for good presentation)
+        function exportReportToExcel(){
+          const table = document.querySelector('.table-container table');
+          if(!table) return alert('Report table not found');
+          const dateEl = document.getElementById('report-date');
+          const datePart = dateEl && dateEl.value ? dateEl.value.replace(/-/g,'') : toISODateInput(new Date());
+          const title = 'Pre-Counselling Admission Report';
+
+          // Build a styled HTML for Excel
+          const stylesheet = `
+            <style>
+              table { border-collapse:collapse; width:100%; }
+              th, td { border:1px solid #888; padding:6px 8px; text-align:center; }
+              th { background:#f3f4f6; font-weight:700; }
+              .left { text-align:left; }
+              .meta { font-size:14px; margin-bottom:8px; }
+            </style>`;
+
+          const headerHtml = `<div class="meta"><strong>Er. Perumal Manimekalai College of Engineering</strong><br/>${title}<br/>Date: ${dateEl && dateEl.value ? dateEl.value : ''}</div>`;
+          const html = `<!doctype html><html><head><meta charset="utf-8"/>${stylesheet}</head><body>${headerHtml}${table.outerHTML}</body></html>`;
+
+          const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+          const filename = `precounselling_report_${datePart}.xls`;
+          if(navigator.msSaveBlob) navigator.msSaveBlob(blob, filename);
+          else {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+          }
+        }
+    </script>
+    <script>(function(){const from=new URLSearchParams(location.search).get('from')||'';const btn=document.getElementById('backBtn');if(btn&&from==='super_admin'){btn.href='/admin/super_admin_dashboard';btn.textContent='\u2190 Super Admin';}})();</script>
+</body></html>

@@ -11,27 +11,33 @@ const uploadMemory = multer({ storage: multer.memoryStorage() });
 const fs = require('fs');
 const nodemailer = require('nodemailer');
 
-// Helper to create SMTP transporter using .env settings
+// Helper to create SMTP transporter using .env settings.
+// For Render.com: add SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS in the Render
+// environment dashboard (Settings → Environment). Use SMTP_PORT=465 for Gmail
+// on Render — many cloud hosts block outbound port 587 (STARTTLS).
 function createSmtpTransporter(){
   const smtpHost = process.env.SMTP_HOST;
   const smtpPort = Number(process.env.SMTP_PORT) || 587;
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS;
-  const useTls = String(process.env.SMTP_USE_TLS || 'true').toLowerCase() === 'true';
 
   if(!smtpHost || !smtpUser || !smtpPass) return null;
 
+  const isSecurePort = smtpPort === 465;
   const transportOptions = {
     host: smtpHost,
     port: smtpPort,
-    secure: smtpPort === 465, // use TLS for 465
-    auth: { user: smtpUser, pass: smtpPass }
+    secure: isSecurePort,            // true = SSL (465), false = STARTTLS (587)
+    auth: { user: smtpUser, pass: smtpPass },
+    tls: { rejectUnauthorized: false }, // accept cloud/self-signed certs
+    connectionTimeout: 15000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000
   };
 
-  // If TLS is required (587), enforce STARTTLS
-  if(useTls && smtpPort !== 465){
+  // Port 587: require STARTTLS upgrade after connection
+  if(!isSecurePort){
     transportOptions.requireTLS = true;
-    transportOptions.tls = transportOptions.tls || { rejectUnauthorized: false };
   }
 
   try{
@@ -278,6 +284,61 @@ app.get('/api/enquiries/:id', async (req, res) => {
     if(error) return res.status(500).json({ error: error.message });
     if(!data) return res.status(404).json({ error: 'not found' });
     return res.json(data);
+  }catch(e){ return res.status(500).json({ error: String(e) }); }
+});
+
+// Update enquiry + linked student + linked academic record
+app.put('/api/enquiries/:id', async (req, res) => {
+  try{
+    const id = Number(req.params.id);
+    if(isNaN(id)) return res.status(400).json({ error: 'invalid id' });
+
+    const body = req.body || {};
+
+    // Load existing enquiry to get student_id
+    const { data: existing, error: fetchErr } = await supabase.from('enquiries').select('id,student_id').eq('id', id).maybeSingle();
+    if(fetchErr) return res.status(500).json({ error: fetchErr.message });
+    if(!existing) return res.status(404).json({ error: 'Enquiry not found' });
+
+    const studentId = existing.student_id;
+
+    // Update student record if student_id is known
+    if(studentId){
+      const studentFields = {};
+      const studentKeys = ['full_name','email','whatsapp_number','phone','father_name','mother_name','gender','date_of_birth','aadhar_number','emis_number','plus2_register_number','plus2_school_name','plus2_marks','plus2_percentage','plus2_year','board','study_state','group_studied','medium_of_study','community','caste','religion','mother_tongue','category_7_5','first_graduate','general_quota','reference_details'];
+      studentKeys.forEach(k => { if(body[k] !== undefined) studentFields[k] = body[k]; });
+      if(Object.keys(studentFields).length > 0){
+        const { error: sErr } = await supabase.from('students').update(studentFields).eq('id', studentId);
+        if(sErr) console.warn('enquiry PUT student update error', sErr.message);
+      }
+
+      // Update / upsert academics record
+      const academicFields = {};
+      const academicKeys = ['maths_marks','physics_marks','chemistry_marks','language_subject_name','language_subject_marks','cutoff','tnea_average','tnea_eligible','practical1','practical2','theory','maths_voc','school_name','board'];
+      academicKeys.forEach(k => { if(body[k] !== undefined) academicFields[k] = body[k] === '' ? null : body[k]; });
+      if(Object.keys(academicFields).length > 0){
+        // Try update first, then insert
+        const { data: existAcad } = await supabase.from('academics').select('id').eq('student_id', studentId).maybeSingle();
+        if(existAcad && existAcad.id){
+          const { error: acErr } = await supabase.from('academics').update(academicFields).eq('id', existAcad.id);
+          if(acErr) console.warn('enquiry PUT academics update error', acErr.message);
+        } else {
+          const { error: acInsErr } = await supabase.from('academics').insert(Object.assign({ student_id: studentId }, academicFields));
+          if(acInsErr) console.warn('enquiry PUT academics insert error', acInsErr.message);
+        }
+      }
+    }
+
+    // Update enquiry row itself
+    const enquiryFields = {};
+    const enquiryKeys = ['status','subject','preferred_course','source','notes','student_name','whatsapp_number','email'];
+    enquiryKeys.forEach(k => { if(body[k] !== undefined) enquiryFields[k] = body[k]; });
+    // sync student_name from full_name
+    if(body.full_name && !enquiryFields.student_name) enquiryFields.student_name = body.full_name;
+
+    const { data: updated, error: updErr } = await supabase.from('enquiries').update(Object.assign({ updated_at: new Date().toISOString() }, enquiryFields)).eq('id', id).select().maybeSingle();
+    if(updErr) return res.status(500).json({ error: updErr.message });
+    return res.json({ ok: true, enquiry: updated });
   }catch(e){ return res.status(500).json({ error: String(e) }); }
 });
 

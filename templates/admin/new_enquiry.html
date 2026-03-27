@@ -41,6 +41,9 @@
         @media (max-width: 767px) {
             .header { position: sticky; top: 0; z-index: 50; }
         }
+            /* Fix: Ensure vocational inputs (including cutoff) are fully visible and not clipped */
+            #vocational-section { overflow: visible !important; }
+            #vocational-section input { height: 3rem !important; min-height: 3rem; line-height: 1.2; padding-top: .5rem; padding-bottom: .5rem; }
     </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark font-display min-h-screen text-[#111418] dark:text-white">
@@ -295,28 +298,63 @@
 </label>
 </div>
 
-<!-- Subject Marks for Cutoff -->
-<h3 class="text-lg font-bold mb-4 text-gray-700 dark:text-gray-300">Subject-wise Marks (for Cutoff Calculation)</h3>
-<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-<label class="flex flex-col">
-<p class="text-sm font-semibold mb-2">Maths Marks <span class="text-red-500">*</span></p>
-<input name="maths_marks" id="maths" required class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="0-100" type="number" step="0.01" oninput="calculateCutoff()"/>
-</label>
-<label class="flex flex-col">
-<p class="text-sm font-semibold mb-2">Physics Marks <span class="text-red-500">*</span></p>
-<input name="physics_marks" id="physics" required class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="0-100" type="number" step="0.01" oninput="calculateCutoff()"/>
-</label>
-<label class="flex flex-col">
-<p class="text-sm font-semibold mb-2">Chemistry Marks <span class="text-red-500">*</span></p>
-<input name="chemistry_marks" id="chemistry" required class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="0-100" type="number" step="0.01" oninput="calculateCutoff()"/>
-</label>
-<label class="flex flex-col">
-<div class="flex items-center gap-1 mb-2">
-<p class="text-sm font-semibold">Total Cut-off</p>
-<span class="material-symbols-outlined text-[16px] text-primary cursor-help" title="Calculated as (Maths + (Physics + Chemistry)/2)">info</span>
+<!-- Subject Marks for Cutoff (standard) -->
+<div id="subject-marks-section">
+    <h3 class="text-lg font-bold mb-4 text-gray-700 dark:text-gray-300">Subject-wise Marks (for Cutoff Calculation)</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <label class="flex flex-col">
+            <p class="text-sm font-semibold mb-2">Maths Marks</p>
+            <input name="maths_marks" id="maths" class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="0-100" type="number" step="0.01" oninput="calculateCutoff()"/>
+        </label>
+        <label class="flex flex-col">
+            <p class="text-sm font-semibold mb-2">Physics Marks</p>
+            <input name="physics_marks" id="physics" class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="0-100" type="number" step="0.01" oninput="calculateCutoff()"/>
+        </label>
+        <label class="flex flex-col">
+            <p class="text-sm font-semibold mb-2">Chemistry Marks</p>
+            <input name="chemistry_marks" id="chemistry" class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="0-100" type="number" step="0.01" oninput="calculateCutoff()"/>
+        </label>
+        <label class="flex flex-col">
+            <div class="flex items-center gap-1 mb-2">
+                <p class="text-sm font-semibold">Total Cut-off</p>
+                <span class="material-symbols-outlined text-[16px] text-primary cursor-help" title="Calculated as (Maths + (Physics + Chemistry)/2)">info</span>
+            </div>
+            <input id="cutoff" class="rounded-lg border-primary/30 bg-primary/10 text-primary font-bold h-12 px-4" readonly="" type="text" value="0.00"/>
+        </label>
+    </div>
 </div>
-<input id="cutoff" class="rounded-lg border-primary/30 bg-primary/10 text-primary font-bold h-12 px-4" readonly="" type="text" value="0.00"/>
-</label>
+
+<!-- Vocational subjects: full-width block, shown only when Vocational group is selected -->
+<div id="vocational-section" class="mt-8 p-6 border border-[#dbe0e6] dark:border-[#2d3748] rounded-xl bg-white dark:bg-background-dark" style="display:none;">
+    <div class="flex items-center gap-2 mb-4">
+        <span class="material-symbols-outlined text-primary">engineering</span>
+        <h3 class="text-lg font-bold tracking-tight">Vocational Subjects (for Vocational group)</h3>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
+        <label class="flex flex-col">
+            <p class="text-sm font-semibold mb-2">Practical 1</p>
+            <input id="practical1" name="practical1" type="number" step="0.01" placeholder="0-100" class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" oninput="calculateCutoff()"/>
+        </label>
+        <label class="flex flex-col">
+            <p class="text-sm font-semibold mb-2">Practical 2</p>
+            <input id="practical2" name="practical2" type="number" step="0.01" placeholder="0-100" class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" oninput="calculateCutoff()"/>
+        </label>
+        <label class="flex flex-col">
+            <p class="text-sm font-semibold mb-2">Theory</p>
+            <input id="theory" name="theory" type="number" step="0.01" placeholder="0-100" class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" oninput="calculateCutoff()"/>
+        </label>
+        <label class="flex flex-col">
+            <p class="text-sm font-semibold mb-2">Maths (Vocational)</p>
+            <input id="maths_voc" name="maths_voc" type="number" step="0.01" placeholder="0-100" class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" oninput="calculateCutoff()"/>
+        </label>
+        <div class="flex flex-col">
+            <p class="text-sm font-semibold mb-2">Calculated Cut-off</p>
+            <div class="flex items-center justify-center rounded-lg bg-primary/10 text-primary font-bold h-12 text-lg">
+                <span id="cutoff_voc_display">0.00</span>
+            </div>
+            <input type="hidden" id="cutoff_voc" name="cutoff_voc" />
+        </div>
+    </div>
 </div>
 
 <h3 class="text-lg font-bold mt-8 mb-4 text-gray-700 dark:text-gray-300">Additional Subject Entry</h3>
@@ -462,118 +500,163 @@
 </div>
 
 <script>
-        function calculateCutoff() {
-            const maths = parseFloat(document.getElementById('maths').value) || 0;
-            const physics = parseFloat(document.getElementById('physics').value) || 0;
-            const chemistry = parseFloat(document.getElementById('chemistry').value) || 0;
-
-            // Existing cutoff calculation (kept for compatibility)
-            const cutoff = maths + ((physics + chemistry) / 2);
-            document.getElementById('cutoff').value = cutoff.toFixed(2);
-
-            // TNEA average and eligibility calculation
-            const avg = (maths + physics + chemistry) / 3;
-            document.getElementById('tnea_average').value = avg.toFixed(2);
-
-            // Determine community (allow custom when 'Other' selected)
-            let communityEl = document.getElementById('community');
-            let community = communityEl ? communityEl.value : '';
-            if (community === 'Other') {
-                const custom = document.getElementById('community_custom');
-                community = custom && custom.value ? custom.value : 'Other';
-            }
-
-            const threshold = (community && community.toString().trim().toUpperCase() === 'OC') ? 45.0 : 40.0;
-            const eligible = avg >= threshold;
-
-            const el = document.getElementById('tnea_eligibility');
-            if (el) {
-                if (isNaN(avg) || (maths === 0 && physics === 0 && chemistry === 0)) {
-                    el.innerText = 'Not calculated';
-                    el.className = 'text-sm font-bold text-gray-700 dark:text-white';
-                } else if (eligible) {
-                    el.innerText = 'Eligible';
-                    el.className = 'text-sm font-bold text-green-600 dark:text-green-400';
-                } else {
-                    el.innerText = 'Not Eligible';
-                    el.className = 'text-sm font-bold text-red-600 dark:text-red-400';
-                }
-            }
+    // Calculate cutoff and TNEA average/eligibility
+    function calculateCutoff() {
+        const group = (document.querySelector('select[name="group_studied"]') || {}).value || '';
+        // vocational formula: maths_voc + average(practical1, practical2, theory)
+        if(group && group.toLowerCase().includes('vocational')){
+            const m = parseFloat(document.getElementById('maths_voc')?.value || 0);
+            const p1 = parseFloat(document.getElementById('practical1')?.value || 0);
+            const p2 = parseFloat(document.getElementById('practical2')?.value || 0);
+            const th = parseFloat(document.getElementById('theory')?.value || 0);
+            const avgPr = (p1 + p2 + th) / 3;
+            const cutoffVal = m + avgPr;
+            const cutoffHidden = document.getElementById('cutoff_voc'); if (cutoffHidden) cutoffHidden.value = isFinite(cutoffVal) ? cutoffVal.toFixed(2) : '';
+            const cutoffDisplay = document.getElementById('cutoff_voc_display'); if(cutoffDisplay) cutoffDisplay.innerText = isFinite(cutoffVal) ? cutoffVal.toFixed(2) : '0.00';
+            const tneaAvgEl = document.getElementById('tnea_average'); if (tneaAvgEl) tneaAvgEl.value = isFinite(cutoffVal) ? cutoffVal.toFixed(2) : '';
+            updateTneaEligibility(cutoffVal, true);
+            return;
         }
+        // default formula: maths + (physics + chemistry)/2
+        const maths = parseFloat(document.getElementById('maths')?.value || 0);
+        const physics = parseFloat(document.getElementById('physics')?.value || 0);
+        const chemistry = parseFloat(document.getElementById('chemistry')?.value || 0);
+        const cutoffVal = maths + ((physics + chemistry) / 2);
+        const cutoffEl = document.getElementById('cutoff'); if (cutoffEl) cutoffEl.value = isFinite(cutoffVal) ? cutoffVal.toFixed(2) : '';
+        // TNEA average and eligibility calculation
+        const avg = (maths + physics + chemistry) / 3;
+        const tneaAvgEl = document.getElementById('tnea_average'); if (tneaAvgEl) tneaAvgEl.value = isFinite(avg) ? avg.toFixed(2) : '';
+        updateTneaEligibility(avg, false);
+    }
 
-        // Calculate percentage for 10th and +2 when marks or total change
-        function calculatePercentage(prefix) {
-            try {
-                const marksEl = document.getElementById(prefix + '_marks');
-                const totalEl = document.getElementById(prefix + '_total');
-                const percEl = document.getElementById(prefix + '_percentage');
-                if (!marksEl || !totalEl || !percEl) return;
-                const marks = parseFloat(marksEl.value) || 0;
-                const total = parseFloat(totalEl.value) || 0;
-                if (total > 0) {
-                    const p = (marks / total) * 100;
-                    percEl.value = p.toFixed(2);
-                } else {
-                    percEl.value = '';
-                }
-            } catch (e) {
-                console.error('calculatePercentage error', e);
-            }
-        }
-
-        // Disable First Graduate checkbox if 7.5 category is checked
-        function sync7_5AndFG() {
-            const box7 = document.querySelector('input[name="category_7_5"]');
-            const fg = document.querySelector('input[name="first_graduate"]');
-            if (!box7 || !fg) return;
-            if (box7.checked) {
-                fg.checked = false;
-                fg.disabled = true;
+    function updateTneaEligibility(scoreValue, isVocational){
+        const el = document.getElementById('tnea_eligibility');
+        if(!el) return;
+        if(isVocational){
+            // For vocational: eligible if any cutoff was entered
+            if(!isFinite(scoreValue) || scoreValue <= 0){
+                el.innerText = 'Not calculated';
+                el.className = 'text-sm font-bold text-gray-700 dark:text-white';
             } else {
-                fg.disabled = false;
+                el.innerText = 'Eligible (Vocational)';
+                el.className = 'text-sm font-bold text-green-600 dark:text-green-400';
             }
+            return;
         }
-
-        // Wire 7.5 checkbox change to sync function
-        document.addEventListener('DOMContentLoaded', function() {
-            const box7 = document.querySelector('input[name="category_7_5"]');
-            if (box7) {
-                box7.addEventListener('change', sync7_5AndFG);
-                // initial sync
-                sync7_5AndFG();
-            }
-        });
-
-        function onCommunityChange() {
-            const sel = document.getElementById('community');
+        let maths = parseFloat(document.getElementById('maths')?.value || 0);
+        let physics = parseFloat(document.getElementById('physics')?.value || 0);
+        let chemistry = parseFloat(document.getElementById('chemistry')?.value || 0);
+        let community = '';
+        const communityEl = document.getElementById('community');
+        if(communityEl) community = communityEl.value || '';
+        if (community === 'Other') {
             const custom = document.getElementById('community_custom');
-            if (!sel || !custom) return;
-            if (sel.value === 'Other') {
-                custom.style.display = 'block';
+            community = custom && custom.value ? custom.value : 'Other';
+        }
+        const threshold = (community && community.toString().trim().toUpperCase() === 'OC') ? 45.0 : 40.0;
+        if (!isFinite(scoreValue) || (maths === 0 && physics === 0 && chemistry === 0)){
+            el.innerText = 'Not calculated';
+            el.className = 'text-sm font-bold text-gray-700 dark:text-white';
+            return;
+        }
+        if (scoreValue >= threshold){
+            el.innerText = 'Eligible';
+            el.className = 'text-sm font-bold text-green-600 dark:text-green-400';
+        } else {
+            el.innerText = 'Not Eligible';
+            el.className = 'text-sm font-bold text-red-600 dark:text-red-400';
+        }
+    }
+
+    // Calculate percentage for 10th and +2 when marks or total change
+    function calculatePercentage(prefix) {
+        try {
+            const marksEl = document.getElementById(prefix + '_marks');
+            const totalEl = document.getElementById(prefix + '_total');
+            const percEl = document.getElementById(prefix + '_percentage');
+            if (!marksEl || !totalEl || !percEl) return;
+            const marks = parseFloat(marksEl.value) || 0;
+            const total = parseFloat(totalEl.value) || 0;
+            if (total > 0) {
+                const p = (marks / total) * 100;
+                percEl.value = p.toFixed(2);
             } else {
-                custom.style.display = 'none';
-                custom.value = '';
+                percEl.value = '';
             }
-            calculateCutoff();
+        } catch (e) {
+            console.error('calculatePercentage error', e);
         }
+    }
 
-        function saveDraft() {
-            alert('Draft save functionality will be implemented soon!');
+    // Disable First Graduate checkbox if 7.5 category is checked
+    function sync7_5AndFG() {
+        const box7 = document.querySelector('input[name="category_7_5"]');
+        const fg = document.querySelector('input[name="first_graduate"]');
+        if (!box7 || !fg) return;
+        if (box7.checked) {
+            fg.checked = false;
+            fg.disabled = true;
+        } else {
+            fg.disabled = false;
         }
+    }
 
-        function addOtherSubjectRow(subjectName = '', marks = '') {
-            const tbody = document.getElementById('other-subjects-rows');
-            if (!tbody) return;
-            const tr = document.createElement('tr');
-            tr.className = 'other-subject-row border-t border-[#eef2f7] dark:border-[#2d3748]';
-            tr.innerHTML = `
-                <td class="px-3 py-2"><input type="text" class="other-subject-name rounded-lg border-[#dbe0e6] h-10 px-3 dark:bg-background-dark dark:border-[#2d3748]" placeholder="e.g. Biology" value="${String(subjectName).replace(/"/g,'&quot;')}"></td>
-                <td class="px-3 py-2"><input type="number" step="0.01" class="other-subject-marks rounded-lg border-[#dbe0e6] h-10 px-3 dark:bg-background-dark dark:border-[#2d3748]" placeholder="0-100" value="${marks}"></td>
-                <td class="px-3 py-2"><button type="button" class="remove-subject-row px-2 py-1 rounded border border-red-200 text-red-600 hover:bg-red-50">Remove</button></td>
-            `;
-            tbody.appendChild(tr);
+    function onCommunityChange() {
+        const sel = document.getElementById('community');
+        const custom = document.getElementById('community_custom');
+        if (!sel || !custom) return;
+        if (sel.value === 'Other') {
+            custom.style.display = 'block';
+        } else {
+            custom.style.display = 'none';
+            custom.value = '';
         }
-    </script>
+        calculateCutoff();
+    }
+
+    function onGroupChange(){
+        const group = (document.querySelector('select[name="group_studied"]') || {}).value || '';
+        const voc = document.getElementById('vocational-section');
+        const subj = document.getElementById('subject-marks-section');
+        if(group && group.toLowerCase().includes('vocational')){
+            if(voc) voc.style.display = '';
+            if(subj) subj.style.display = 'none';
+        } else {
+            if(voc) voc.style.display = 'none';
+            if(subj) subj.style.display = '';
+        }
+        calculateCutoff();
+    }
+
+    function saveDraft() {
+        alert('Draft save functionality will be implemented soon!');
+    }
+
+    function addOtherSubjectRow(subjectName = '', marks = '') {
+        const tbody = document.getElementById('other-subjects-rows');
+        if (!tbody) return;
+        const tr = document.createElement('tr');
+        tr.className = 'other-subject-row border-t border-[#eef2f7] dark:border-[#2d3748]';
+        tr.innerHTML = `
+            <td class="px-3 py-2"><input type="text" class="other-subject-name rounded-lg border-[#dbe0e6] h-10 px-3 dark:bg-background-dark dark:border-[#2d3748]" placeholder="e.g. Biology" value="${String(subjectName).replace(/"/g,'&quot;')}"></td>
+            <td class="px-3 py-2"><input type="number" step="0.01" class="other-subject-marks rounded-lg border-[#dbe0e6] h-10 px-3 dark:bg-background-dark dark:border-[#2d3748]" placeholder="0-100" value="${marks}"></td>
+            <td class="px-3 py-2"><button type="button" class="remove-subject-row px-2 py-1 rounded border border-red-200 text-red-600 hover:bg-red-50">Remove</button></td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    // Initialize small behaviors on DOM ready
+    document.addEventListener('DOMContentLoaded', function() {
+        const box7 = document.querySelector('input[name="category_7_5"]');
+        if (box7) {
+            box7.addEventListener('change', sync7_5AndFG);
+            sync7_5AndFG();
+        }
+        const community = document.getElementById('community'); if (community) community.addEventListener('change', onCommunityChange);
+        const groupSelect = document.querySelector('select[name="group_studied"]'); if(groupSelect) groupSelect.addEventListener('change', onGroupChange);
+        onGroupChange();
+    });
+</script>
     <script>
         // New client submit handler: post student + academic + enquiry to server
         document.addEventListener('DOMContentLoaded', function(){
@@ -661,7 +744,7 @@
                     language_subject_name: fd.get('language_subject_name') || null,
                     language_subject_marks: fd.get('language_subject_marks') ? Number(fd.get('language_subject_marks')) : null,
                     other_subjects_json: otherSubjectsJson,
-                    cutoff: document.getElementById('cutoff') ? Number(document.getElementById('cutoff').value || 0) : null,
+                    cutoff: (function(){ const grp = (document.querySelector('select[name="group_studied"]')||{}).value||''; if(grp.toLowerCase().includes('vocational')){ const v = document.getElementById('cutoff_voc'); return v ? Number(v.value||0) : null; } const c = document.getElementById('cutoff'); return c ? Number(c.value||0) : null; })(),
                     tnea_average: document.getElementById('tnea_average') ? Number(document.getElementById('tnea_average').value || 0) : null,
                     tnea_eligible: (function(){ try{ const el = document.getElementById('tnea_eligibility'); return el && el.className && el.className.indexOf('green') !== -1 ? true : (el && el.className && el.className.indexOf('red') !== -1 ? false : null);}catch(e){return null;} })()
                 };
