@@ -88,6 +88,34 @@
 </div>
 </div>
 
+<!-- Search / Filter bar -->
+<div class="bg-white dark:bg-[#1a202c] rounded-lg border border-[#e5e7eb] dark:border-[#2d3748] p-4">
+  <div class="flex flex-wrap gap-3 items-center">
+    <div class="flex-1 min-w-[200px]">
+      <input id="enqSearch" type="text" placeholder="Search by name or phone…" oninput="applyFilters()"
+        class="w-full px-4 py-2 border border-[#e5e7eb] dark:border-[#2d3748] rounded-lg bg-white dark:bg-[#111827] text-sm text-[#111418] dark:text-white focus:outline-none focus:ring-2 focus:ring-primary" />
+    </div>
+    <select id="enqStatusFilter" onchange="applyFilters()"
+      class="px-3 py-2 border border-[#e5e7eb] dark:border-[#2d3748] rounded-lg bg-white dark:bg-[#111827] text-sm text-[#111418] dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+      <option value="">All Statuses</option>
+      <option value="open">Open</option>
+      <option value="converted">Converted</option>
+      <option value="closed">Closed</option>
+    </select>
+    <select id="enqTneaFilter" onchange="applyFilters()"
+      class="px-3 py-2 border border-[#e5e7eb] dark:border-[#2d3748] rounded-lg bg-white dark:bg-[#111827] text-sm text-[#111418] dark:text-white focus:outline-none focus:ring-2 focus:ring-primary">
+      <option value="">All TNEA</option>
+      <option value="eligible">Eligible</option>
+      <option value="not_eligible">Not Eligible</option>
+      <option value="na">N/A</option>
+    </select>
+    <button onclick="resetFilters()" class="px-4 py-2 bg-gray-200 dark:bg-[#2d3748] text-sm text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-[#4a5568] font-medium flex items-center gap-1">
+      <span class="material-symbols-outlined text-sm">refresh</span>Reset
+    </button>
+    <span class="text-xs text-[#617589] dark:text-[#a0aec0]">Showing <span id="enqShowing">0</span> of <span id="enqTotal">0</span></span>
+  </div>
+</div>
+
 <!-- Enquiries Table -->
 <div class="bg-white dark:bg-[#1a202c] rounded-lg border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden">
 <div class="overflow-x-auto">
@@ -105,6 +133,9 @@
 <tbody id="enquiries-tbody" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"></tbody>
 </table>
 </div>
+</div>
+<!-- Pagination -->
+<div id="enqPagination" class="flex flex-wrap items-center justify-center gap-2 mt-2 pb-2"></div>
 </div>
 
 <!-- Stats Footer -->
@@ -127,7 +158,13 @@
 </main>
 </div>
 <script>
-// Client-side enquiries loader
+// ------- State -------
+let allEnquiries = [];
+let filteredEnquiries = [];
+let currentPage = 1;
+const PAGE_SIZE = 25;
+
+// ------- Data load -------
 async function fetchEnquiries(){
     const out = document.getElementById('enquiries-tbody');
     const flash = document.getElementById('flash-area');
@@ -136,38 +173,8 @@ async function fetchEnquiries(){
         const res = await fetch('/api/enquiries');
         if(!res.ok) throw new Error('Failed to load enquiries');
         const arr = await res.json();
-        if(!Array.isArray(arr) || arr.length===0){ out.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center"><div class="flex flex-col items-center gap-2"><span class="material-symbols-outlined text-[#617589] text-5xl">mail</span><p class="text-[#617589] dark:text-[#a0aec0] text-sm font-medium">No enquiries found</p></div></td></tr>'; return; }
-
-        out.innerHTML = '';
-        arr.forEach(enq => {
-            const tr = document.createElement('tr');
-            tr.className = 'hover:bg-[#f9fafb] dark:hover:bg-[#111827] transition-colors';
-            const created = enq.created_at ? (new Date(enq.created_at)).toLocaleDateString() : 'N/A';
-            const cutoffDisplay = (enq.cutoff !== null && enq.cutoff !== undefined) ? Number(enq.cutoff).toFixed(2) : 'N/A';
-            const eligible = (enq.tnea_eligible === true) ? '<span class="px-3 py-1 inline-flex text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">Eligible</span>' : (enq.tnea_eligible === false ? '<span class="px-3 py-1 inline-flex text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">Not Eligible</span>' : '<span class="text-sm font-medium text-gray-500">N/A</span>');
-            tr.innerHTML = `
-                <td class="px-6 py-4 whitespace-nowrap"><p class="text-sm font-medium text-[#111418] dark:text-white">${escapeHtml(enq.student_name||'')}</p></td>
-                <td class="px-6 py-4 whitespace-nowrap"><p class="text-sm text-[#617589] dark:text-[#a0aec0]">${escapeHtml(enq.whatsapp_number||'')}</p></td>
-                <td class="px-6 py-4 whitespace-nowrap"><p class="text-sm font-medium text-[#111418] dark:text-white">${cutoffDisplay}</p></td>
-                <td class="px-6 py-4 whitespace-nowrap"><p class="text-sm text-[#617589] dark:text-[#a0aec0]">${created}</p></td>
-                <td class="px-6 py-4 whitespace-nowrap">${eligible}</td>
-                <td class="px-6 py-4 whitespace-nowrap"><div class="flex gap-2"><a href="/templates/admin/view_enquiry.html?enquiry_id=${encodeURIComponent(enq.id)}" class="px-3 py-1 bg-primary text-white rounded-lg text-sm font-medium">View</a><a href="/templates/admin/edit_enquiry.html?enquiry_id=${encodeURIComponent(enq.id)}" class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium">Edit</a></div></td>
-            `;
-            out.appendChild(tr);
-        });
-
-        // update stats footer
-        try{
-            const totalEl = document.getElementById('total-enquiries-count');
-            const openEl = document.getElementById('open-enquiries-count');
-            const convEl = document.getElementById('converted-enquiries-count');
-            if(totalEl) totalEl.textContent = String(arr.length || 0);
-            const openCount = arr.filter(x => (x.status||'').toLowerCase() === 'open').length;
-            const convCount = arr.filter(x => (x.status||'').toLowerCase() === 'converted').length;
-            if(openEl) openEl.textContent = String(openCount);
-            if(convEl) convEl.textContent = String(convCount);
-        }catch(e){ console.warn('update stats', e); }
-
+        allEnquiries = Array.isArray(arr) ? arr : [];
+        applyFilters();
     }catch(err){
         out.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-sm text-red-600">Error loading enquiries</td></tr>';
         if(flash) flash.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">${escapeHtml(err.message||String(err))}</div>`;
@@ -175,10 +182,113 @@ async function fetchEnquiries(){
     }
 }
 
+// ------- Filter + Paginate -------
+function applyFilters(){
+    const q = (document.getElementById('enqSearch')?.value || '').toLowerCase().trim();
+    const statusF = (document.getElementById('enqStatusFilter')?.value || '').toLowerCase();
+    const tneaF = (document.getElementById('enqTneaFilter')?.value || '');
+
+    filteredEnquiries = allEnquiries.filter(enq => {
+        if(q){
+            const haystack = ((enq.student_name||'') + ' ' + (enq.whatsapp_number||'')).toLowerCase();
+            if(!haystack.includes(q)) return false;
+        }
+        if(statusF){
+            const s = (enq.status||'').toLowerCase();
+            if(s !== statusF) return false;
+        }
+        if(tneaF === 'eligible' && enq.tnea_eligible !== true) return false;
+        if(tneaF === 'not_eligible' && enq.tnea_eligible !== false) return false;
+        if(tneaF === 'na' && enq.tnea_eligible !== null && enq.tnea_eligible !== undefined) return false;
+        return true;
+    });
+
+    document.getElementById('enqTotal').textContent = allEnquiries.length;
+    renderPage(1);
+}
+
+function resetFilters(){
+    document.getElementById('enqSearch').value = '';
+    document.getElementById('enqStatusFilter').value = '';
+    document.getElementById('enqTneaFilter').value = '';
+    applyFilters();
+}
+
+function renderPage(page){
+    currentPage = page;
+    const out = document.getElementById('enquiries-tbody');
+    const total = filteredEnquiries.length;
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    if(page < 1) page = 1; if(page > totalPages) page = totalPages;
+    const slice = filteredEnquiries.slice((page-1)*PAGE_SIZE, page*PAGE_SIZE);
+
+    document.getElementById('enqShowing').textContent = total;
+
+    if(total === 0){
+        out.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center"><div class="flex flex-col items-center gap-2"><span class="material-symbols-outlined text-[#617589] text-5xl">mail</span><p class="text-[#617589] dark:text-[#a0aec0] text-sm font-medium">No enquiries found</p></div></td></tr>';
+        renderPagination(0, 0, 1);
+        return;
+    }
+
+    out.innerHTML = '';
+    slice.forEach(enq => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-[#f9fafb] dark:hover:bg-[#111827] transition-colors';
+        const created = enq.created_at ? (new Date(enq.created_at)).toLocaleDateString() : 'N/A';
+        const cutoffDisplay = (enq.cutoff !== null && enq.cutoff !== undefined) ? Number(enq.cutoff).toFixed(2) : 'N/A';
+        const eligible = (enq.tnea_eligible === true)
+            ? '<span class="px-3 py-1 inline-flex text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">Eligible</span>'
+            : (enq.tnea_eligible === false
+                ? '<span class="px-3 py-1 inline-flex text-xs font-semibold rounded-full bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">Not Eligible</span>'
+                : '<span class="text-xs font-medium text-gray-400">N/A</span>');
+        tr.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap"><p class="text-sm font-medium text-[#111418] dark:text-white">${escapeHtml(enq.student_name||'')}</p></td>
+            <td class="px-6 py-4 whitespace-nowrap"><p class="text-sm text-[#617589] dark:text-[#a0aec0]">${escapeHtml(enq.whatsapp_number||'')}</p></td>
+            <td class="px-6 py-4 whitespace-nowrap"><p class="text-sm font-medium text-[#111418] dark:text-white">${cutoffDisplay}</p></td>
+            <td class="px-6 py-4 whitespace-nowrap"><p class="text-sm text-[#617589] dark:text-[#a0aec0]">${created}</p></td>
+            <td class="px-6 py-4 whitespace-nowrap">${eligible}</td>
+            <td class="px-6 py-4 whitespace-nowrap"><div class="flex gap-2"><a href="/templates/admin/view_enquiry.html?enquiry_id=${encodeURIComponent(enq.id)}" class="px-3 py-1 bg-primary text-white rounded-lg text-sm font-medium">View</a><a href="/templates/admin/edit_enquiry.html?enquiry_id=${encodeURIComponent(enq.id)}" class="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium">Edit</a></div></td>
+        `;
+        out.appendChild(tr);
+    });
+
+    renderPagination(page, totalPages, total);
+    updateStats();
+}
+
+function renderPagination(page, totalPages, total){
+    const pg = document.getElementById('enqPagination');
+    if(!pg) return;
+    if(totalPages <= 1){ pg.innerHTML = ''; return; }
+    const btnClass = 'px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors';
+    const activeClass = 'bg-primary text-white border-primary';
+    const inactiveClass = 'bg-white dark:bg-[#111827] text-[#111418] dark:text-white border-[#e5e7eb] dark:border-[#2d3748] hover:bg-[#f0f2f4] dark:hover:bg-[#1f2937]';
+    let html = `<button class="${btnClass} ${page===1?'opacity-40 cursor-not-allowed '+inactiveClass:inactiveClass}" onclick="renderPage(${page-1})" ${page===1?'disabled':''}>‹ Prev</button>`;
+    const start = Math.max(1, page-2), end = Math.min(totalPages, page+2);
+    if(start > 1) html += `<button class="${btnClass} ${inactiveClass}" onclick="renderPage(1)">1</button>${start>2?'<span class="px-1 text-xs text-[#617589]">…</span>':''}`;
+    for(let i=start;i<=end;i++) html += `<button class="${btnClass} ${i===page?activeClass:inactiveClass}" onclick="renderPage(${i})">${i}</button>`;
+    if(end < totalPages) html += `${end<totalPages-1?'<span class="px-1 text-xs text-[#617589]">…</span>':''}<button class="${btnClass} ${inactiveClass}" onclick="renderPage(${totalPages})">${totalPages}</button>`;
+    html += `<button class="${btnClass} ${page===totalPages?'opacity-40 cursor-not-allowed '+inactiveClass:inactiveClass}" onclick="renderPage(${page+1})" ${page===totalPages?'disabled':''}>Next ›</button>`;
+    html += `<span class="text-xs text-[#617589] ml-2">Page ${page}/${totalPages}</span>`;
+    pg.innerHTML = html;
+}
+
+function updateStats(){
+    try{
+        const totalEl = document.getElementById('total-enquiries-count');
+        const openEl = document.getElementById('open-enquiries-count');
+        const convEl = document.getElementById('converted-enquiries-count');
+        if(totalEl) totalEl.textContent = String(allEnquiries.length || 0);
+        const openCount = allEnquiries.filter(x => (x.status||'').toLowerCase() === 'open').length;
+        const convCount = allEnquiries.filter(x => (x.status||'').toLowerCase() === 'converted').length;
+        if(openEl) openEl.textContent = String(openCount);
+        if(convEl) convEl.textContent = String(convCount);
+    }catch(e){ console.warn('update stats', e); }
+}
+
 function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 document.addEventListener('DOMContentLoaded', function(){
-    // populate sidebar user info from sessionStorage if available
     try{ const u = JSON.parse(sessionStorage.getItem('pmc_user')||'null'); if(u){ document.getElementById('sidebar-user-name').textContent = (u.first_name||u.email||'User'); document.getElementById('sidebar-user-role').textContent = (u.role_id?('Role '+u.role_id):''); } }catch(e){}
     fetchEnquiries();
 });

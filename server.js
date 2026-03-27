@@ -32,7 +32,8 @@ function createSmtpTransporter(){
     tls: { rejectUnauthorized: false }, // accept cloud/self-signed certs
     connectionTimeout: 15000,
     greetingTimeout: 10000,
-    socketTimeout: 15000
+    socketTimeout: 15000,
+    family: 4  // Force IPv4 — Render.com does not route IPv6 SMTP (ENETUNREACH on ::)
   };
 
   // Port 587: require STARTTLS upgrade after connection
@@ -259,7 +260,7 @@ app.get('/api/enquiries', async (req, res) => {
     const studentIds = Array.from(new Set(enquiries.filter(e => e.student_id).map(e => e.student_id)));
     let academicsMap = {};
     if(studentIds.length > 0){
-      const { data: academics, error: acadErr } = await supabase.from('academics').select('student_id,cutoff,tnea_eligible').in('student_id', studentIds);
+      const { data: academics, error: acadErr } = await supabase.from('academics').select('student_id,cutoff,tnea_eligible,maths_voc').in('student_id', studentIds);
       if(!acadErr && Array.isArray(academics)){
         academics.forEach(a => { if(a && a.student_id) academicsMap[String(a.student_id)] = a; });
       }
@@ -268,7 +269,14 @@ app.get('/api/enquiries', async (req, res) => {
     // Attach academic info to each enquiry
     const merged = enquiries.map(enq => {
       const acad = enq.student_id ? academicsMap[String(enq.student_id)] : null;
-      return Object.assign({}, enq, { cutoff: acad && (acad.cutoff !== undefined) ? acad.cutoff : null, tnea_eligible: acad && (acad.tnea_eligible !== undefined) ? acad.tnea_eligible : null });
+      // Compute tnea_eligible: stored value takes priority; if null, derive from maths_voc (vocational students)
+      const storedElig = acad ? acad.tnea_eligible : undefined;
+      const tneaElig = acad
+        ? (storedElig !== null && storedElig !== undefined
+            ? storedElig
+            : (acad.maths_voc !== null && acad.maths_voc !== undefined && Number(acad.maths_voc) > 0 ? true : null))
+        : null;
+      return Object.assign({}, enq, { cutoff: acad && (acad.cutoff !== undefined) ? acad.cutoff : null, tnea_eligible: tneaElig });
     });
 
     res.json(merged);

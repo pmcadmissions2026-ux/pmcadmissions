@@ -68,12 +68,21 @@
 <!-- Search and Filter Section -->
 <div class="bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] p-4 shadow-sm">
 <div class="flex flex-wrap gap-3 items-center">
-<div class="flex-1 min-w-xs">
-<input type="text" id="studentSearch" placeholder="Search by name, ID, email or phone..." class="w-full px-4 py-2 border border-[#e5e7eb] dark:border-[#4a5568] rounded-lg bg-white dark:bg-[#2d3748] text-[#111418] dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
-</div>
-<button onclick="document.getElementById('studentSearch').value = ''; location.reload();" class="px-4 py-2 bg-gray-200 dark:bg-[#2d3748] text-gray-800 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-[#4a5568] transition-colors font-medium text-sm">
-<span class="material-symbols-outlined inline text-sm mr-1">refresh</span>Reset
-</button>
+<div class="flex-1 min-w-[200px]">
+      <input type="text" id="studentSearch" placeholder="Search by name, ID, email or phone..." oninput="applyStudentFilters()"
+        class="w-full px-4 py-2 border border-[#e5e7eb] dark:border-[#4a5568] rounded-lg bg-white dark:bg-[#2d3748] text-[#111418] dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500" />
+    </div>
+    <select id="studentStatusFilter" onchange="applyStudentFilters()"
+      class="px-3 py-2 border border-[#e5e7eb] dark:border-[#4a5568] rounded-lg bg-white dark:bg-[#2d3748] text-sm text-[#111418] dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+      <option value="">All Status</option>
+      <option value="Admitted">Admitted</option>
+      <option value="Waiting">Waiting</option>
+      <option value="Enquiry">Enquiry</option>
+    </select>
+    <button onclick="resetStudentFilters()" class="px-4 py-2 bg-gray-200 dark:bg-[#2d3748] text-gray-800 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-[#4a5568] transition-colors font-medium text-sm">
+      <span class="material-symbols-outlined inline text-sm mr-1">refresh</span>Reset
+    </button>
+    <span class="text-xs text-[#617589] dark:text-[#a0aec0]">Showing <span id="profileShowing">0</span> of <span id="profileTotal">0</span></span>
 </div>
 </div>
 
@@ -115,6 +124,8 @@
 <tbody id="students-rows" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"></tbody>
 </table>
 </div>
+<!-- Pagination -->
+<div id="profilePagination" class="flex flex-wrap items-center justify-center gap-2 py-3 px-4 border-t border-[#e5e7eb] dark:border-[#2d3748]"></div>
 </div>
 
 </div>
@@ -138,6 +149,12 @@ if (SUPABASE_URL.startsWith('http')) {
 } else {
   console.warn('Supabase URL not configured - client disabled');
 }
+
+// ------- Pagination state -------
+let allStudents = [];
+let filteredStudents = [];
+let profilePage = 1;
+const PROFILE_PAGE_SIZE = 25;
 
 // Utility maps
 let academicsByStudent = {};
@@ -234,8 +251,76 @@ async function loadData() {
     }
   });
 
-  renderTable(students);
+  allStudents = students;
   populateExportFields();
+  applyStudentFilters();
+}
+
+// Compute admission status for a student (needed for filter)
+function getStudentStatus(sid, apps){
+  const pays = paymentsByStudent[sid] || [];
+  const hasPay = pays.length > 0;
+  const hasApp = apps.length > 0;
+  const hasDocs = apps.some(ap => { const aid = ap.app_id || ap.id || ap.application_id; return (documentsByApp[aid]||[]).length > 0; });
+  return hasPay ? 'Admitted' : (hasApp && hasDocs ? 'Waiting' : 'Enquiry');
+}
+
+function applyStudentFilters(){
+  const q = (document.getElementById('studentSearch')?.value || '').toLowerCase().trim();
+  const statusF = document.getElementById('studentStatusFilter')?.value || '';
+
+  filteredStudents = allStudents.filter(student => {
+    if(q){
+      const hay = ((student.full_name||student.name||'') + ' ' + (student.unique_id||student.id||'') + ' ' + (student.email||'') + ' ' + (student.phone||student.whatsapp_number||'')).toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    if(statusF){
+      const sid = student.id || student.student_id;
+      const apps = applicationsByStudent[sid] || [];
+      const status = getStudentStatus(sid, apps);
+      if(status !== statusF) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('profileTotal').textContent = allStudents.length;
+  renderProfilePage(1);
+}
+
+function resetStudentFilters(){
+  document.getElementById('studentSearch').value = '';
+  document.getElementById('studentStatusFilter').value = '';
+  applyStudentFilters();
+}
+
+function renderProfilePage(page){
+  profilePage = page;
+  const total = filteredStudents.length;
+  const totalPages = Math.max(1, Math.ceil(total / PROFILE_PAGE_SIZE));
+  if(page < 1) page = 1; if(page > totalPages) page = totalPages;
+  const slice = filteredStudents.slice((page-1)*PROFILE_PAGE_SIZE, page*PROFILE_PAGE_SIZE);
+  document.getElementById('profileShowing').textContent = total;
+  const cEl = document.getElementById('count-records');
+  if(cEl) cEl.textContent = total;
+  renderTable(slice);
+  renderProfilePagination(page, totalPages);
+}
+
+function renderProfilePagination(page, totalPages){
+  const pg = document.getElementById('profilePagination');
+  if(!pg) return;
+  if(totalPages <= 1){ pg.innerHTML = ''; return; }
+  const btnCls = 'px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors';
+  const act = 'bg-blue-600 text-white border-blue-600';
+  const inact = 'bg-white dark:bg-[#111827] text-[#111418] dark:text-white border-[#e5e7eb] dark:border-[#2d3748] hover:bg-[#f0f2f4] dark:hover:bg-[#1f2937]';
+  let html = `<button class="${btnCls} ${page===1?'opacity-40 cursor-not-allowed '+inact:inact}" onclick="renderProfilePage(${page-1})" ${page===1?'disabled':''}>‹ Prev</button>`;
+  const s = Math.max(1,page-2), e = Math.min(totalPages,page+2);
+  if(s>1) html+=`<button class="${btnCls} ${inact}" onclick="renderProfilePage(1)">1</button>${s>2?'<span class="px-1 text-xs text-[#617589]">…</span>':''}`;
+  for(let i=s;i<=e;i++) html+=`<button class="${btnCls} ${i===page?act:inact}" onclick="renderProfilePage(${i})">${i}</button>`;
+  if(e<totalPages) html+=`${e<totalPages-1?'<span class="px-1 text-xs text-[#617589]">…</span>':''}<button class="${btnCls} ${inact}" onclick="renderProfilePage(${totalPages})">${totalPages}</button>`;
+  html+=`<button class="${btnCls} ${page===totalPages?'opacity-40 cursor-not-allowed '+inact:inact}" onclick="renderProfilePage(${page+1})" ${page===totalPages?'disabled':''}>Next ›</button>`;
+  html+=`<span class="text-xs text-[#617589] ml-2">Page ${page}/${totalPages}</span>`;
+  pg.innerHTML = html;
 }
 
 function showConfigError() {
@@ -410,11 +495,7 @@ function renderTable(students) {
 
     tbody.appendChild(row);
   });
-
-  // update count
-  const cnt = students.length || 0;
-  const cEl = document.getElementById('count-records');
-  if (cEl) cEl.textContent = cnt;
+  // count updated by renderProfilePage
 }
 
 // Export modal helpers
@@ -500,20 +581,9 @@ function submitExport() {
   URL.revokeObjectURL(url);
 }
 
-// Search functionality
+// Search functionality (now handled by applyStudentFilters - oninput on the input element)
 const searchInput = document.getElementById('studentSearch');
-if (searchInput) {
-  searchInput.addEventListener('keyup', function(e) {
-    const searchTerm = this.value.toLowerCase();
-    const rows = document.querySelectorAll('#students-rows tr');
-    rows.forEach(row => {
-      if (row.textContent.toLowerCase().includes(searchTerm)) row.style.display = ''; else row.style.display = 'none';
-    });
-    const visibleRows = Array.from(rows).filter(row => row.style.display !== 'none');
-    const recordCount = document.getElementById('count-records');
-    if (recordCount) recordCount.textContent = visibleRows.length;
-  });
-}
+// no keyup handler needed - oninput="applyStudentFilters()" is on the element
 
 // Auto-adjust table width on resize
 window.addEventListener('resize', function() { const table = document.querySelector('table'); if (table) table.style.minWidth = Math.max(1200, window.innerWidth - 40) + 'px'; });
