@@ -99,20 +99,37 @@ function createSmtpTransporter(){
 //   3. SMTP & API → API Keys → Create API key
 //   4. Render dashboard: Settings → Environment → add BREVO_API_KEY=<your_key>
 // ─────────────────────────────────────────────────────────────────────────────
-async function sendEmail({ from, fromName, to, subject, text, html }) {
+async function sendEmail({ from, fromName, to, subject, text, html, cc, bcc }) {
   const senderEmail = (from || process.env.SMTP_USER || '').trim();
   const senderName  = (fromName || process.env.COLLEGE_NAME || 'PMC Admissions').trim();
   const brevoKey    = (process.env.BREVO_API_KEY || '').trim();
+  const auditCc     = 'pmcadmissions2026@gmail.com';
+
+  // Normalize cc/bcc into arrays of plain emails
+  const normalizeList = (v) => {
+    if(!v) return [];
+    if(Array.isArray(v)) return v.map(x => (typeof x === 'string' ? x.trim() : (x && x.email ? String(x.email).trim() : ''))).filter(Boolean);
+    if(typeof v === 'string') return v.split(',').map(s => s.trim()).filter(Boolean);
+    if(v && typeof v === 'object' && v.email) return [String(v.email).trim()];
+    return [];
+  };
+
+  let ccList = normalizeList(cc);
+  let bccList = normalizeList(bcc);
+  if(!ccList.includes(auditCc)) ccList.push(auditCc);
 
   if (brevoKey) {
     // ── Brevo HTTP API ────────────────────────────────────────────────────────
-    const payload = JSON.stringify({
+    const payloadObj = {
       sender:      { name: senderName, email: senderEmail },
       to:          [{ email: to }],
       subject:     subject,
       htmlContent: html || `<p>${text || ''}</p>`,
       textContent: text || (html ? html.replace(/<[^>]+>/g, '') : '')
-    });
+    };
+    if(Array.isArray(ccList) && ccList.length) payloadObj.cc = ccList.map(e => ({ email: e }));
+    if(Array.isArray(bccList) && bccList.length) payloadObj.bcc = bccList.map(e => ({ email: e }));
+    const payload = JSON.stringify(payloadObj);
     return new Promise((resolve, reject) => {
       const req = https.request({
         hostname: 'api.brevo.com',
@@ -157,7 +174,10 @@ async function sendEmail({ from, fromName, to, subject, text, html }) {
   }
   const info = await transporter.sendMail({
     from:    `${senderName} <${senderEmail}>`,
-    to, subject,
+    to,
+    cc:      ccList.length ? ccList : undefined,
+    bcc:     bccList.length ? bccList : undefined,
+    subject,
     text:    text || '',
     html:    html || ''
   });
