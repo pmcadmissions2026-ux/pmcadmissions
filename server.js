@@ -1484,5 +1484,10 @@ app.get('/auth/logout', (req, res) => {
 // Endpoint to inspect current session
 app.get('/auth/me', (req,res) => { res.json({ user: req.session && req.session.user ? req.session.user : null }); });
 
+// Export `app` for serverless adapters (Vercel, Netlify) and only listen when run directly
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`Server listening on http://localhost:${port}`));
+if(require.main === module){
+  app.listen(port, () => console.log(`Server listening on http://localhost:${port}`));
+}
+
+module.exports = app;
