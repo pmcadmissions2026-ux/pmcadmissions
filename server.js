@@ -9,7 +9,19 @@ const { createClient } = require('@supabase/supabase-js');
 const multer = require('multer');
 const uploadMemory = multer({ storage: multer.memoryStorage() });
 const fs = require('fs');
+const dns = require('dns');
 const nodemailer = require('nodemailer');
+
+// CRITICAL: force IPv4-first DNS resolution GLOBALLY for the entire process.
+// On Render, smtp.gmail.com resolves to both IPv4 and IPv6 addresses. Node.js picks
+// IPv6 by default — but Render's network blocks outbound IPv6 SMTP, causing ENETUNREACH.
+// dns.setDefaultResultOrder('ipv4first') ensures all dns.lookup() calls return IPv4 first.
+// The family:4 option in nodemailer alone is NOT sufficient — it depends on the system
+// resolver returning IPv4, which this call guarantees.
+if(typeof dns.setDefaultResultOrder === 'function'){
+  dns.setDefaultResultOrder('ipv4first');
+  console.log('[DNS] ipv4first order set — IPv6 SMTP ENETUNREACH prevented');
+}
 
 // Helper to create SMTP transporter using .env settings.
 // ROOT CAUSE OF RENDER TIMEOUT: port 587 uses STARTTLS (plaintext TCP then TLS upgrade).
@@ -41,10 +53,15 @@ function createSmtpTransporter(){
 
   let transportOptions;
   if(isGmail){
-    // nodemailer built-in 'gmail' service uses port 465, secure:true (SMTPS) automatically.
-    // This bypasses all port/STARTTLS configuration issues on cloud platforms.
-    transportOptions = Object.assign({ service: 'gmail' }, baseOpts);
-    console.log('[SMTP] Using gmail service (port 465 SMTPS, IPv4 forced)');
+    // Use explicit host/port instead of service:'gmail' shorthand.
+    // service:'gmail' resolves internally and may bypass the family:4 socket option.
+    // Explicit host + port 465 + secure:true (SMTPS) = TLS from byte 1, no STARTTLS needed.
+    transportOptions = Object.assign({
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
+    }, baseOpts);
+    console.log('[SMTP] Gmail explicit host:smtp.gmail.com port:465 SMTPS, IPv4 forced');
   } else {
     // Non-Gmail: use explicit host/port from env
     const smtpPort = Number(process.env.SMTP_PORT) || 465;
