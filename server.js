@@ -10,44 +10,52 @@ const multer = require('multer');
 const uploadMemory = multer({ storage: multer.memoryStorage() });
 const fs = require('fs');
 const nodemailer = require('nodemailer');
-// optional SendGrid fallback (API) - used when SMTP connections fail on cloud hosts
-let sendgridClient = null;
-if(process.env.SENDGRID_API_KEY){
-  try{
-    sendgridClient = require('@sendgrid/mail');
-    sendgridClient.setApiKey(process.env.SENDGRID_API_KEY);
-  }catch(e){ console.warn('SendGrid lib not available, outgoing email fallback will be disabled'); sendgridClient = null; }
-}
 
 // Helper to create SMTP transporter using .env settings.
-// For Render.com: add SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS in the Render
-// environment dashboard (Settings → Environment). Use SMTP_PORT=465 for Gmail
-// on Render — many cloud hosts block outbound port 587 (STARTTLS).
-// Create SMTP transporter using .env settings; optional `portOverride` to test alternate ports
-function createSmtpTransporter(portOverride){
-  const smtpHost = process.env.SMTP_HOST;
-  const smtpPort = Number(portOverride) || Number(process.env.SMTP_PORT) || 587;
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
+// ROOT CAUSE OF RENDER TIMEOUT: port 587 uses STARTTLS (plaintext TCP then TLS upgrade).
+// Render's network egress layer blocks/drops the mid-session TLS upgrade → "Connection timeout".
+// FIX: use service:'gmail' which nodemailer resolves to port 465 (SMTPS — TLS from byte 1, no upgrade).
+// Port 465 SMTPS is reliable on all cloud platforms including Render.
+function createSmtpTransporter(){
+  const smtpHost = (process.env.SMTP_HOST || '').trim();
+  const smtpUser = (process.env.SMTP_USER || '').trim();
+  const smtpPass = (process.env.SMTP_PASS || '').trim();
 
-  if(!smtpHost || !smtpUser || !smtpPass) return null;
+  if(!smtpUser || !smtpPass) return null;
 
-  const isSecurePort = smtpPort === 465;
-  const transportOptions = {
-    host: smtpHost,
-    port: smtpPort,
-    secure: isSecurePort,            // true = SSL (465), false = STARTTLS (587)
+  // Shared base options for all transports
+  const baseOpts = {
     auth: { user: smtpUser, pass: smtpPass },
-    tls: { rejectUnauthorized: false }, // accept cloud/self-signed certs
-    connectionTimeout: 20000,
-    greetingTimeout: 15000,
-    socketTimeout: 20000,
-    family: 4  // Force IPv4 — some cloud hosts do not route IPv6 SMTP
+    tls: {
+      rejectUnauthorized: false,  // accept cloud/self-signed certs
+      minVersion: 'TLSv1.2'      // require modern TLS
+    },
+    connectionTimeout: 30000,  // increased for Render cold-start latency
+    greetingTimeout: 20000,
+    socketTimeout: 30000,
+    dnsTimeout: 10000,
+    family: 4,  // Force IPv4 DNS — Render IPv6 SMTP triggers ENETUNREACH on Google IPs
   };
 
-  // Port 587 / non-SSL: require STARTTLS upgrade after connection
-  if(!isSecurePort){
-    transportOptions.requireTLS = true;
+  const isGmail = smtpHost.toLowerCase().includes('gmail.com');
+
+  let transportOptions;
+  if(isGmail){
+    // nodemailer built-in 'gmail' service uses port 465, secure:true (SMTPS) automatically.
+    // This bypasses all port/STARTTLS configuration issues on cloud platforms.
+    transportOptions = Object.assign({ service: 'gmail' }, baseOpts);
+    console.log('[SMTP] Using gmail service (port 465 SMTPS, IPv4 forced)');
+  } else {
+    // Non-Gmail: use explicit host/port from env
+    const smtpPort = Number(process.env.SMTP_PORT) || 465;
+    const isSecurePort = smtpPort === 465;
+    transportOptions = Object.assign({
+      host: smtpHost,
+      port: smtpPort,
+      secure: isSecurePort,
+    }, baseOpts);
+    if(!isSecurePort) transportOptions.requireTLS = true;
+    console.log(`[SMTP] Using custom host ${smtpHost}:${smtpPort} secure=${isSecurePort}`);
   }
 
   try{
@@ -56,91 +64,6 @@ function createSmtpTransporter(portOverride){
     console.error('createSmtpTransporter error', e);
     return null;
   }
-}
-
-// Robust send helper: verify connectivity and attempt alternate SMTP ports when connection times out.
-// This function intentionally uses SMTP only; SendGrid fallback will NOT be used unless explicitly desired.
-async function sendEmailWithFallback(mailOptions){
-  const smtpHost = process.env.SMTP_HOST;
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
-  if(!smtpHost || !smtpUser || !smtpPass) throw new Error('SMTP_HOST/SMTP_USER/SMTP_PASS must be configured');
-
-  // DNS diagnostic (force IPv4 lookup) to help Render troubleshooting
-  try{
-    const dns = require('dns').promises;
-    try{
-      const addrs = await dns.lookup(smtpHost, { family: 4, all: true });
-      console.log('SMTP host IPv4 addresses:', addrs.map(a=>a.address).join(', '));
-    }catch(e){ console.warn('DNS lookup (IPv4) for SMTP_HOST failed', e && e.message ? e.message : e); }
-  }catch(e){ /* ignore */ }
-
-  // Prepare list of ports to try: env-specified first, then common alternates
-  const envPort = Number(process.env.SMTP_PORT) || 0;
-  const candidatePorts = [];
-  if(envPort && !candidatePorts.includes(envPort)) candidatePorts.push(envPort);
-  [465, 587, 25].forEach(p => { if(!candidatePorts.includes(p)) candidatePorts.push(p); });
-  // allow override via SMTP_PORTS env (comma-separated)
-  if(process.env.SMTP_PORTS){
-    const extras = String(process.env.SMTP_PORTS).split(',').map(x=>Number(x.trim())).filter(Boolean);
-    extras.forEach(p => { if(!candidatePorts.includes(p)) candidatePorts.push(p); });
-  }
-
-  const net = require('net');
-  let lastErr = null;
-  for(const port of candidatePorts){
-    console.log('Attempting SMTP connectivity to', smtpHost, 'port', port);
-    // First, quick TCP connect test to detect network-level blocking
-    const tcpTest = () => new Promise((resolve, reject) => {
-      const sock = net.createConnection({ host: smtpHost, port, family: 4 }, () => {
-        sock.destroy();
-        resolve(true);
-      });
-      sock.on('error', (err) => { try{ sock.destroy(); }catch(e){}; reject(err); });
-      sock.setTimeout(6000, () => { try{ sock.destroy(); }catch(e){}; reject(new Error('TCP connect timeout')); });
-    });
-
-    try{
-      await tcpTest();
-      console.log(`TCP connect to ${smtpHost}:${port} succeeded`);
-    }catch(tcpErr){
-      console.warn(`TCP connect to ${smtpHost}:${port} failed:`, tcpErr && tcpErr.message ? tcpErr.message : tcpErr);
-      lastErr = tcpErr;
-      // Try next port
-      continue;
-    }
-
-    // Create transporter for this port and verify
-    const transporter = createSmtpTransporter(port);
-    if(!transporter){ lastErr = new Error('createSmtpTransporter returned null'); continue; }
-
-    try{
-      const ok = await transporter.verify();
-      console.log('SMTP transporter verify ok for port', port, ok);
-    }catch(verErr){
-      console.error('SMTP transporter verify failed for port', port, verErr && verErr.message ? verErr.message : verErr);
-      lastErr = verErr;
-      continue; // try next port
-    }
-
-    // If verify succeeded, attempt to send
-    try{
-      const info = await transporter.sendMail(mailOptions);
-      console.log('Email sent via SMTP to', mailOptions.to, 'via port', port, 'messageId=', info && info.messageId);
-      return { provider: 'smtp', info, port };
-    }catch(sendErr){
-      console.error('SMTP sendMail error on port', port, sendErr && sendErr.message ? sendErr.message : sendErr);
-      lastErr = sendErr;
-      // try next port
-      continue;
-    }
-  }
-
-  // All attempts failed
-  const err = lastErr || new Error('All SMTP connection attempts failed');
-  err.message = `SMTP delivery failed after trying ports ${candidatePorts.join(', ')}: ${err.message}`;
-  console.error(err.message);
-  throw err;
 }
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -569,9 +492,8 @@ app.post('/api/enquiries', async (req, res) => {
           html: htmlBody
         };
 
-        // use robust send with diagnostics and possible SendGrid fallback
-        sendEmailWithFallback(mailOptions).then(r => {
-          console.log('Enquiry email send result', r && r.provider, 'to', toEmail);
+        transporter.sendMail(mailOptions).then(info => {
+          console.log('Enquiry email sent', info && info.messageId, 'to', toEmail);
         }).catch(err => {
           console.error('Error sending enquiry email', err && err.message ? err.message : err);
         });
@@ -715,13 +637,8 @@ app.post('/api/_debug/send_test_email', async (req, res) => {
     const text = 'This is a test email sent from the PMC Admissions server to verify SMTP configuration.';
     const html = `<p>${text}</p><p>If you received this, SMTP is working.</p>`;
 
-    try{
-      const r = await sendEmailWithFallback({ from: `${fromName} <${fromEmail}>`, to, subject, text, html });
-      return res.json({ ok: true, provider: r && r.provider, info: r && r.info });
-    }catch(e){
-      console.error('test email send failed', e && e.message ? e.message : e);
-      return res.status(500).json({ error: String(e) });
-    }
+    const info = await transporter.sendMail({ from: `${fromName} <${fromEmail}>`, to, subject, text, html });
+    return res.json({ ok: true, messageId: info && info.messageId, accepted: info && info.accepted });
   }catch(e){
     console.error('test email error', e);
     return res.status(500).json({ error: String(e) });
@@ -755,7 +672,8 @@ app.post('/api/_debug/resend_enquiry_email', async (req, res) => {
       academic = a || null;
     }
 
-    // don't require direct SMTP transporter here; use sendEmailWithFallback which will try SMTP then API fallback
+    const transporter = createSmtpTransporter();
+    if(!transporter) return res.status(500).json({ error: 'SMTP not configured' });
 
     // build tplData
     const tplData = Object.assign({}, student || {}, academic || {}, enqRow || {});
@@ -793,11 +711,11 @@ app.post('/api/_debug/resend_enquiry_email', async (req, res) => {
     const mailOptions = { from: `${fromName} <${fromEmail}>`, to: toEmail, subject: `${tplData.college_name || 'Admissions'} - Enquiry received`, text: textBody, html: htmlBody };
 
     try{
-      const r = await sendEmailWithFallback(mailOptions);
-      console.log('Resend enquiry email sent via', r && r.provider, 'to', toEmail);
-      return res.json({ ok: true, provider: r && r.provider, info: r && r.info });
+      const info = await transporter.sendMail(mailOptions);
+      console.log('Resend enquiry email sent', info && info.messageId, 'to', toEmail);
+      return res.json({ ok: true, messageId: info && info.messageId, accepted: info && info.accepted });
     }catch(e){
-      console.error('Resend enquiry send error', e && e.message ? e.message : e);
+      console.error('Resend enquiry send error', e);
       return res.status(500).json({ error: String(e) });
     }
   }catch(e){
@@ -1484,10 +1402,5 @@ app.get('/auth/logout', (req, res) => {
 // Endpoint to inspect current session
 app.get('/auth/me', (req,res) => { res.json({ user: req.session && req.session.user ? req.session.user : null }); });
 
-// Export `app` for serverless adapters (Vercel, Netlify) and only listen when run directly
 const port = process.env.PORT || 3000;
-if(require.main === module){
-  app.listen(port, () => console.log(`Server listening on http://localhost:${port}`));
-}
-
-module.exports = app;
+app.listen(port, () => console.log(`Server listening on http://localhost:${port}`));
