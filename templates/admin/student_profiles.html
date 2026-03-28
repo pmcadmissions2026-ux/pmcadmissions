@@ -352,11 +352,6 @@ function renderTable(students) {
     const community = pick(student, 'community', 'community_name') || 'N/A';
     const religion = pick(student, 'religion', 'religion_name') || 'N/A';
     const fullName = pick(student, 'full_name', 'name') || 'N/A';
-    // If the first two characters are the same letter (e.g. 'SShan...'), remove the duplicate leading char
-    let sanitizedFullName = String(fullName || 'N/A');
-    if(sanitizedFullName.length > 1 && sanitizedFullName[0].toLowerCase() === sanitizedFullName[1].toLowerCase()){
-      sanitizedFullName = sanitizedFullName.slice(1).trim();
-    }
     const uniqueId = pick(student, 'unique_id', 'id') || 'N/A';
     const plus2 = pick(student, 'plus2_percentage', 'plus2_percent', 'hsc_percentage') || 'N/A';
     const schoolName = pick(academic, 'school_name', 'school', 'institute_name') || 'N/A';
@@ -437,7 +432,7 @@ function renderTable(students) {
     const admissionStatus = hasPayment ? 'Admitted' : (hasApp && hasDocs ? 'Waiting' : 'Enquiry');
     const statusColor = admissionStatus === 'Admitted' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : (admissionStatus === 'Waiting' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300');
 
-    const nameInitial = (sanitizedFullName || 'N')[0] || 'N';
+    const nameInitial = (fullName || 'N')[0] || 'N';
     // compute optional departments codes from admissionsByStudent
     const optionalIds = new Set();
     (admissionsByStudent[sid] || []).forEach(ad => {
@@ -464,7 +459,7 @@ function renderTable(students) {
     const row = document.createElement('tr');
     row.className = 'hover:bg-blue-50 dark:hover:bg-[#2d3748] transition-colors duration-150 border-l-4 border-l-transparent hover:border-l-blue-500';
     row.innerHTML = `
-      <td class="px-4 py-3 text-xs font-semibold text-[#111418] dark:text-white sticky left-0 bg-white dark:bg-[#1a202c] hover:bg-blue-50 dark:hover:bg-[#2d3748]"><div class="flex items-center gap-2"><div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-xs">${nameInitial.toUpperCase()}</div>${escapeHtml(sanitizedFullName || 'N/A')}</div></td>
+      <td class="px-4 py-3 text-xs font-semibold text-[#111418] dark:text-white sticky left-0 bg-white dark:bg-[#1a202c] hover:bg-blue-50 dark:hover:bg-[#2d3748]"><div class="flex items-center gap-2"><div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-xs">${nameInitial.toUpperCase()}</div>${(student.full_name || student.name || 'N/A')}</div></td>
       <td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1] font-mono bg-[#f9fafb] dark:bg-[#0f172a]">${student.unique_id || student.id || 'N/A'}</td>
       <td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1] truncate">${student.email || 'N/A'}</td>
       <td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1]">${phone}</td>
@@ -543,7 +538,7 @@ function submitExport() {
   tbodyRows.forEach(tr => {
     const data = {};
     const tds = tr.querySelectorAll('td');
-    data.full_name = tds[0]?.textContent.trim() || '';
+    data.full_name = (tds[0]?.textContent.trim() || '').slice(1); // skip avatar initial char
     data.unique_id = tds[1]?.textContent.trim() || '';
     data.email = tds[2]?.textContent.trim() || '';
     data.phone = tds[3]?.textContent.trim() || '';
@@ -589,7 +584,7 @@ function submitExport() {
     tbodyRowsXlsx.forEach(tr => {
       const data2 = {};
       const tds2 = tr.querySelectorAll('td');
-      data2.full_name = tds2[0]?.textContent.trim() || '';
+      data2.full_name = (tds2[0]?.textContent.trim() || '').slice(1); // skip avatar initial char
       data2.unique_id = tds2[1]?.textContent.trim() || '';
       data2.email = tds2[2]?.textContent.trim() || '';
       data2.phone = tds2[3]?.textContent.trim() || '';

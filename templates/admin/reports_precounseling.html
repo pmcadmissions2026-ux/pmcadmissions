@@ -174,7 +174,10 @@
         }
 
         function formatDisplayDate(d){
-          return d.toLocaleDateString();
+          const dd = String(d.getDate()).padStart(2,'0');
+          const mm = String(d.getMonth()+1).padStart(2,'0');
+          const yyyy = d.getFullYear();
+          return `${dd}/${mm}/${yyyy}`;
         }
 
         function endOfDay(date){ const d = new Date(date); d.setHours(23,59,59,999); return d; }

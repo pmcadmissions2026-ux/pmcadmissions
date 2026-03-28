@@ -33,27 +33,37 @@
     </script>
 <style>
         @media print {
+            @page { size: A4 landscape; margin: 8mm; }
             .no-print {
                 display: none !important;
             }
             body {
                 background-color: white !important;
                 color: black !important;
+                font-size: 9px !important;
             }
             .report-container {
                 box-shadow: none !important;
                 border: none !important;
                 margin: 0 !important;
-                padding: 0 !important;
+                padding: 4mm !important;
                 max-width: 100% !important;
             }
+            main { padding: 0 !important; max-width: 100% !important; }
+            header { margin-bottom: 4mm !important; padding-bottom: 2mm !important; }
+            h2 { font-size: 13px !important; }
+            h3 { font-size: 11px !important; }
             table {
                 border-collapse: collapse;
                 width: 100%;
+                font-size: 8px !important;
+                page-break-inside: avoid;
             }
             th, td {
                 border: 1px solid #000 !important;
+                padding: 2px 3px !important;
             }
+            .mt-8, .mt-12 { margin-top: 3mm !important; }
         }
         .table-container {
             overflow-x: auto;
@@ -62,11 +72,11 @@
             width: 100%;
             border-collapse: collapse;
             text-align: center;
-            font-size: 0.875rem;
+            font-size: 0.72rem;
         }
         th, td {
             border: 1px solid;
-            padding: 8px 4px;
+            padding: 5px 3px;
         }
     </style>
 </head>
@@ -88,10 +98,9 @@
 <button class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-700 transition-all font-medium text-sm" onclick="printReport()">
 <span class="material-symbols-outlined text-sm">print</span> Print Report
             </button>
-            <button id="export-pdf" class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-all font-medium text-sm" onclick="printReport()"><span class="material-symbols-outlined text-sm">print</span> Print / PDF</button>
-            <button id="export-xls" type="button" class="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-all font-medium text-sm">
-            <span class="material-symbols-outlined text-sm">description</span> Export to Excel
-            </button>
+<button id="export-xls" type="button" class="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-all font-medium text-sm">
+<span class="material-symbols-outlined text-sm">description</span> Export to Excel
+</button>
 </div>
 </nav>
 <main class="max-w-[1200px] mx-auto p-4 md:p-8">
@@ -199,7 +208,10 @@
         }
 
         function formatDisplayDate(d){
-          return d.toLocaleDateString();
+          const dd = String(d.getDate()).padStart(2,'0');
+          const mm = String(d.getMonth()+1).padStart(2,'0');
+          const yyyy = d.getFullYear();
+          return `${dd}/${mm}/${yyyy}`;
         }
 
         function endOfDay(date){ const d = new Date(date); d.setHours(23,59,59,999); return d; }
