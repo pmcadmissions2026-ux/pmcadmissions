@@ -10,6 +10,14 @@ const multer = require('multer');
 const uploadMemory = multer({ storage: multer.memoryStorage() });
 const fs = require('fs');
 const nodemailer = require('nodemailer');
+// optional SendGrid fallback (API) - used when SMTP connections fail on cloud hosts
+let sendgridClient = null;
+if(process.env.SENDGRID_API_KEY){
+  try{
+    sendgridClient = require('@sendgrid/mail');
+    sendgridClient.setApiKey(process.env.SENDGRID_API_KEY);
+  }catch(e){ console.warn('SendGrid lib not available, outgoing email fallback will be disabled'); sendgridClient = null; }
+}
 
 // Helper to create SMTP transporter using .env settings.
 // For Render.com: add SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS in the Render
@@ -46,6 +54,68 @@ function createSmtpTransporter(){
   }catch(e){
     console.error('createSmtpTransporter error', e);
     return null;
+  }
+}
+
+// Robust send helper: verifies transporter connectivity, logs DNS resolution, and falls back to SendGrid API when available
+async function sendEmailWithFallback(mailOptions){
+  const transporter = createSmtpTransporter();
+  if(!transporter){
+    console.warn('No SMTP transporter available; checking SendGrid fallback');
+    if(sendgridClient){
+      try{
+        await sendgridClient.send({ to: mailOptions.to, from: mailOptions.from, subject: mailOptions.subject, text: mailOptions.text, html: mailOptions.html });
+        console.log('Email sent via SendGrid fallback to', mailOptions.to);
+        return { provider: 'sendgrid' };
+      }catch(e){ console.error('SendGrid fallback failed', e && e.message ? e.message : e); throw e; }
+    }
+    throw new Error('No SMTP transporter configured and no SendGrid fallback available');
+  }
+
+  // DNS diagnostic (force IPv4 lookup) to help Render troubleshooting
+  try{
+    const dns = require('dns').promises;
+    if(process.env.SMTP_HOST){
+      try{
+        const addrs = await dns.lookup(process.env.SMTP_HOST, { family: 4, all: true });
+        console.log('SMTP host IPv4 addresses:', addrs.map(a=>a.address).join(', '));
+      }catch(e){ console.warn('DNS lookup (IPv4) for SMTP_HOST failed', e && e.message ? e.message : e); }
+    }
+  }catch(e){ /* ignore */ }
+
+  // verify transporter connectivity before sending
+  try{
+    const ok = await transporter.verify();
+    console.log('SMTP transporter verify: ok=', ok);
+  }catch(err){
+    console.error('SMTP transporter verify failed', err && err.message ? err.message : err);
+    // if SMTP verify fails due to connection/timeouts and SendGrid is configured, try fallback
+    if(sendgridClient){
+      try{
+        await sendgridClient.send({ to: mailOptions.to, from: mailOptions.from, subject: mailOptions.subject, text: mailOptions.text, html: mailOptions.html });
+        console.log('Email sent via SendGrid fallback after SMTP verify failed, to', mailOptions.to);
+        return { provider: 'sendgrid' };
+      }catch(e){ console.error('SendGrid fallback also failed', e && e.message ? e.message : e); throw e; }
+    }
+    throw err;
+  }
+
+  // attempt send
+  try{
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Email sent via SMTP to', mailOptions.to, 'messageId=', info && info.messageId);
+    return { provider: 'smtp', info };
+  }catch(e){
+    console.error('SMTP sendMail error', e && e.message ? e.message : e);
+    // final fallback to SendGrid if configured
+    if(sendgridClient){
+      try{
+        await sendgridClient.send({ to: mailOptions.to, from: mailOptions.from, subject: mailOptions.subject, text: mailOptions.text, html: mailOptions.html });
+        console.log('Email sent via SendGrid fallback after SMTP send failed, to', mailOptions.to);
+        return { provider: 'sendgrid' };
+      }catch(err){ console.error('SendGrid fallback also failed', err && err.message ? err.message : err); throw err; }
+    }
+    throw e;
   }
 }
 
@@ -475,8 +545,9 @@ app.post('/api/enquiries', async (req, res) => {
           html: htmlBody
         };
 
-        transporter.sendMail(mailOptions).then(info => {
-          console.log('Enquiry email sent', info && info.messageId, 'to', toEmail);
+        // use robust send with diagnostics and possible SendGrid fallback
+        sendEmailWithFallback(mailOptions).then(r => {
+          console.log('Enquiry email send result', r && r.provider, 'to', toEmail);
         }).catch(err => {
           console.error('Error sending enquiry email', err && err.message ? err.message : err);
         });
@@ -620,8 +691,13 @@ app.post('/api/_debug/send_test_email', async (req, res) => {
     const text = 'This is a test email sent from the PMC Admissions server to verify SMTP configuration.';
     const html = `<p>${text}</p><p>If you received this, SMTP is working.</p>`;
 
-    const info = await transporter.sendMail({ from: `${fromName} <${fromEmail}>`, to, subject, text, html });
-    return res.json({ ok: true, messageId: info && info.messageId, accepted: info && info.accepted });
+    try{
+      const r = await sendEmailWithFallback({ from: `${fromName} <${fromEmail}>`, to, subject, text, html });
+      return res.json({ ok: true, provider: r && r.provider, info: r && r.info });
+    }catch(e){
+      console.error('test email send failed', e && e.message ? e.message : e);
+      return res.status(500).json({ error: String(e) });
+    }
   }catch(e){
     console.error('test email error', e);
     return res.status(500).json({ error: String(e) });
@@ -655,8 +731,7 @@ app.post('/api/_debug/resend_enquiry_email', async (req, res) => {
       academic = a || null;
     }
 
-    const transporter = createSmtpTransporter();
-    if(!transporter) return res.status(500).json({ error: 'SMTP not configured' });
+    // don't require direct SMTP transporter here; use sendEmailWithFallback which will try SMTP then API fallback
 
     // build tplData
     const tplData = Object.assign({}, student || {}, academic || {}, enqRow || {});
@@ -694,11 +769,11 @@ app.post('/api/_debug/resend_enquiry_email', async (req, res) => {
     const mailOptions = { from: `${fromName} <${fromEmail}>`, to: toEmail, subject: `${tplData.college_name || 'Admissions'} - Enquiry received`, text: textBody, html: htmlBody };
 
     try{
-      const info = await transporter.sendMail(mailOptions);
-      console.log('Resend enquiry email sent', info && info.messageId, 'to', toEmail);
-      return res.json({ ok: true, messageId: info && info.messageId, accepted: info && info.accepted });
+      const r = await sendEmailWithFallback(mailOptions);
+      console.log('Resend enquiry email sent via', r && r.provider, 'to', toEmail);
+      return res.json({ ok: true, provider: r && r.provider, info: r && r.info });
     }catch(e){
-      console.error('Resend enquiry send error', e);
+      console.error('Resend enquiry send error', e && e.message ? e.message : e);
       return res.status(500).json({ error: String(e) });
     }
   }catch(e){
