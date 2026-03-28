@@ -10,6 +10,7 @@ const multer = require('multer');
 const uploadMemory = multer({ storage: multer.memoryStorage() });
 const fs = require('fs');
 const dns = require('dns');
+const https = require('https');
 const nodemailer = require('nodemailer');
 
 // CRITICAL: force IPv4-first DNS resolution GLOBALLY for the entire process.
@@ -81,6 +82,87 @@ function createSmtpTransporter(){
     console.error('createSmtpTransporter error', e);
     return null;
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UNIFIED EMAIL SENDER
+// Primary:  Brevo HTTP API  — port 443 HTTPS, works on Render/all cloud hosts
+// Fallback: Nodemailer SMTP — works for non-Gmail SMTP and local dev
+//
+// WHY BREVO: Google blocks all SMTP connections (ports 465 & 587) from Render/
+// cloud provider IP ranges as an anti-spam measure → "Connection timeout".
+// Brevo sends via HTTPS (port 443) which is NEVER blocked anywhere.
+//
+// ONE-TIME SETUP (free, 300 emails/day):
+//   1. Sign up at https://app.brevo.com
+//   2. Senders & IPs → Add Sender → verify pmcadmissions2026@gmail.com
+//   3. SMTP & API → API Keys → Create API key
+//   4. Render dashboard: Settings → Environment → add BREVO_API_KEY=<your_key>
+// ─────────────────────────────────────────────────────────────────────────────
+async function sendEmail({ from, fromName, to, subject, text, html }) {
+  const senderEmail = (from || process.env.SMTP_USER || '').trim();
+  const senderName  = (fromName || process.env.COLLEGE_NAME || 'PMC Admissions').trim();
+  const brevoKey    = (process.env.BREVO_API_KEY || '').trim();
+
+  if (brevoKey) {
+    // ── Brevo HTTP API ────────────────────────────────────────────────────────
+    const payload = JSON.stringify({
+      sender:      { name: senderName, email: senderEmail },
+      to:          [{ email: to }],
+      subject:     subject,
+      htmlContent: html || `<p>${text || ''}</p>`,
+      textContent: text || (html ? html.replace(/<[^>]+>/g, '') : '')
+    });
+    return new Promise((resolve, reject) => {
+      const req = https.request({
+        hostname: 'api.brevo.com',
+        port:     443,
+        path:     '/v3/smtp/email',
+        method:   'POST',
+        headers:  {
+          'accept':         'application/json',
+          'api-key':        brevoKey,
+          'content-type':   'application/json',
+          'content-length': Buffer.byteLength(payload)
+        }
+      }, (res) => {
+        let body = '';
+        res.on('data', (c) => { body += c; });
+        res.on('end',  () => {
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            let result = {};
+            try { result = JSON.parse(body); } catch(e) {}
+            console.log('[Brevo] Email sent to', to, '| messageId:', result.messageId || 'ok');
+            resolve({ messageId: result.messageId, provider: 'brevo', accepted: [to] });
+          } else {
+            // Log the full error so it is visible in Render logs
+            console.error('[Brevo] API error', res.statusCode, body);
+            reject(new Error(`Brevo API ${res.statusCode}: ${body}`));
+          }
+        });
+      });
+      req.on('error', (e) => reject(new Error('Brevo HTTPS error: ' + e.message)));
+      req.write(payload);
+      req.end();
+    });
+  }
+
+  // ── SMTP fallback (non-Gmail providers, local dev) ────────────────────────
+  const transporter = createSmtpTransporter();
+  if (!transporter) {
+    throw new Error(
+      '[Email] No provider configured. ' +
+      'Set BREVO_API_KEY in Render env vars (recommended) or SMTP_HOST+SMTP_USER+SMTP_PASS.'
+    );
+  }
+  const info = await transporter.sendMail({
+    from:    `${senderName} <${senderEmail}>`,
+    to, subject,
+    text:    text || '',
+    html:    html || ''
+  });
+  console.log('[SMTP] Email sent to', to, '| messageId:', info && info.messageId);
+  return info;
 }
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -449,20 +531,15 @@ app.post('/api/enquiries', async (req, res) => {
     // Attempt to send an acknowledgement email to the enquirer using nodemailer.
     (async () => {
       try{
-        const smtpHost = process.env.SMTP_HOST;
-        const smtpPort = Number(process.env.SMTP_PORT) || 587;
         const smtpUser = process.env.SMTP_USER;
-        const smtpPass = process.env.SMTP_PASS;
-        const fromName = process.env.SENDGRID_FROM_NAME || process.env.COLLEGE_NAME || smtpUser || 'Admissions';
-        const fromEmail = process.env.SENDGRID_FROM_EMAIL || smtpUser || smtpUser;
+        const fromName = process.env.COLLEGE_NAME || smtpUser || 'Admissions';
+        const fromEmail = (process.env.SMTP_USER || '').trim();
 
-        if(!smtpHost || !smtpUser || !smtpPass){
-          console.warn('SMTP not configured fully; skipping enquiry email send');
+        const brevoKey = (process.env.BREVO_API_KEY || '').trim();
+        if(!brevoKey && !smtpUser){
+          console.warn('[Email] No provider configured (set BREVO_API_KEY or SMTP_USER); skipping enquiry email');
           return;
         }
-
-        const transporter = createSmtpTransporter();
-        if(!transporter){ console.warn('No SMTP transporter available; skipping send'); return; }
 
         // Prepare template rendering data (prefer student/enquiry fields)
         const tplData = Object.assign({}, createdStudent || {}, createdAcademic || {}, createdEnquiry || {}, enquiryRow || {});
@@ -509,8 +586,8 @@ app.post('/api/enquiries', async (req, res) => {
           html: htmlBody
         };
 
-        transporter.sendMail(mailOptions).then(info => {
-          console.log('Enquiry email sent', info && info.messageId, 'to', toEmail);
+        sendEmail({ from: fromEmail, fromName, to: toEmail, subject: mailOptions.subject, text: mailOptions.text, html: mailOptions.html }).then(info => {
+          console.log('Enquiry email sent', info && info.messageId, 'to', toEmail, 'via', info && info.provider || 'smtp');
         }).catch(err => {
           console.error('Error sending enquiry email', err && err.message ? err.message : err);
         });
@@ -644,18 +721,14 @@ app.post('/api/_debug/send_test_email', async (req, res) => {
     const to = req.body && (req.body.to || req.query.to);
     if(!to) return res.status(400).json({ error: 'to is required (body.to or ?to=)' });
 
-    const transporter = createSmtpTransporter();
-    if(!transporter) return res.status(500).json({ error: 'SMTP not configured on server' });
+    const fromName  = process.env.COLLEGE_NAME || process.env.SMTP_USER || 'Admissions';
+    const fromEmail = (process.env.SMTP_USER || '').trim();
+    const subject   = 'Test email from PMC Admissions';
+    const text      = 'This is a test email to verify email configuration on the PMC Admissions server.';
+    const html      = `<p>${text}</p><p>If you received this, email is working (provider: ${(process.env.BREVO_API_KEY||'').trim() ? 'Brevo' : 'SMTP'}).</p>`;
 
-    // Compose simple test message
-    const fromName = process.env.SENDGRID_FROM_NAME || process.env.COLLEGE_NAME || process.env.SMTP_USER || 'Admissions';
-    const fromEmail = process.env.SENDGRID_FROM_EMAIL || process.env.SMTP_USER || process.env.SMTP_USER;
-    const subject = 'Test email from PMC Admissions';
-    const text = 'This is a test email sent from the PMC Admissions server to verify SMTP configuration.';
-    const html = `<p>${text}</p><p>If you received this, SMTP is working.</p>`;
-
-    const info = await transporter.sendMail({ from: `${fromName} <${fromEmail}>`, to, subject, text, html });
-    return res.json({ ok: true, messageId: info && info.messageId, accepted: info && info.accepted });
+    const info = await sendEmail({ from: fromEmail, fromName, to, subject, text, html });
+    return res.json({ ok: true, messageId: info && info.messageId, provider: info && info.provider || 'smtp', accepted: info && info.accepted });
   }catch(e){
     console.error('test email error', e);
     return res.status(500).json({ error: String(e) });
@@ -689,9 +762,7 @@ app.post('/api/_debug/resend_enquiry_email', async (req, res) => {
       academic = a || null;
     }
 
-    const transporter = createSmtpTransporter();
-    if(!transporter) return res.status(500).json({ error: 'SMTP not configured' });
-
+    // (transporter removed — now using central sendEmail() which uses Brevo or SMTP)
     // build tplData
     const tplData = Object.assign({}, student || {}, academic || {}, enqRow || {});
     tplData.college_name = tplData.college_name || process.env.COLLEGE_NAME || '';
@@ -723,14 +794,14 @@ app.post('/api/_debug/resend_enquiry_email', async (req, res) => {
     const toEmail = (enqRow.email || enqRow.contact_email) || (student && (student.email || student.contact_email)) || null;
     if(!toEmail) return res.status(400).json({ error: 'no recipient email available', candidates: { enquiryEmail: enqRow.email, studentEmail: student && student.email } });
 
-    const fromName = process.env.SENDGRID_FROM_NAME || process.env.COLLEGE_NAME || process.env.SMTP_USER || 'Admissions';
-    const fromEmail = process.env.SENDGRID_FROM_EMAIL || process.env.SMTP_USER || process.env.SMTP_USER;
-    const mailOptions = { from: `${fromName} <${fromEmail}>`, to: toEmail, subject: `${tplData.college_name || 'Admissions'} - Enquiry received`, text: textBody, html: htmlBody };
+    const fromName  = process.env.COLLEGE_NAME || process.env.SMTP_USER || 'Admissions';
+    const fromEmail = (process.env.SMTP_USER || '').trim();
+    const mailOptions = { subject: `${tplData.college_name || 'Admissions'} - Enquiry received`, text: textBody, html: htmlBody };
 
     try{
-      const info = await transporter.sendMail(mailOptions);
-      console.log('Resend enquiry email sent', info && info.messageId, 'to', toEmail);
-      return res.json({ ok: true, messageId: info && info.messageId, accepted: info && info.accepted });
+      const info = await sendEmail({ from: fromEmail, fromName, to: toEmail, subject: mailOptions.subject, text: mailOptions.text, html: mailOptions.html });
+      console.log('Resend enquiry email sent', info && info.messageId, 'to', toEmail, 'via', info && info.provider || 'smtp');
+      return res.json({ ok: true, messageId: info && info.messageId, provider: info && info.provider || 'smtp', accepted: info && info.accepted });
     }catch(e){
       console.error('Resend enquiry send error', e);
       return res.status(500).json({ error: String(e) });
