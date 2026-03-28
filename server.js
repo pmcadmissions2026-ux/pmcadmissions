@@ -23,9 +23,10 @@ if(process.env.SENDGRID_API_KEY){
 // For Render.com: add SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS in the Render
 // environment dashboard (Settings → Environment). Use SMTP_PORT=465 for Gmail
 // on Render — many cloud hosts block outbound port 587 (STARTTLS).
-function createSmtpTransporter(){
+// Create SMTP transporter using .env settings; optional `portOverride` to test alternate ports
+function createSmtpTransporter(portOverride){
   const smtpHost = process.env.SMTP_HOST;
-  const smtpPort = Number(process.env.SMTP_PORT) || 587;
+  const smtpPort = Number(portOverride) || Number(process.env.SMTP_PORT) || 587;
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS;
 
@@ -38,13 +39,13 @@ function createSmtpTransporter(){
     secure: isSecurePort,            // true = SSL (465), false = STARTTLS (587)
     auth: { user: smtpUser, pass: smtpPass },
     tls: { rejectUnauthorized: false }, // accept cloud/self-signed certs
-    connectionTimeout: 15000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
-    family: 4  // Force IPv4 — Render.com does not route IPv6 SMTP (ENETUNREACH on ::)
+    connectionTimeout: 20000,
+    greetingTimeout: 15000,
+    socketTimeout: 20000,
+    family: 4  // Force IPv4 — some cloud hosts do not route IPv6 SMTP
   };
 
-  // Port 587: require STARTTLS upgrade after connection
+  // Port 587 / non-SSL: require STARTTLS upgrade after connection
   if(!isSecurePort){
     transportOptions.requireTLS = true;
   }
@@ -57,66 +58,89 @@ function createSmtpTransporter(){
   }
 }
 
-// Robust send helper: verifies transporter connectivity, logs DNS resolution, and falls back to SendGrid API when available
+// Robust send helper: verify connectivity and attempt alternate SMTP ports when connection times out.
+// This function intentionally uses SMTP only; SendGrid fallback will NOT be used unless explicitly desired.
 async function sendEmailWithFallback(mailOptions){
-  const transporter = createSmtpTransporter();
-  if(!transporter){
-    console.warn('No SMTP transporter available; checking SendGrid fallback');
-    if(sendgridClient){
-      try{
-        await sendgridClient.send({ to: mailOptions.to, from: mailOptions.from, subject: mailOptions.subject, text: mailOptions.text, html: mailOptions.html });
-        console.log('Email sent via SendGrid fallback to', mailOptions.to);
-        return { provider: 'sendgrid' };
-      }catch(e){ console.error('SendGrid fallback failed', e && e.message ? e.message : e); throw e; }
-    }
-    throw new Error('No SMTP transporter configured and no SendGrid fallback available');
-  }
+  const smtpHost = process.env.SMTP_HOST;
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+  if(!smtpHost || !smtpUser || !smtpPass) throw new Error('SMTP_HOST/SMTP_USER/SMTP_PASS must be configured');
 
   // DNS diagnostic (force IPv4 lookup) to help Render troubleshooting
   try{
     const dns = require('dns').promises;
-    if(process.env.SMTP_HOST){
-      try{
-        const addrs = await dns.lookup(process.env.SMTP_HOST, { family: 4, all: true });
-        console.log('SMTP host IPv4 addresses:', addrs.map(a=>a.address).join(', '));
-      }catch(e){ console.warn('DNS lookup (IPv4) for SMTP_HOST failed', e && e.message ? e.message : e); }
-    }
+    try{
+      const addrs = await dns.lookup(smtpHost, { family: 4, all: true });
+      console.log('SMTP host IPv4 addresses:', addrs.map(a=>a.address).join(', '));
+    }catch(e){ console.warn('DNS lookup (IPv4) for SMTP_HOST failed', e && e.message ? e.message : e); }
   }catch(e){ /* ignore */ }
 
-  // verify transporter connectivity before sending
-  try{
-    const ok = await transporter.verify();
-    console.log('SMTP transporter verify: ok=', ok);
-  }catch(err){
-    console.error('SMTP transporter verify failed', err && err.message ? err.message : err);
-    // if SMTP verify fails due to connection/timeouts and SendGrid is configured, try fallback
-    if(sendgridClient){
-      try{
-        await sendgridClient.send({ to: mailOptions.to, from: mailOptions.from, subject: mailOptions.subject, text: mailOptions.text, html: mailOptions.html });
-        console.log('Email sent via SendGrid fallback after SMTP verify failed, to', mailOptions.to);
-        return { provider: 'sendgrid' };
-      }catch(e){ console.error('SendGrid fallback also failed', e && e.message ? e.message : e); throw e; }
-    }
-    throw err;
+  // Prepare list of ports to try: env-specified first, then common alternates
+  const envPort = Number(process.env.SMTP_PORT) || 0;
+  const candidatePorts = [];
+  if(envPort && !candidatePorts.includes(envPort)) candidatePorts.push(envPort);
+  [465, 587, 25].forEach(p => { if(!candidatePorts.includes(p)) candidatePorts.push(p); });
+  // allow override via SMTP_PORTS env (comma-separated)
+  if(process.env.SMTP_PORTS){
+    const extras = String(process.env.SMTP_PORTS).split(',').map(x=>Number(x.trim())).filter(Boolean);
+    extras.forEach(p => { if(!candidatePorts.includes(p)) candidatePorts.push(p); });
   }
 
-  // attempt send
-  try{
-    const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent via SMTP to', mailOptions.to, 'messageId=', info && info.messageId);
-    return { provider: 'smtp', info };
-  }catch(e){
-    console.error('SMTP sendMail error', e && e.message ? e.message : e);
-    // final fallback to SendGrid if configured
-    if(sendgridClient){
-      try{
-        await sendgridClient.send({ to: mailOptions.to, from: mailOptions.from, subject: mailOptions.subject, text: mailOptions.text, html: mailOptions.html });
-        console.log('Email sent via SendGrid fallback after SMTP send failed, to', mailOptions.to);
-        return { provider: 'sendgrid' };
-      }catch(err){ console.error('SendGrid fallback also failed', err && err.message ? err.message : err); throw err; }
+  const net = require('net');
+  let lastErr = null;
+  for(const port of candidatePorts){
+    console.log('Attempting SMTP connectivity to', smtpHost, 'port', port);
+    // First, quick TCP connect test to detect network-level blocking
+    const tcpTest = () => new Promise((resolve, reject) => {
+      const sock = net.createConnection({ host: smtpHost, port, family: 4 }, () => {
+        sock.destroy();
+        resolve(true);
+      });
+      sock.on('error', (err) => { try{ sock.destroy(); }catch(e){}; reject(err); });
+      sock.setTimeout(6000, () => { try{ sock.destroy(); }catch(e){}; reject(new Error('TCP connect timeout')); });
+    });
+
+    try{
+      await tcpTest();
+      console.log(`TCP connect to ${smtpHost}:${port} succeeded`);
+    }catch(tcpErr){
+      console.warn(`TCP connect to ${smtpHost}:${port} failed:`, tcpErr && tcpErr.message ? tcpErr.message : tcpErr);
+      lastErr = tcpErr;
+      // Try next port
+      continue;
     }
-    throw e;
+
+    // Create transporter for this port and verify
+    const transporter = createSmtpTransporter(port);
+    if(!transporter){ lastErr = new Error('createSmtpTransporter returned null'); continue; }
+
+    try{
+      const ok = await transporter.verify();
+      console.log('SMTP transporter verify ok for port', port, ok);
+    }catch(verErr){
+      console.error('SMTP transporter verify failed for port', port, verErr && verErr.message ? verErr.message : verErr);
+      lastErr = verErr;
+      continue; // try next port
+    }
+
+    // If verify succeeded, attempt to send
+    try{
+      const info = await transporter.sendMail(mailOptions);
+      console.log('Email sent via SMTP to', mailOptions.to, 'via port', port, 'messageId=', info && info.messageId);
+      return { provider: 'smtp', info, port };
+    }catch(sendErr){
+      console.error('SMTP sendMail error on port', port, sendErr && sendErr.message ? sendErr.message : sendErr);
+      lastErr = sendErr;
+      // try next port
+      continue;
+    }
   }
+
+  // All attempts failed
+  const err = lastErr || new Error('All SMTP connection attempts failed');
+  err.message = `SMTP delivery failed after trying ports ${candidatePorts.join(', ')}: ${err.message}`;
+  console.error(err.message);
+  throw err;
 }
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
