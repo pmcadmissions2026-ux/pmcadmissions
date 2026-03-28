@@ -499,7 +499,7 @@ function renderTable(students) {
 }
 
 // Export modal helpers
-const EXPORT_COLUMNS = ['full_name','unique_id','email','phone','gender','dob','community','religion','status','school_name','plus2_percentage','cutoff','tnea_eligible','tnea_average','preferred_depts','optional_depts_codes','quota','admitted_dept','order','consortium_number','counsel_status','admitted_date','payments'];
+const EXPORT_COLUMNS = ['full_name','unique_id','email','phone','gender','dob','community','religion','status','school_name','plus2_percentage','cutoff','tnea_eligible','tnea_average','preferred_depts','opt_dept_1','opt_dept_2','opt_dept_3','quota','admitted_dept','order','consortium_number','counsel_status','admitted_date','payments'];
 const EXPORT_COLUMNS_EXT = ['maths_marks','physics_marks','chemistry_marks','language_subject_name'];
 
 function populateExportFields() {
@@ -509,7 +509,8 @@ function populateExportFields() {
   EXPORT_COLUMNS.forEach(col => {
     const lbl = document.createElement('label');
     lbl.className = 'inline-flex items-center gap-2 text-sm';
-    lbl.innerHTML = `<input type="checkbox" class="export-field-checkbox" value="${col}" onchange="updateSelectedCount()" checked /> <span>${col}</span>`;
+    const displayName = col === 'opt_dept_1' ? 'Optional Dept 1' : col === 'opt_dept_2' ? 'Optional Dept 2' : col === 'opt_dept_3' ? 'Optional Dept 3' : col;
+    lbl.innerHTML = `<input type="checkbox" class="export-field-checkbox" value="${col}" onchange="updateSelectedCount()" checked /> <span>${displayName}</span>`;
     container.appendChild(lbl);
   });
   EXPORT_COLUMNS_EXT.forEach(col => {
@@ -557,28 +558,83 @@ function submitExport() {
     data.tnea_average = tds[17]?.textContent.trim() || '';
     data.preferred_depts = tds[18]?.textContent.trim() || '';
     data.optional_depts_codes = tds[19]?.textContent.trim() || '';
+    const optParts = data.optional_depts_codes.split(',').map(s => s.trim());
+    data.opt_dept_1 = optParts[0] || '';
+    data.opt_dept_2 = optParts[1] || '';
+    data.opt_dept_3 = optParts[2] || '';
     data.quota = tds[20]?.textContent.trim() || '';
     data.admitted_dept = tds[21]?.textContent.trim() || '';
     data.order = tds[22]?.textContent.trim() || '';
     data.consortium_number = tds[23]?.textContent.trim() || '';
     data.counsel_status = tds[24]?.textContent.trim() || '';
     data.admitted_date = tds[25]?.textContent.trim() || '';
-    data.payments = tds[26]?.textContent.trim() || '';
+    data.payments = (tds[26]?.textContent.trim() || '').replace(/₹/g, '').trim();
 
     const line = selected.map(k => `"${(data[k]||'').replace(/"/g,'""')}"`).join(',');
     rows.push(line);
   });
 
-  const csv = rows.join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'students_export.csv';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  if(typeof XLSX !== 'undefined'){
+    // Generate proper .xlsx with column headers
+    const headers = selected.map(k => k === 'opt_dept_1' ? 'Optional Dept 1' : k === 'opt_dept_2' ? 'Optional Dept 2' : k === 'opt_dept_3' ? 'Optional Dept 3' : k.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()));
+    const aoa = [headers];
+    // re-run extract for all rows (already done above into rows array but let's rebuild from `rows`)
+    // rows[0] = header (already extracted as selected keys) — rebuild cleanly from DOM
+    const tbodyRowsXlsx = document.querySelectorAll('#students-rows > tr');
+    tbodyRowsXlsx.forEach(tr => {
+      const data2 = {};
+      const tds2 = tr.querySelectorAll('td');
+      data2.full_name = tds2[0]?.textContent.trim() || '';
+      data2.unique_id = tds2[1]?.textContent.trim() || '';
+      data2.email = tds2[2]?.textContent.trim() || '';
+      data2.phone = tds2[3]?.textContent.trim() || '';
+      data2.gender = tds2[4]?.textContent.trim() || '';
+      data2.dob = tds2[5]?.textContent.trim() || '';
+      data2.community = tds2[6]?.textContent.trim() || '';
+      data2.religion = tds2[7]?.textContent.trim() || '';
+      data2.status = tds2[8]?.textContent.trim() || '';
+      data2.school_name = tds2[9]?.textContent.trim() || '';
+      data2.plus2_percentage = tds2[10]?.textContent.trim() || '';
+      data2.maths_marks = tds2[11]?.textContent.trim() || '';
+      data2.physics_marks = tds2[12]?.textContent.trim() || '';
+      data2.chemistry_marks = tds2[13]?.textContent.trim() || '';
+      data2.language_subject_name = tds2[14]?.textContent.trim() || '';
+      data2.cutoff = tds2[15]?.textContent.trim() || '';
+      data2.tnea_eligible = tds2[16]?.textContent.trim() || '';
+      data2.tnea_average = tds2[17]?.textContent.trim() || '';
+      data2.preferred_depts = tds2[18]?.textContent.trim() || '';
+      const optRaw = tds2[19]?.textContent.trim() || '';
+      const optArr = optRaw.split(',').map(s => s.trim());
+      data2.opt_dept_1 = optArr[0] || '';
+      data2.opt_dept_2 = optArr[1] || '';
+      data2.opt_dept_3 = optArr[2] || '';
+      data2.quota = tds2[20]?.textContent.trim() || '';
+      data2.admitted_dept = tds2[21]?.textContent.trim() || '';
+      data2.order = tds2[22]?.textContent.trim() || '';
+      data2.consortium_number = tds2[23]?.textContent.trim() || '';
+      data2.counsel_status = tds2[24]?.textContent.trim() || '';
+      data2.admitted_date = tds2[25]?.textContent.trim() || '';
+      data2.payments = (tds2[26]?.textContent.trim() || '').replace(/₹/g, '').trim();
+      aoa.push(selected.map(k => data2[k] || ''));
+    });
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = headers.map(() => ({wch: 18}));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Students');
+    XLSX.writeFile(wb, 'students_export.xlsx');
+  } else {
+    // Fallback: CSV download
+    const csv = rows.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'students_export.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
 }
 
 // Search functionality (now handled by applyStudentFilters - oninput on the input element)
@@ -606,5 +662,6 @@ document.addEventListener('DOMContentLoaded', () => {
   else showConfigError();
 });
 </script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </body>
 </html>

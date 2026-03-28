@@ -116,8 +116,8 @@
 <table class="border-slate-300 dark:border-slate-700">
 <thead class="bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 uppercase text-[11px] font-bold">
 <tr>
-<th class="w-10" rowspan="3">S.No</th>
-<th class="w-20" rowspan="3">Dept</th>
+<th class="w-10" rowspan="2">S.No</th>
+<th class="w-20" rowspan="2">Dept</th>
 <th class="py-2" colspan="2">Actual No of Seats</th>
 <th colspan="3">Admitted Upto<br/><span class="selected-date-hdr"></span></th>
 <th colspan="3">Total Admitted As On<br/><span class="selected-date-hdr"></span></th>
@@ -136,10 +136,7 @@
 <th class="w-16">GQ</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
-            <!-- Rows will be rendered client-side -->
-            <tbody id="report-rows" class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300"></tbody>
-</tbody>
+<tbody id="report-rows" class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300"></tbody>
 <tfoot id="report-footer" class="bg-slate-100 dark:bg-slate-800 font-bold text-slate-900 dark:text-white"></tfoot>
 </table>
 </div>
@@ -321,12 +318,12 @@
             await renderReport(val);
           });
 
-          // Export CSV wiring
+          // Export Excel wiring
           const exportBtn = document.getElementById('export-xls');
           if(exportBtn){
             exportBtn.addEventListener('click', () => {
               try{
-                exportReportToCSV();
+                exportReportToExcel();
               }catch(e){ console.error('export error', e); alert('Export failed: ' + (e && e.message ? e.message : e)); }
             });
           }
@@ -335,53 +332,70 @@
           renderReport(selectedDate).catch(err => { console.error('renderReport error', err); alert('Error loading report: ' + err.message); });
         });
 
-        // Export table data to CSV (simple, Excel-compatible CSV)
-        function exportReportToCSV(){
+        // Export report table to Excel (.xlsx) using SheetJS
+        function exportReportToExcel(){
+          if(typeof XLSX === 'undefined') return alert('Excel library not loaded. Please refresh the page and try again.');
           const rowsTbody = document.getElementById('report-rows');
           if(!rowsTbody) return alert('Report rows not found');
-          const table = document.querySelector('.table-container table');
-          if(!table) return alert('Report table not found');
 
-          // build header from second thead row if present, otherwise flatten all th
-          let headerCells = [];
-          const theadRows = table.querySelectorAll('thead tr');
-          if(theadRows && theadRows.length >= 2){
-            headerCells = Array.from(theadRows[1].querySelectorAll('th')).map(th => th.innerText.trim());
-          } else if(theadRows.length === 1){
-            headerCells = Array.from(theadRows[0].querySelectorAll('th')).map(th => th.innerText.trim());
-          }
+          const dateEl = document.getElementById('report-date');
+          const dateInputVal = dateEl && dateEl.value ? dateEl.value : '';
+          const selDateDisp = document.getElementById('selected-date-display')?.innerText || dateInputVal;
+          const datePart = dateInputVal ? dateInputVal.replace(/-/g,'') : toISODateInput(new Date());
 
-          const csvRows = [];
-          if(headerCells.length) csvRows.push(headerCells.join(','));
+          // Build array-of-arrays for worksheet
+          const aoa = [
+            ['Er. Perumal Manimekalai College of Engineering'],
+            ['Daily Admission Status - 2025-2026'],
+            ['Report Date: ' + selDateDisp],
+            ['B.E - First Year'],
+            [],
+            ['S.No', 'Dept', 'Actual No of Seats', '', 'Admitted Upto ' + selDateDisp, '', '', 'Total Admitted As On ' + selDateDisp, '', '', 'Vacancy', ''],
+            ['', '', 'MQ', 'GQ', 'MQ', 'GQ', 'GQ(S)', 'MQ', 'GQ', 'GQ(S)', 'MQ', 'GQ'],
+          ];
 
-          const trs = Array.from(rowsTbody.querySelectorAll('tr'));
-          trs.forEach(tr => {
+          Array.from(rowsTbody.querySelectorAll('tr')).forEach(tr => {
             const vals = Array.from(tr.querySelectorAll('td')).map(td => {
-              let v = td.innerText || '';
-              v = v.replace(/\"/g, '""');
-              if(v.indexOf(',') !== -1 || v.indexOf('"') !== -1 || v.indexOf('\n') !== -1) v = '"' + v + '"';
-              return v;
+              const v = td.innerText.trim();
+              const n = Number(v);
+              return (!isNaN(n) && v !== '') ? n : v;
             });
-            csvRows.push(vals.join(','));
+            aoa.push(vals);
           });
 
-          const csvContent = csvRows.join('\r\n');
-          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-          const dateEl = document.getElementById('report-date');
-          const datePart = dateEl && dateEl.value ? dateEl.value.replace(/-/g,'') : toISODateInput(new Date());
-          const filename = `admissions_report_${datePart}.csv`;
+          const footerTrs = document.getElementById('report-footer')?.querySelectorAll('tr') || [];
+          footerTrs.forEach(tr => {
+            const vals = Array.from(tr.querySelectorAll('td')).map(td => {
+              const v = td.innerText.trim();
+              const n = Number(v);
+              return (!isNaN(n) && v !== '') ? n : v;
+            });
+            aoa.push(vals);
+          });
 
-          if(navigator.msSaveBlob){ navigator.msSaveBlob(blob, filename); }
-          else {
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', filename);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            setTimeout(() => URL.revokeObjectURL(url), 5000);
-          }
+          const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+          ws['!merges'] = [
+            {s:{r:0,c:0}, e:{r:0,c:11}},
+            {s:{r:1,c:0}, e:{r:1,c:11}},
+            {s:{r:2,c:0}, e:{r:2,c:11}},
+            {s:{r:3,c:0}, e:{r:3,c:11}},
+            {s:{r:5,c:0}, e:{r:6,c:0}},
+            {s:{r:5,c:1}, e:{r:6,c:1}},
+            {s:{r:5,c:2}, e:{r:5,c:3}},
+            {s:{r:5,c:4}, e:{r:5,c:6}},
+            {s:{r:5,c:7}, e:{r:5,c:9}},
+            {s:{r:5,c:10}, e:{r:5,c:11}},
+          ];
+
+          ws['!cols'] = [
+            {wch:6}, {wch:14}, {wch:8}, {wch:8}, {wch:8}, {wch:8}, {wch:8},
+            {wch:12}, {wch:12}, {wch:12}, {wch:8}, {wch:8}
+          ];
+
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, 'Admission Report');
+          XLSX.writeFile(wb, 'admissions_report_' + datePart + '.xlsx');
         }
     </script>
     <script>
@@ -396,4 +410,5 @@
       })();
     </script>
 
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </body></html>
