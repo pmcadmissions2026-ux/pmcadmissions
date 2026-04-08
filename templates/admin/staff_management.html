@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html class="light" lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -41,12 +41,7 @@
 <body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white min-h-screen flex flex-col">
 <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] px-6 py-3 sticky top-0 z-50">
 <div class="flex items-center gap-4">
-<div class="text-primary">
-<svg fill="none" height="32" viewbox="0 0 48 48" width="32" xmlns="http://www.w3.org/2000/svg">
-<path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
-</svg>
-</div>
-<h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Er. Perumal Manimekalai College of Engineering</h2>
+<img src="/static/img/pmc-logo.jpeg" alt="PMC Engineering" class="h-10 w-auto object-contain rounded" />
 </div>
 <div class="flex items-center gap-4">
 <div class="flex items-center gap-2 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-3 py-1 rounded-full text-xs font-bold">
@@ -91,6 +86,9 @@ Add Staff Member
 
 <!-- Staff Table -->
 <div class="bg-white dark:bg-[#1a202c] rounded-lg border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden">
+<div class="px-6 py-4 border-b border-[#e5e7eb] dark:border-[#2d3748]">
+<input id="staffSearch" type="search" placeholder="Search by name, email, role, employee ID..." class="w-full md:w-1/2 px-3 py-2 border border-[#e5e7eb] dark:border-[#2d3748] rounded-lg focus:outline-none focus:ring focus:ring-blue-200 text-sm bg-white dark:bg-[#111827] text-[#111418] dark:text-white" />
+</div>
 <div class="overflow-x-auto">
 <table class="w-full">
 <thead class="bg-[#f0f2f4] dark:bg-[#111827] border-b border-[#e5e7eb] dark:border-[#2d3748]">
@@ -109,6 +107,7 @@ Add Staff Member
 <tbody id="staff-tbody" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"></tbody>
 </table>
 </div>
+<div id="staffPagination" class="px-6 py-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#e5e7eb] dark:border-[#2d3748]"></div>
 </div>
 
 <!-- Summary Stats -->
@@ -142,11 +141,6 @@ async function fetchJson(url, opts){ const r = await fetch(url, opts); if(!r.ok)
 function showFlash(msg, type='info'){ const fc = document.getElementById('flashContainer'); if(!fc) return; fc.innerHTML = `<div class="bg-${type==='success'?'green':'red'}-50 border border-${type==='success'?'green':'red'}-200 text-${type==='success'?'green':'red'}-800 px-4 py-3 rounded-lg">${msg}</div>`; setTimeout(()=>{ if(fc) fc.innerHTML=''; }, 3000); }
 
 function renderUsers(users){ const tbody = document.getElementById('staff-tbody'); tbody.innerHTML='';
-    // Update stats
-    const allUsers = Array.isArray(users) ? users : [];
-    const statTotal = document.getElementById('stat-total'); if(statTotal) statTotal.textContent = allUsers.length;
-    const statActive = document.getElementById('stat-active'); if(statActive) statActive.textContent = allUsers.filter(u=>u.is_active).length;
-    const statSuper = document.getElementById('stat-super'); if(statSuper) statSuper.textContent = allUsers.filter(u=>u.role_id==1).length;
     if(!Array.isArray(users) || users.length===0){ const tr = document.createElement('tr'); tr.innerHTML = `<td colspan="9" class="px-6 py-8 text-center"><div class="flex flex-col items-center gap-2"><span class="material-symbols-outlined text-5xl text-[#e5e7eb] dark:text-[#2d3748]">people</span><p class="text-[#617589] dark:text-[#a0aec0] font-medium">No staff members found</p><p class="text-xs text-[#617589] dark:text-[#a0aec0]">Create your first staff member to get started</p></div></td>`; tbody.appendChild(tr); return; }
     users.forEach(u=>{
         const tr = document.createElement('tr'); tr.className='hover:bg-[#f9fafb] dark:hover:bg-[#111827] transition-colors';
@@ -172,7 +166,48 @@ function renderUsers(users){ const tbody = document.getElementById('staff-tbody'
         `;
         tbody.appendChild(tr);
     });
-        // use event delegation for edit/delete buttons
+        // use event delegation for edit/delete buttons - now wired once in DOMContentLoaded
+}
+
+let allStaff = [], filteredStaff = [], staffPage = 1;
+const STAFF_PAGE_SIZE = 25;
+
+function applyStaffFilters(){
+    const q = (document.getElementById('staffSearch')?.value || '').trim().toLowerCase();
+    filteredStaff = allStaff.filter(u => !q || [u.employee_id,u.first_name,u.last_name,u.email,u.phone,u.role_name].join(' ').toLowerCase().includes(q));
+    staffPage = 1; renderStaffPage(1);
+}
+function renderStaffPage(page){
+    staffPage = page;
+    const total = filteredStaff.length;
+    const totalPages = Math.ceil(total / STAFF_PAGE_SIZE) || 1;
+    const start = (page - 1) * STAFF_PAGE_SIZE;
+    renderUsers(filteredStaff.slice(start, start + STAFF_PAGE_SIZE));
+    renderStaffPagination(page, totalPages, total);
+}
+function renderStaffPagination(page, totalPages, total){
+    const div = document.getElementById('staffPagination'); if(!div) return;
+    if(totalPages <= 1){ div.innerHTML = '<span class="text-xs text-[#617589] dark:text-[#a0aec0]">'+total+' staff member(s)</span>'; return; }
+    let html = '<span class="text-xs text-[#617589] dark:text-[#a0aec0]">Showing '+(((page-1)*STAFF_PAGE_SIZE)+1)+'\u2013'+Math.min(page*STAFF_PAGE_SIZE,total)+' of '+total+'</span>';
+    html += '<div class="flex items-center gap-1">';
+    html += '<button onclick="renderStaffPage('+Math.max(1,page-1)+')" '+(page<=1?'disabled':'')+' class="px-3 py-1 rounded border text-sm '+(page<=1?'opacity-40 cursor-not-allowed':'hover:bg-gray-100 dark:hover:bg-[#2d3748]')+'">Prev</button>';
+    for(let i=Math.max(1,page-2); i<=Math.min(totalPages,page+2); i++){ html += '<button onclick="renderStaffPage('+i+')" class="px-3 py-1 rounded border text-sm '+(i===page?'bg-primary text-white border-primary':'hover:bg-gray-100 dark:hover:bg-[#2d3748]')+'">'+i+'</button>'; }
+    html += '<button onclick="renderStaffPage('+Math.min(totalPages,page+1)+')" '+(page>=totalPages?'disabled':'')+' class="px-3 py-1 rounded border text-sm '+(page>=totalPages?'opacity-40 cursor-not-allowed':'hover:bg-gray-100 dark:hover:bg-[#2d3748]')+'">Next</button>';
+    html += '</div>'; div.innerHTML = html;
+}
+async function loadUsers(){
+    try{
+        const users = await fetchJson('/api/users');
+        allStaff = Array.isArray(users) ? users : [];
+        const statTotal = document.getElementById('stat-total'); if(statTotal) statTotal.textContent = allStaff.length;
+        const statActive = document.getElementById('stat-active'); if(statActive) statActive.textContent = allStaff.filter(u=>u.is_active).length;
+        const statSuper = document.getElementById('stat-super'); if(statSuper) statSuper.textContent = allStaff.filter(u=>u.role_id==1).length;
+        applyStaffFilters();
+    }catch(e){ console.error(e); showFlash('Failed to load users'); }
+}
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+        const tbody = document.getElementById('staff-tbody');
         tbody.addEventListener('click', async function(ev){
             const del = ev.target.closest && ev.target.closest('.delete-btn');
             if(del){
@@ -184,16 +219,11 @@ function renderUsers(users){ const tbody = document.getElementById('staff-tbody'
                 return;
             }
             const edit = ev.target.closest && ev.target.closest('a[data-action="edit_staff"]');
-            if(edit){ ev.preventDefault(); const uid = edit.getAttribute('data-staff-id') || edit.dataset.staffId; if(!uid) return showFlash('Invalid user id'); // navigate to edit page (implement separately)
-                // open an edit page if available
+            if(edit){ ev.preventDefault(); const uid = edit.getAttribute('data-staff-id') || edit.dataset.staffId; if(!uid) return showFlash('Invalid user id');
                 window.location.href = 'staff_edit.html?user_id=' + encodeURIComponent(uid);
             }
         });
-}
-
-async function loadUsers(){ try{ const users = await fetchJson('/api/users'); renderUsers(users); }catch(e){ console.error(e); showFlash('Failed to load users'); } }
-
-    document.addEventListener('DOMContentLoaded', ()=>{
+        document.getElementById('staffSearch')?.addEventListener('input', function(){ applyStaffFilters(); });
         loadUsers();
         // Populate sidebar user info
         try {

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html class="light" lang="en">
 <head>
   <meta charset="utf-8"/>
@@ -18,10 +18,7 @@
 <!-- Minimal client-only admin dashboard (Jinja removed). The page relies on client JS and AdminAPI to populate tables. -->
 <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] px-6 py-3 sticky top-0 z-50">
   <div class="flex items-center gap-4">
-    <div class="text-primary"> <!-- Logo -->
-      <svg fill="none" height="32" viewbox="0 0 48 48" width="32" xmlns="http://www.w3.org/2000/svg"><path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path></svg>
-    </div>
-    <h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Er. Perumal Manimekalai College of Engineering</h2>
+    <img src="/static/img/pmc-logo.jpeg" alt="PMC Engineering" class="h-10 w-auto object-contain rounded" />
   </div>
   <div class="flex flex-1 justify-end gap-4 items-center">
     <label class="flex flex-col min-w-64 !h-10 max-w-96">
@@ -37,11 +34,15 @@
   <aside class="w-64 border-r border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] hidden md:flex flex-col p-4 gap-6 sticky top-[65px] h-[calc(100vh-65px)]">
     <div class="flex items-center gap-3 px-3 py-4"><div class="bg-primary/10 text-primary p-2 rounded-lg"><span class="material-symbols-outlined">shield_person</span></div><div class="flex flex-col"><h1 class="text-[#111418] dark:text-white text-sm font-bold leading-none">Admin Portal</h1><p class="text-[#617589] text-xs font-normal">Management Dashboard</p></div></div>
     <nav id="sidebar-nav" class="flex flex-col gap-2">
-      <a href="#" data-route="enquiries" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#111418] dark:text-white hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] cursor-pointer"><span class="material-symbols-outlined">mail</span><p class="text-sm font-medium">Enquiries</p></a>
+      <a href="/templates/admin/student_profiles.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#111418] dark:text-white hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] cursor-pointer"><span class="material-symbols-outlined">school</span><p class="text-sm font-medium">Student Management</p></a>
+      <a href="/templates/admin/enquiries.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#111418] dark:text-white hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] cursor-pointer"><span class="material-symbols-outlined">mail</span><p class="text-sm font-medium">Enquiries</p></a>
       <a href="/admin/admin-branch-management" class="flex items-center gap-3 px-3 py-2.5 rounded-lg active-nav cursor-pointer"><span class="material-symbols-outlined">account_tree</span><p class="text-sm font-medium">Branch Assignment</p></a>
-      <a href="#" data-route="counselling_list" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#111418] dark:text-white hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] cursor-pointer"><span class="material-symbols-outlined">how_to_vote</span><p class="text-sm font-medium">Counselling</p></a>
-      <a href="#" data-route="payments_list" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#111418] dark:text-white hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] cursor-pointer"><span class="material-symbols-outlined">payments</span><p class="text-sm font-medium">Payments</p></a>
-      <a href="/templates/admin/document_upload_step1.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#137fec] hover:bg-blue-50 cursor-pointer"><span class="material-symbols-outlined">upload_file</span><p class="text-sm font-medium">Document Upload</p></a>
+      <a href="/templates/admin/document_upload_step1.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#111418] dark:text-white hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] cursor-pointer"><span class="material-symbols-outlined">receipt_long</span><p class="text-sm font-medium">Applications</p></a>
+      <a href="/templates/admin/counselling_list.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#111418] dark:text-white hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] cursor-pointer"><span class="material-symbols-outlined">how_to_vote</span><p class="text-sm font-medium">Counselling</p></a>
+      <a href="/templates/admin/payments_list.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#111418] dark:text-white hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] cursor-pointer"><span class="material-symbols-outlined">payments</span><p class="text-sm font-medium">Payments</p></a>
+      <a href="/templates/admin/reports_selector.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#111418] dark:text-white hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] cursor-pointer"><span class="material-symbols-outlined">insights</span><p class="text-sm font-medium">Reports</p></a>
+      <a href="/templates/admin/documents_management.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#111418] dark:text-white hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] cursor-pointer"><span class="material-symbols-outlined">description</span><p class="text-sm font-medium">Documents</p></a>
+      <a href="/templates/admin/staff_management.html" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-[#111418] dark:text-white hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] cursor-pointer"><span class="material-symbols-outlined">groups</span><p class="text-sm font-medium">Staff</p></a>
     </nav>
     <div class="mt-auto pt-4 border-t border-[#e5e7eb] dark:border-[#2d3748]"><p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">System Status</p><div class="flex items-center gap-2 px-3 py-2"><div class="size-2 rounded-full bg-green-500"></div><span class="text-xs text-[#617589]">Admission Server Live</span></div></div>
   </aside>
@@ -260,7 +261,7 @@ document.addEventListener('DOMContentLoaded', function(){
                 // If 'dashboard' is not explicitly present, still show it for all users
                 if(!allowed.has('dashboard')) allowed.add('dashboard');
                 // Render in a preferred order
-                const order = ['enquiries','applications','branch_selection','counselling','payments','documents','student_management','reports','staff'];
+                const order = ['student_management','enquiries','branch_selection','applications','counselling','payments','reports','documents','staff'];
                 order.forEach(key => {
                   if(!allowed.has(key)) return;
                   const spec = navMap[key] || { label: key, href: `/templates/admin/${key}.html`, icon: 'circle' };

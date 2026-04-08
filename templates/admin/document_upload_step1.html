@@ -31,6 +31,7 @@
 				<button id="refresh-btn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"><span class="material-symbols-outlined">refresh</span>Refresh</button>
 			</div>
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+					<div id="list-controls" class="col-span-2 mb-4"></div>
 					<!-- Pending uploads: students with no documents -->
 					<div id="pending-section" class="space-y-4">
 						<h3 class="text-lg font-bold text-gray-700">Pending Uploads</h3>
@@ -55,10 +56,13 @@
 			try{
 				// Fetch admissions and students (avoid cached 304 responses)
 				const fetchOpts = { cache: 'no-store', headers: { 'Accept': 'application/json' } };
-				const admRes = await fetch('/api/admissions', fetchOpts);
+				// Fetch admission_applications (we need application_number and app_id)
+				const admRes = await fetch('/api/_admission_applications', fetchOpts);
 				let admissions = [];
 				if(admRes.status >= 200 && admRes.status < 300){
-					admissions = await admRes.json();
+					const admJson = await admRes.json();
+					// diagnostic endpoint returns { ok:true, items: [...] } or an array
+					admissions = Array.isArray(admJson) ? admJson : (admJson && admJson.items ? admJson.items : (admJson && admJson.data ? admJson.data : []));
 				} else if(admRes.status === 304 || admRes.status === 204){
 					const txt = await admRes.text().catch(()=> '');
 					admissions = txt ? JSON.parse(txt) : [];
@@ -86,7 +90,9 @@
 				const merged = admissions.map(a => {
 					let st = a.student_id ? studentById[String(a.student_id)] : null;
 					return {
+						// keep numeric app_id for server operations, but expose application_number for display
 						app_id: a.app_id || a.id || '-',
+						application_number: a.application_number || null,
 						unique_id: st ? (st.unique_id || '-') : (a.unique_id || '-'),
 						student_name: st ? (st.full_name || st.name || '-') : (a.student_name || a.name || '-'),
 						community: st ? (st.community || a.community || '-') : (a.community || '-'),
@@ -116,8 +122,48 @@
 					}
 				}catch(e){ console.warn('failed to fetch counts', e); }
 
-				const noDocs = filtered.filter(f => !(counts[f.unique_id] > 0));
-				const withDocs = filtered.filter(f => (counts[f.unique_id] > 0));
+				// Pagination settings (client-side)
+				const perPageOptions = [10,25,50];
+				let perPage = Number(localStorage.getItem('docsPerPage') || 10);
+				let page = Number(localStorage.getItem('docsPage') || 1);
+				const totalItems = filtered.length;
+				const totalPages = Math.max(1, Math.ceil(totalItems / perPage));
+				if(page < 1) page = 1; if(page > totalPages) page = totalPages;
+
+				// Render pagination controls
+				const controls = document.getElementById('list-controls');
+				controls.innerHTML = '';
+				const ctlHtml = `<div class="flex justify-between items-center">
+					<div class="text-sm text-gray-700">Showing <span class="font-mono">${(page-1)*perPage + 1}</span> - <span class="font-mono">${Math.min(page*perPage, totalItems)}</span> of <span class="font-mono">${totalItems}</span></div>
+					<div class="flex items-center gap-2">
+						<button id="prev-page" class="px-3 py-1 bg-gray-200 rounded">Prev</button>
+						<button id="next-page" class="px-3 py-1 bg-gray-200 rounded">Next</button>
+						<select id="per-page" class="px-2 py-1 border rounded bg-white">
+							${perPageOptions.map(o => `<option value="${o}" ${o===perPage? 'selected':''}>${o}/page</option>`).join('')}
+						</select>
+					</div>
+				</div>`;
+				controls.innerHTML = ctlHtml;
+				document.getElementById('prev-page').addEventListener('click', function(){ if(page>1){ page--; localStorage.setItem('docsPage', page); loadStudents(); } });
+				document.getElementById('next-page').addEventListener('click', function(){ if(page<totalPages){ page++; localStorage.setItem('docsPage', page); loadStudents(); } });
+				document.getElementById('per-page').addEventListener('change', function(){ perPage = Number(this.value); localStorage.setItem('docsPerPage', perPage); localStorage.setItem('docsPage', 1); loadStudents(); });
+
+				// Apply pagination to filtered list
+				const start = (page - 1) * perPage;
+				const paged = filtered.slice(start, start + perPage);
+
+				const noDocs = paged.filter(f => !(counts[f.unique_id] > 0));
+				const withDocs = paged.filter(f => (counts[f.unique_id] > 0));
+
+				// Fetch bill numbers for apps present in this page (so we can display below App #)
+				const appIds = Array.from(new Set(paged.map(p => p.app_id).filter(x => x && x !== '-')));
+				let bills = {};
+				try{
+					if(appIds.length > 0){
+						const res = await fetch('/api/documents/bills?app_ids=' + encodeURIComponent(appIds.join(',')));
+						if(res.ok) bills = await res.json();
+					}
+				}catch(e){ console.warn('failed to fetch bills', e); }
 
 				const pendingEl = document.getElementById('pending-list');
 				const uploadedEl = document.getElementById('uploaded-list');
@@ -131,7 +177,9 @@
 					noDocs.forEach(a => {
 						const card = document.createElement('div');
 						card.className = 'bg-white rounded-lg shadow-md p-6 flex flex-col gap-2';
-						card.innerHTML = `<div class="flex items-center gap-3 mb-2"><span class="material-symbols-outlined text-blue-600 text-2xl">person</span><div><div class="text-lg font-bold text-gray-800">${a.student_name||'-'}</div><div class="text-xs text-gray-500">App #: <span class="font-mono">${a.app_id||'-'}</span></div></div></div><div class="flex items-center gap-2"><span class="material-symbols-outlined text-green-600">badge</span><span class="text-sm font-mono text-green-700">${a.unique_id||'-'}</span></div><div class="flex gap-2 mt-4"><button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 select-student-btn" data-app-id="${a.app_id}" data-unique-id="${a.unique_id}" data-name="${a.student_name}"><span class="material-symbols-outlined">check_circle</span>Select Student</button></div>`;
+						const billForA = bills && bills[a.app_id] ? bills[a.app_id] : '-';
+						const displayApp = a.application_number || a.app_id || '-';
+						card.innerHTML = `<div class="flex items-center gap-3 mb-2"><span class="material-symbols-outlined text-blue-600 text-2xl">person</span><div><div class="text-lg font-bold text-gray-800">${a.student_name||'-'}</div><div class="text-xs text-gray-500">App #: <span class="font-mono font-bold text-blue-700">${displayApp}</span></div><div class="text-xs text-gray-500 mt-1">Bill #: <span class="font-mono font-semibold text-indigo-600">${billForA}</span></div></div></div><div class="flex items-center gap-2"><span class="material-symbols-outlined text-green-600">badge</span><span class="text-sm font-mono text-green-700">${a.unique_id||'-'}</span></div><div class="flex gap-2 mt-4"><button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 select-student-btn" data-app-id="${a.app_id}" data-unique-id="${a.unique_id}" data-name="${a.student_name}"><span class="material-symbols-outlined">check_circle</span>Select Student</button></div>`;
 						pendingEl.appendChild(card);
 					});
 				}
@@ -143,7 +191,9 @@
 					withDocs.forEach(a => {
 						const card = document.createElement('div');
 						card.className = 'bg-gray-50 rounded-lg shadow-md p-6 flex flex-col gap-2';
-						card.innerHTML = `<div class="flex items-center gap-3 mb-2"><span class="material-symbols-outlined text-blue-600 text-2xl">person</span><div><div class="text-lg font-bold text-gray-800">${a.student_name||'-'}</div><div class="text-xs text-gray-500">App #: <span class="font-mono">${a.app_id||'-'}</span></div></div></div><div class="flex items-center gap-2"><span class="material-symbols-outlined text-green-600">badge</span><span class="text-sm font-mono text-green-700">${a.unique_id||'-'}</span></div><div class="flex gap-2 mt-4"><button class="ml-2 bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded view-docs-btn" data-app-id="${a.app_id}" data-unique-id="${a.unique_id}">View Uploaded Docs (${counts[a.unique_id]||0})</button></div>`;
+						const billForA = bills && bills[a.app_id] ? bills[a.app_id] : '-';
+						const displayApp = a.application_number || a.app_id || '-';
+						card.innerHTML = `<div class="flex items-center gap-3 mb-2"><span class="material-symbols-outlined text-blue-600 text-2xl">person</span><div><div class="text-lg font-bold text-gray-800">${a.student_name||'-'}</div><div class="text-xs text-gray-500">App #: <span class="font-mono font-bold text-blue-700">${displayApp}</span></div><div class="text-xs text-gray-500 mt-1">Bill #: <span class="font-mono font-semibold text-indigo-600">${billForA}</span></div></div></div><div class="flex items-center gap-2"><span class="material-symbols-outlined text-green-600">badge</span><span class="text-sm font-mono text-green-700">${a.unique_id||'-'}</span></div><div class="flex gap-2 mt-4"><button class="ml-2 bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded view-docs-btn" data-app-id="${a.app_id}" data-unique-id="${a.unique_id}">View Uploaded Docs (${counts[a.unique_id]||0})</button></div>`;
 						uploadedEl.appendChild(card);
 					});
 				}
@@ -154,7 +204,7 @@
 			}
 		}
 		document.getElementById('refresh-btn').addEventListener('click', loadStudents);
-		document.getElementById('search-input').addEventListener('input', loadStudents);
+		document.getElementById('search-input').addEventListener('input', function(){ localStorage.setItem('docsPage', 1); loadStudents(); });
 		loadStudents();
 
 		// Handle student selection: navigate to upload page with student data
@@ -192,9 +242,9 @@
 					document.getElementById('uploaded-docs').innerHTML = `<div class="bg-white rounded-lg shadow-md p-6 mt-6 text-gray-600">No documents uploaded yet for App #: <span class="font-mono">${appId}</span>.</div>`;
 					return;
 				}
-				let html = `<div class="bg-white rounded-lg shadow-md p-6 mt-6"><h3 class="text-lg font-bold mb-3">Uploaded Documents for App #: <span class="font-mono">${appId}</span></h3><table class="w-full text-sm"><thead><tr class="text-left text-xs text-gray-500"><th class="py-2">Type</th><th class="py-2">URL</th><th class="py-2">Size</th><th class="py-2">Uploaded At</th></tr></thead><tbody>`;
-				docs.forEach(d => {
-					html += `<tr class="border-t"><td class="py-2">${d.document_type || '-'}</td><td class="py-2"><a class="text-blue-600 hover:underline" href="${d.document_url}" target="_blank">Open</a></td><td class="py-2">${d.file_size || '-'}</td><td class="py-2">${d.created_at ? new Date(d.created_at).toLocaleString() : '-'}</td></tr>`;
+			let html = `<div class="bg-white rounded-lg shadow-md p-6 mt-6"><h3 class="text-lg font-bold mb-3">Uploaded Documents for App #: <span class="font-mono font-bold text-blue-700">${appId}</span></h3><table class="w-full text-sm"><thead><tr class="text-left text-xs text-gray-500"><th class="py-2">Type</th><th class="py-2">Bill #</th><th class="py-2">URL</th><th class="py-2">Size</th><th class="py-2">Uploaded At</th></tr></thead><tbody>`;
+			docs.forEach(d => {
+				html += `<tr class="border-t"><td class="py-2">${d.document_type || '-'}</td><td class="py-2"><span class="font-mono font-semibold text-blue-600">${d.bill_number || '-'}</span></td><td class="py-2"><a class="text-blue-600 hover:underline" href="${d.document_url}" target="_blank">Open</a></td><td class="py-2">${d.file_size || '-'}</td><td class="py-2">${d.created_at ? new Date(d.created_at).toLocaleString() : '-'}</td></tr>`;
 				});
 				html += `</tbody></table></div>`;
 				document.getElementById('uploaded-docs').innerHTML = html;

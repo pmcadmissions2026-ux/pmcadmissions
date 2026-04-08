@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html class="light" lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -41,12 +41,7 @@
 <body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white min-h-screen flex flex-col">
 <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] px-6 py-3 sticky top-0 z-50">
 <div class="flex items-center gap-4">
-<div class="text-primary">
-<svg fill="none" height="32" viewbox="0 0 48 48" width="32" xmlns="http://www.w3.org/2000/svg">
-<path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
-</svg>
-</div>
-<h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Er. Perumal Manimekalai College of Engineering</h2>
+<img src="/static/img/pmc-logo.jpeg" alt="PMC Engineering" class="h-10 w-auto object-contain rounded" />
 </div>
 <div class="flex items-center gap-4">
 <a href="/admin/admin_dashboard" class="flex items-center gap-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg text-sm font-medium"><span class="material-symbols-outlined text-sm">arrow_back</span> Dashboard</a>
@@ -105,6 +100,7 @@
 <tbody id="pending-tbody" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"></tbody>
 </table>
 </div>
+<div id="pendingPagination" class="px-6 py-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#e5e7eb] dark:border-[#2d3748]"></div>
 </div>
 
 <!-- APPLIED (STEP 1) STUDENTS TABLE -->
@@ -130,6 +126,7 @@
 <tbody id="applied-tbody" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"></tbody>
 </table>
 </div>
+<div id="appliedPagination" class="px-6 py-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#e5e7eb] dark:border-[#2d3748]"></div>
 </div>
 
 <!-- COMPLETED/FILLED STUDENTS TABLE -->
@@ -154,6 +151,7 @@
 <tbody id="completed-tbody" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"></tbody>
 </table>
 </div>
+<div id="completedPagination" class="px-6 py-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#e5e7eb] dark:border-[#2d3748]"></div>
 </div>
 
 </div>
@@ -162,6 +160,34 @@
 </div>
 
 <script>
+let clPendingRows = [], clAppliedRows = [], clCompletedRows = [];
+let clPendingPage = 1, clAppliedPage = 1, clCompletedPage = 1;
+const CL_PAGE_SIZE = 25;
+
+function renderClPage(rows, tbodyId, paginationId, page, pageFn){
+    const tbody = document.getElementById(tbodyId);
+    const total = rows.length;
+    const totalPages = Math.ceil(total / CL_PAGE_SIZE) || 1;
+    const start = (page - 1) * CL_PAGE_SIZE;
+    tbody.innerHTML = '';
+    if(total === 0){
+        tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-8 text-center text-[#617589] dark:text-[#a0aec0] text-sm">No records found</td></tr>';
+    } else {
+        rows.slice(start, start + CL_PAGE_SIZE).forEach(tr => tbody.appendChild(tr));
+    }
+    const div = document.getElementById(paginationId); if(!div) return;
+    if(totalPages <= 1){ div.innerHTML = '<span class="text-xs text-[#617589] dark:text-[#a0aec0]">'+total+' record(s)</span>'; return; }
+    let html = '<span class="text-xs text-[#617589] dark:text-[#a0aec0]">Showing '+(((page-1)*CL_PAGE_SIZE)+1)+'\u2013'+Math.min(page*CL_PAGE_SIZE,total)+' of '+total+'</span>';
+    html += '<div class="flex items-center gap-1">';
+    html += '<button onclick="'+pageFn+'('+Math.max(1,page-1)+')" '+(page<=1?'disabled':'')+' class="px-3 py-1 rounded border text-sm '+(page<=1?'opacity-40 cursor-not-allowed':'hover:bg-gray-100 dark:hover:bg-[#2d3748]')+'">Prev</button>';
+    for(let i=Math.max(1,page-2); i<=Math.min(totalPages,page+2); i++){ html += '<button onclick="'+pageFn+'('+i+')" class="px-3 py-1 rounded border text-sm '+(i===page?'bg-primary text-white border-primary':'hover:bg-gray-100 dark:hover:bg-[#2d3748]')+'">'+i+'</button>'; }
+    html += '<button onclick="'+pageFn+'('+Math.min(totalPages,page+1)+')" '+(page>=totalPages?'disabled':'')+' class="px-3 py-1 rounded border text-sm '+(page>=totalPages?'opacity-40 cursor-not-allowed':'hover:bg-gray-100 dark:hover:bg-[#2d3748]')+'">Next</button>';
+    html += '</div>'; div.innerHTML = html;
+}
+function clPendingGo(p){ clPendingPage=p; renderClPage(clPendingRows,'pending-tbody','pendingPagination',clPendingPage,'clPendingGo'); }
+function clAppliedGo(p){ clAppliedPage=p; renderClPage(clAppliedRows,'applied-tbody','appliedPagination',clAppliedPage,'clAppliedGo'); }
+function clCompletedGo(p){ clCompletedPage=p; renderClPage(clCompletedRows,'completed-tbody','completedPagination',clCompletedPage,'clCompletedGo'); }
+
 async function loadCounsellingList() {
     const docsRes = await fetch('/api/_documents').then(r => r.json()).catch(()=>({ok:false, items:[]}));
     let items = [];
@@ -217,6 +243,8 @@ async function loadCounsellingList() {
     pendingTbody.innerHTML = '';
     appliedTbody.innerHTML = '';
     completedTbody.innerHTML = '';
+    clPendingRows = []; clAppliedRows = []; clCompletedRows = [];
+    clPendingPage = 1; clAppliedPage = 1; clCompletedPage = 1;
     let pending = 0, applied = 0, completed = 0;
 
     if (allAppIds.size === 0) {
@@ -271,7 +299,7 @@ async function loadCounsellingList() {
                 <td class="px-6 py-4 text-sm text-[#111418] dark:text-white">${details}</td>
             `;
             tr.innerHTML = rowHtml;
-            completedTbody.appendChild(tr); completed++;
+            clCompletedRows.push(tr); completed++;
         } else if (isApplied) {
             // Applied table: App #, Student Name, Unique ID, Applied, Application #, Applied Date, Action
             rowHtml = `
@@ -284,7 +312,7 @@ async function loadCounsellingList() {
                 <td class="px-6 py-4"><a href="${actionHref}" class="inline-flex items-center gap-2 ${actionClass} text-xs font-bold py-2 px-4 rounded-lg"> <span class="material-symbols-outlined text-sm">${actionIcon}</span> ${actionLabel}</a></td>
             `;
             tr.innerHTML = rowHtml;
-            appliedTbody.appendChild(tr); applied++;
+            clAppliedRows.push(tr); applied++;
         } else {
             // Pending table: include Documents column
             rowHtml = `
@@ -298,13 +326,16 @@ async function loadCounsellingList() {
                 <td class="px-6 py-4"><a href="${actionHref}" class="inline-flex items-center gap-2 ${actionClass} text-xs font-bold py-2 px-4 rounded-lg"> <span class="material-symbols-outlined text-sm">${actionIcon}</span> ${actionLabel}</a></td>
             `;
             tr.innerHTML = rowHtml;
-            pendingTbody.appendChild(tr); pending++;
+            clPendingRows.push(tr); pending++;
         }
     });
 
     pendingCount.textContent = pending + ' Student(s)';
     appliedCount.textContent = applied + ' Student(s)';
     completedCount.textContent = completed + ' Student(s)';
+    clPendingGo(1);
+    clAppliedGo(1);
+    clCompletedGo(1);
 }
 
 document.addEventListener('DOMContentLoaded', () => { loadCounsellingList(); });

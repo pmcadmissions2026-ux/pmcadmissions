@@ -44,19 +44,28 @@
                     <label class="block text-sm font-semibold text-gray-600 mb-2">UNIQUE ID</label>
                     <p id="student-unique" class="text-lg font-bold text-green-600">-</p>
                 </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-2">Application Number</label>
+                    <p id="display-app-number" class="text-lg font-bold text-blue-600">-</p>
+                </div>
             </div>
         </div>
 
         <!-- Form -->
         <form method="POST" enctype="multipart/form-data" class="space-y-8">
-            <!-- Application Number Entry -->
+            <!-- Application & Billing Info Section -->
                 <div class="bg-white rounded-lg shadow-md p-6">
-                    <h2 class="text-xl font-bold text-gray-800 mb-4">Application Number</h2>
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Application & Billing Details</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">Application Number</label>
-                        <input id="application-number" type="text" name="application_number" placeholder="Application #" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-                        <p class="text-xs text-gray-500 mt-1">This value is tied to the admission application (app_id)</p>
+                        <input id="application-number" type="text" name="application_number" placeholder="Enter Application #" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                        <p class="text-xs text-gray-500 mt-1">Auto-fetched from admission application</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Bill Number</label>
+                        <input id="bill-number" type="text" name="bill_number" placeholder="Enter bill # (e.g., BILL-001)" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                        <p class="text-xs text-gray-500 mt-1">Bill number for this upload batch (optional)</p>
                     </div>
                 </div>
             </div>
@@ -292,7 +301,12 @@ async function initDocumentUpload(){
     const appId = params.get('app_id') || params.get('application_id') || params.get('app');
     const nameParam = params.get('name') || params.get('student_name');
     const uniqueParam = params.get('unique_id') || params.get('unique') || params.get('student_unique');
-    if(appId){ document.getElementById('application-number').value = appId; }
+    // Do not auto-fill application number from URL — user will enter it manually.
+    document.getElementById('display-app-number').textContent = document.getElementById('application-number').value || '-';
+    // Update display when user types application number
+    document.getElementById('application-number').addEventListener('input', function(){
+        document.getElementById('display-app-number').textContent = this.value || '-';
+    });
     // If caller provided name/unique in the querystring (from step1), prefer those and populate immediately
     if(nameParam){ document.getElementById('student-name').textContent = decodeURIComponent(nameParam.replace(/\+/g,' ')); }
     if(uniqueParam){ document.getElementById('student-unique').textContent = decodeURIComponent(uniqueParam.replace(/\+/g,' ')); }
@@ -375,13 +389,15 @@ async function initDocumentUpload(){
             // Listen for custom submit event dispatched from the form handler
             document.addEventListener('upload:submit', async function(){
                 const appIdVal = document.getElementById('application-number').value;
-                if(!appIdVal){ setStatus('Application id required (app_id)', 'error'); return; }
+                if(!appIdVal){ setStatus('Application id or application number required', 'error'); return; }
+
+                const billNumberVal = document.getElementById('bill-number').value.trim() || null;
 
                 const uploadBtnEl = document.getElementById('upload-submit-btn');
                 if(uploadBtnEl) uploadBtnEl.disabled = true;
 
                 let anyErrors = false;
-                appendStatusLine(`Using application id: ${appIdVal}`);
+                appendStatusLine(`Using application id: ${appIdVal}${billNumberVal ? ', bill #: ' + billNumberVal : ''}`);
 
                 for(const id of fileInputs){
                     const input = document.getElementById(id);
@@ -403,13 +419,13 @@ async function initDocumentUpload(){
                                 const userObj = (() => { try{ return JSON.parse(sessionStorage.getItem('pmc_user')||'null'); }catch(e){return null;} })();
                                 const studentName = (document.getElementById('student-name') && document.getElementById('student-name').textContent) ? document.getElementById('student-name').textContent.trim() : null;
                                 const studentUnique = (document.getElementById('student-unique') && document.getElementById('student-unique').textContent) ? document.getElementById('student-unique').textContent.trim() : null;
-                                const payload = { app_id: appIdVal, document_type: id, document_url: publicUrl, file_size: file.size, uploaded_by: userObj && userObj.user_id ? userObj.user_id : null, student_name: studentName, student_unique: studentUnique };
+                                const payload = { app_id: appIdVal, application_number: appIdVal, document_type: id, document_url: publicUrl, file_size: file.size, uploaded_by: userObj && userObj.user_id ? userObj.user_id : null, student_name: studentName, student_unique: studentUnique, bill_number: billNumberVal };
                                 const metaRes = await fetch('/api/documents', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                                 if(!metaRes.ok){ anyErrors = true; let text = await metaRes.text(); try{ const j = JSON.parse(text); text = j.error || JSON.stringify(j); }catch(e){} appendStatusLine(`Metadata insert failed for ${file.name}: ${text}`); }
                                 else { const ok = await metaRes.json(); appendStatusLine(`Metadata recorded (doc_id: ${ok.document && ok.document.doc_id ? ok.document.doc_id : 'unknown'})`); }
                             } else {
                                 // server-side upload fallback: POST file to /api/upload-file
-                                const fd = new FormData(); fd.append('file', file, file.name); fd.append('app_id', appIdVal); fd.append('document_type', id);
+                                const fd = new FormData(); fd.append('file', file, file.name); fd.append('app_id', appIdVal); fd.append('application_number', appIdVal); fd.append('document_type', id); fd.append('bill_number', billNumberVal);
                                 const studentName = (document.getElementById('student-name') && document.getElementById('student-name').textContent) ? document.getElementById('student-name').textContent.trim() : null;
                                 const studentUnique = (document.getElementById('student-unique') && document.getElementById('student-unique').textContent) ? document.getElementById('student-unique').textContent.trim() : null;
                                 if(studentName) fd.append('student_name', studentName);

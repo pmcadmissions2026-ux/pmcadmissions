@@ -848,12 +848,21 @@ app.post('/api/admissions/:id/assign', async (req, res) => {
 // Documents metadata insert (used after client uploads to Supabase storage)
 app.post('/api/documents', async (req, res) => {
   try{
-    const { app_id, unique_id, student_unique, document_type, document_url, file_size, uploaded_by } = req.body || {};
-    console.log('/api/documents payload', { app_id, unique_id, student_unique, document_type, document_url, file_size, uploaded_by });
+    const { app_id, application_number, unique_id, student_unique, document_type, document_url, file_size, uploaded_by, bill_number } = req.body || {};
+    console.log('/api/documents payload', { app_id, unique_id, student_unique, document_type, document_url, file_size, uploaded_by, bill_number });
 
     if(!document_url) return res.status(400).json({ error: 'document_url required' });
 
     let normalizedAppId = null;
+
+    // If caller supplied an application_number (user-visible), try to resolve to numeric app_id
+    if(!normalizedAppId && (application_number || (app_id && isNaN(Number(app_id))))){
+      const lookupVal = application_number || app_id;
+      try{
+        const { data: byNum, error: byNumErr } = await supabase.from('admission_applications').select('app_id').eq('application_number', String(lookupVal)).maybeSingle();
+        if(!byNumErr && byNum && byNum.app_id){ normalizedAppId = Number(byNum.app_id); }
+      }catch(e){ console.warn('lookup admission_applications by application_number failed', e); }
+    }
 
     // If unique_id or student_unique provided, prefer mapping student -> admission_applications.app_id
       // If app_id is provided, prefer using it; otherwise use unique_id/student_unique to map
@@ -897,7 +906,7 @@ app.post('/api/documents', async (req, res) => {
         // If we know the student id, create a new admission_applications and use its app_id
         if(debugInfo && debugInfo.student && debugInfo.student.id){
           try{
-            const newAppRow = { student_id: debugInfo.student.id, status: 'created', processed_by: null, processed_at: null };
+            const newAppRow = { student_id: debugInfo.student.id, status: 'created', processed_by: null, processed_at: null, application_number: application_number || null };
             const { data: createdApp, error: createErr } = await supabase.from('admission_applications').insert(newAppRow).select().maybeSingle();
             if(!createErr && createdApp && createdApp.app_id){ normalizedAppId = Number(createdApp.app_id); console.log('/api/documents created admission_applications fallback', normalizedAppId); }
             else { normalizedAppId = candidate; console.log('/api/documents provided app_id not found but could not create fallback, will try provided', candidate); }
@@ -912,19 +921,26 @@ app.post('/api/documents', async (req, res) => {
 
     if(!normalizedAppId){ console.log('/api/documents debug (no normalizedAppId)', debugInfo); return res.status(400).json({ error: 'Could not determine admission_applications.app_id from provided app_id or unique_id', debug: debugInfo }); }
 
-    const row = { app_id: Number(normalizedAppId), document_type: document_type || null, document_url, file_size: file_size ? Number(file_size) : null, uploaded_by: uploaded_by ? Number(uploaded_by) : null };
+    const row = { app_id: Number(normalizedAppId), document_type: document_type || null, document_url, file_size: file_size ? Number(file_size) : null, uploaded_by: uploaded_by ? Number(uploaded_by) : null, bill_number: bill_number || null };
     let insertAttempt = 0;
     while(true){
       insertAttempt++;
       const { data, error } = await supabase.from('documents').insert(row).select().maybeSingle();
-      if(!error){ return res.json({ ok: true, document: data }); }
+      if(!error){
+        // If a bill_number was provided, persist it to the admission_applications table
+        if(row.bill_number){
+          try{
+            await supabase.from('admission_applications').update({ bill_number: row.bill_number }).eq('app_id', Number(normalizedAppId));
+          }catch(e){ console.warn('failed to persist bill_number to admission_applications', e); }
+        }
+        return res.json({ ok: true, document: data }); }
       // If FK error and we have student info, attempt to create a minimal admission_applications record and retry once
       const msg = error && (error.message || String(error));
       console.error('insert document error', msg);
       if(insertAttempt === 1 && msg && msg.includes('violates foreign key') && debugInfo && debugInfo.student && debugInfo.student.id){
         try{
           console.log('/api/documents attempting to create admission_applications fallback for student', debugInfo.student.id);
-          const newAppRow = { student_id: debugInfo.student.id, status: 'created', processed_by: null, processed_at: null };
+            const newAppRow = { student_id: debugInfo.student.id, status: 'created', processed_by: null, processed_at: null, application_number: application_number || null };
           let createdApp = null;
           try{
             const r = await supabase.from('admission_applications').insert(newAppRow).select().maybeSingle();
@@ -959,8 +975,8 @@ app.post('/api/documents', async (req, res) => {
 app.post('/api/upload-file', uploadMemory.any(), async (req, res) => {
   try{
     const files = req.files || [];
-    const { app_id, unique_id, student_unique, document_type, student_name, uploaded_by } = req.body || {};
-    console.log('/api/upload-file payload', { app_id, unique_id, student_unique, document_type, student_name, uploaded_by, files: files.map(f=>({ field: f.fieldname, originalname: f.originalname, size: f.size })) });
+    const { app_id, application_number, unique_id, student_unique, document_type, student_name, uploaded_by, bill_number } = req.body || {};
+    console.log('/api/upload-file payload', { app_id, unique_id, student_unique, document_type, student_name, uploaded_by, bill_number, files: files.map(f=>({ field: f.fieldname, originalname: f.originalname, size: f.size })) });
     if(!files || files.length === 0) return res.status(400).json({ error: 'one or more files are required' });
 
     // determine app_id if unique_id or student_unique provided
@@ -986,7 +1002,7 @@ app.post('/api/upload-file', uploadMemory.any(), async (req, res) => {
         const { data: s2, error: s2Err } = await supabase.from('students').select('id').eq('unique_id', uidToUse).maybeSingle();
         if(!s2Err && s2 && s2.id){
           try{
-            const newAppRow = { student_id: s2.id, status: 'created', processed_by: null, processed_at: null };
+                const newAppRow = { student_id: s2.id, status: 'created', processed_by: null, processed_at: null, application_number: application_number || null };
             const { data: createdApp, error: createErr } = await supabase.from('admission_applications').insert(newAppRow).select().maybeSingle();
             if(!createErr && createdApp && createdApp.app_id){ targetAppId = Number(createdApp.app_id); console.log('/api/upload-file created admission_applications', targetAppId); }
           }catch(e){ console.warn('create admission_applications exception', e); }
@@ -994,6 +1010,13 @@ app.post('/api/upload-file', uploadMemory.any(), async (req, res) => {
       } else {
         targetAppId = candidate;
       }
+    }
+    // If still not resolved, and caller provided an application_number, try to resolve it
+    if(!targetAppId && application_number){
+      try{
+        const { data: byNum, error: byNumErr } = await supabase.from('admission_applications').select('app_id').eq('application_number', String(application_number)).maybeSingle();
+        if(!byNumErr && byNum && byNum.app_id) targetAppId = Number(byNum.app_id);
+      }catch(e){ console.warn('lookup admission_applications by application_number failed (upload-file)', e); }
     }
     if(!targetAppId){ console.log('/api/upload-file debug (no targetAppId)', { app_id, uidToUse }); return res.status(400).json({ error: 'app_id or unique_id required' }); }
 
@@ -1025,12 +1048,19 @@ app.post('/api/upload-file', uploadMemory.any(), async (req, res) => {
       const publicUrl = `${SUPABASE_URL.replace(/\/$/,'')}/storage/v1/object/public/Student_files/${encodeURIComponent(upData.path)}`;
 
       // insert metadata into documents table
-      const row = { app_id: Number(targetAppId), document_type: docType || null, document_url: publicUrl, file_size: file.size ? Number(file.size) : null, uploaded_by: uploaded_by ? Number(uploaded_by) : null };
+      const row = { app_id: Number(targetAppId), document_type: docType || null, document_url: publicUrl, file_size: file.size ? Number(file.size) : null, uploaded_by: uploaded_by ? Number(uploaded_by) : null, bill_number: bill_number || null };
       let insertAttempt = 0;
       while(true){
         insertAttempt++;
         const { data: docData, error: docErr } = await supabase.from('documents').insert(row).select().maybeSingle();
-        if(!docErr){ results.push({ ok: true, document: docData, publicUrl }); break; }
+        if(!docErr){
+          // persist bill_number into admission_applications if provided
+          if(row.bill_number){
+            try{
+              await supabase.from('admission_applications').update({ bill_number: row.bill_number }).eq('app_id', Number(targetAppId));
+            }catch(e){ console.warn('failed to persist bill_number to admission_applications (upload-file)', e); }
+          }
+          results.push({ ok: true, document: docData, publicUrl }); break; }
         const msg = docErr && (docErr.message || String(docErr));
         console.error('insert document error', msg);
         // If FK error and we have a student id from earlier lookup, try to create admission_applications fallback then retry once
@@ -1043,7 +1073,7 @@ app.post('/api/upload-file', uploadMemory.any(), async (req, res) => {
           }
           if(fallbackStudentId){
             try{
-              const newAppRow = { student_id: fallbackStudentId, status: 'created', processed_by: null, processed_at: null };
+              const newAppRow = { student_id: fallbackStudentId, status: 'created', processed_by: null, processed_at: null, application_number: application_number || null };
               let createdApp = null;
               try{
                 const r = await supabase.from('admission_applications').insert(newAppRow).select().maybeSingle();
@@ -1419,9 +1449,17 @@ app.get('/api/documents', async (req, res) => {
       return res.status(400).json({ error: 'app_id or unique_id query parameter required' });
     }
 
+    // fetch application_number for the target apps so client can display application_number instead of numeric id
+    const { data: appsInfo, error: appsErr } = await supabase.from('admission_applications').select('app_id,application_number').in('app_id', targetAppIds);
+    if(appsErr) return res.status(500).json({ error: appsErr.message });
+    const appNumMap = {};
+    (appsInfo || []).forEach(a => { appNumMap[a.app_id] = a.application_number || null; });
+
     const { data, error } = await supabase.from('documents').select('*').in('app_id', targetAppIds).order('created_at', { ascending: false }).limit(500);
     if(error) return res.status(500).json({ error: error.message });
-    res.json(data);
+    // attach application_number to each document row for convenience
+    const out = (data || []).map(d => Object.assign({}, d, { application_number: appNumMap[d.app_id] || null }));
+    res.json(out);
   }catch(e){ res.status(500).json({ error: String(e) }); }
 });
 
@@ -1476,6 +1514,31 @@ app.get('/api/documents/counts', async (req, res) => {
     });
 
     return res.json(countsByUnique);
+  }catch(e){ return res.status(500).json({ error: String(e) }); }
+});
+
+// Return latest bill_number per app_id for given comma-separated app_ids
+app.get('/api/documents/bills', async (req, res) => {
+  try{
+    const appsParam = req.query.app_ids || req.query.appIds || req.query.apps;
+    if(!appsParam) return res.status(400).json({ error: 'app_ids query parameter required (comma separated)' });
+    const appList = appsParam.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n));
+    if(appList.length === 0) return res.status(400).json({ error: 'no valid app_ids provided' });
+
+    // First, try to read bill_number from admission_applications (preferred source)
+    const { data: appsData, error: appsErr } = await supabase.from('admission_applications').select('app_id,bill_number').in('app_id', appList);
+    if(appsErr) return res.status(500).json({ error: appsErr.message });
+    const mapping = {};
+    (appsData || []).forEach(a => { mapping[a.app_id] = a.bill_number || null; });
+
+    // For any app_id that still has null/undefined bill_number, fall back to recent documents
+    const missing = appList.filter(id => mapping[id] === null || mapping[id] === undefined);
+    if(missing.length > 0){
+      const { data: docsData, error: docsErr } = await supabase.from('documents').select('app_id,bill_number,created_at').in('app_id', missing).order('created_at', { ascending: false }).limit(2000);
+        if(docsErr) return res.status(500).json({ error: docsErr.message });
+        (docsData || []).forEach(d => { if(mapping[d.app_id] === undefined || mapping[d.app_id] === null) mapping[d.app_id] = d.bill_number || null; });
+    }
+    return res.json(mapping);
   }catch(e){ return res.status(500).json({ error: String(e) }); }
 });
 

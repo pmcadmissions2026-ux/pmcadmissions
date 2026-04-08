@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html class="light" lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -41,12 +41,7 @@
 <body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white min-h-screen flex flex-col">
 <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] px-6 py-3 sticky top-0 z-50">
 <div class="flex items-center gap-4">
-<div class="text-primary">
-<svg fill="none" height="32" viewbox="0 0 48 48" width="32" xmlns="http://www.w3.org/2000/svg">
-<path clip-rule="evenodd" d="M12.0799 24L4 19.2479L9.95537 8.75216L18.04 13.4961L18.0446 4H29.9554L29.96 13.4961L38.0446 8.75216L44 19.2479L35.92 24L44 28.7521L38.0446 39.2479L29.96 34.5039L29.9554 44H18.0446L18.04 34.5039L9.95537 39.2479L4 28.7521L12.0799 24Z" fill="currentColor" fill-rule="evenodd"></path>
-</svg>
-</div>
-<h2 class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Er. Perumal Manimekalai College of Engineering</h2>
+<img src="/static/img/pmc-logo.jpeg" alt="PMC Engineering" class="h-10 w-auto object-contain rounded" />
 </div>
 <div class="flex items-center gap-4">
 <a href="/admin/admin_dashboard" class="flex items-center gap-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg text-sm font-medium"><span class="material-symbols-outlined text-sm">arrow_back</span> Dashboard</a>
@@ -107,6 +102,7 @@
 <tbody id="pending-tbody" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"></tbody>
 </table>
 </div>
+<div id="pendingPagination" class="px-6 py-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#e5e7eb] dark:border-[#2d3748]"></div>
 </div>
 
 <!-- COMPLETED PAYMENTS TABLE -->
@@ -135,6 +131,7 @@
 <tbody id="completed-tbody" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"></tbody>
 </table>
 </div>
+<div id="completedPagination" class="px-6 py-4 flex flex-wrap items-center justify-between gap-3 border-t border-[#e5e7eb] dark:border-[#2d3748]"></div>
 </div>
 
 </div>
@@ -146,60 +143,101 @@ function debounce(fn, delay){ let t; return function(){ const args=arguments; co
 
 async function fetchJson(url){ const r = await fetch(url); if(!r.ok) throw new Error('fetch failed '+url); return r.json(); }
 
+let allPending = [], allCompleted = [], filteredPending = [], filteredCompleted = [];
+let pendingPage = 1, completedPage = 1;
+const PAY_PAGE_SIZE = 25;
+
+function buildPendingRow(s, deptMap){
+    const tr = document.createElement('tr'); tr.className='hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors';
+    const dept = s.preferred_dept_id ? (deptMap[String(s.preferred_dept_id)]||('Dept #'+s.preferred_dept_id)) : '-';
+    const quota = s.quota_type||'-';
+    tr.innerHTML = `
+        <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">#${s.app_id}</span></td>
+        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">${s.student_name||''}</td>
+        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${s.unique_id||''}</td>
+        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white">${dept}</td>
+        <td class="px-6 py-4">${quota}</td>
+        <td class="px-6 py-4"><a href="payments_form.html?app_id=${s.app_id}" class="inline-flex items-center gap-2 bg-primary text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-primary/90"> <span class="material-symbols-outlined text-sm">payments</span> Add Payment</a></td>
+    `; return tr;
+}
+function buildCompletedRow(p){
+    const tr = document.createElement('tr'); tr.className='hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors';
+    const modeClass = (m)=>{ if(m==='Cash') return 'bg-green-100 text-green-800'; if(m==='Card') return 'bg-blue-100 text-blue-800'; if(m==='Cheque') return 'bg-orange-100 text-orange-800'; if(m==='Bank Transfer') return 'bg-purple-100 text-purple-800'; return 'bg-gray-100 text-gray-800'; };
+    tr.innerHTML = `
+        <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">#${p.app_id}</span></td>
+        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">${p.student_name || ''}</td>
+        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${p.unique_id || ''}</td>
+        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-bold">${p.bill_no}</td>
+        <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${modeClass(p.mode_of_payment)}">${p.mode_of_payment}</span>${p.mode_of_payment==='UPI' && p.upi_id?('<div class="text-xs text-slate-500 mt-1">'+p.upi_id+'</div>'):''}</td>
+        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-bold">\u20b9 ${Number(p.amount).toFixed(2)}</td>
+    `; return tr;
+}
+function renderPayPagination(divId, page, totalPages, total, fnName){
+    const div = document.getElementById(divId); if(!div) return;
+    if(totalPages <= 1){ div.innerHTML = '<span class="text-xs text-[#617589] dark:text-[#a0aec0]">'+total+' record(s)</span>'; return; }
+    let html = '<span class="text-xs text-[#617589] dark:text-[#a0aec0]">Showing '+(((page-1)*PAY_PAGE_SIZE)+1)+'\u2013'+Math.min(page*PAY_PAGE_SIZE,total)+' of '+total+'</span>';
+    html += '<div class="flex items-center gap-1">';
+    html += '<button onclick="'+fnName+'('+Math.max(1,page-1)+')" '+(page<=1?'disabled':'')+' class="px-3 py-1 rounded border text-sm '+(page<=1?'opacity-40 cursor-not-allowed':'hover:bg-gray-100 dark:hover:bg-[#2d3748]')+'">Prev</button>';
+    for(let i=Math.max(1,page-2); i<=Math.min(totalPages,page+2); i++){ html += '<button onclick="'+fnName+'('+i+')" class="px-3 py-1 rounded border text-sm '+(i===page?'bg-primary text-white border-primary':'hover:bg-gray-100 dark:hover:bg-[#2d3748]')+'">'+i+'</button>'; }
+    html += '<button onclick="'+fnName+'('+Math.min(totalPages,page+1)+')" '+(page>=totalPages?'disabled':'')+' class="px-3 py-1 rounded border text-sm '+(page>=totalPages?'opacity-40 cursor-not-allowed':'hover:bg-gray-100 dark:hover:bg-[#2d3748]')+'">Next</button>';
+    html += '</div>'; div.innerHTML = html;
+}
+function renderPendingPage(page){
+    pendingPage = page;
+    const total = filteredPending.length, totalPages = Math.ceil(total/PAY_PAGE_SIZE)||1;
+    const start = (page-1)*PAY_PAGE_SIZE;
+    const tbody = document.getElementById('pending-tbody'); tbody.innerHTML = '';
+    if(total===0){ tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-[#617589] dark:text-[#a0aec0] text-sm">No pending payments found</td></tr>'; }
+    else { filteredPending.slice(start,start+PAY_PAGE_SIZE).forEach(s=>tbody.appendChild(buildPendingRow(s, window._payDeptMap||{}))); }
+    renderPayPagination('pendingPagination', page, totalPages, total, 'renderPendingPage');
+}
+function renderCompletedPage(page){
+    completedPage = page;
+    const total = filteredCompleted.length, totalPages = Math.ceil(total/PAY_PAGE_SIZE)||1;
+    const start = (page-1)*PAY_PAGE_SIZE;
+    const tbody = document.getElementById('completed-tbody'); tbody.innerHTML = '';
+    if(total===0){ tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-[#617589] dark:text-[#a0aec0] text-sm">No completed payments found</td></tr>'; }
+    else { filteredCompleted.slice(start,start+PAY_PAGE_SIZE).forEach(p=>tbody.appendChild(buildCompletedRow(p))); }
+    renderPayPagination('completedPagination', page, totalPages, total, 'renderCompletedPage');
+}
+function applyPendingSearch(){
+    const q=(document.getElementById('pendingSearch')?.value||'').trim().toLowerCase();
+    filteredPending = q ? allPending.filter(s=>JSON.stringify(s).toLowerCase().includes(q)) : allPending.slice();
+    renderPendingPage(1);
+}
+function applyCompletedSearch(){
+    const q=(document.getElementById('completedSearch')?.value||'').trim().toLowerCase();
+    filteredCompleted = q ? allCompleted.filter(p=>JSON.stringify(p).toLowerCase().includes(q)) : allCompleted.slice();
+    renderCompletedPage(1);
+}
+
 async function loadPaymentsPage(){
-    const pendingTbody = document.getElementById('pending-tbody');
-    const completedTbody = document.getElementById('completed-tbody');
     const pendingCount = document.getElementById('pendingCount');
     const completedCount = document.getElementById('completedCount');
-    pendingTbody.innerHTML = '';
-    completedTbody.innerHTML = '';
 
     let deptMap = {};
     try{ const deps = await fetchJson('/api/departments'); (deps||[]).forEach(d=>{ const id=d.id||d.dept_id; const name=d.dept_name||d.name||d.department_name; if(id) deptMap[String(id)]=name||('Dept #'+id); }); }catch(e){ console.warn('departments fetch failed', e); }
+    window._payDeptMap = deptMap;
 
     let candidates = [];
     try{ candidates = await fetchJson('/api/payment_candidates'); }catch(e){ console.warn('payment_candidates failed', e); }
     candidates.sort((a,b)=>Number(a.app_id)-Number(b.app_id));
-    candidates.forEach(s=>{
-        const tr = document.createElement('tr'); tr.className='hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors';
-        const dept = s.preferred_dept_id ? (deptMap[String(s.preferred_dept_id)]||('Dept #'+s.preferred_dept_id)) : '-';
-        const quota = s.quota_type||'-';
-        tr.innerHTML = `
-            <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800">#${s.app_id}</span></td>
-            <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">${s.student_name||''}</td>
-            <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${s.unique_id||''}</td>
-            <td class="px-6 py-4 text-sm text-[#111418] dark:text-white">${dept}</td>
-            <td class="px-6 py-4">${quota}</td>
-            <td class="px-6 py-4"><a href="payments_form.html?app_id=${s.app_id}" class="inline-flex items-center gap-2 bg-primary text-white text-xs font-bold py-2 px-4 rounded-lg hover:bg-primary/90"> <span class="material-symbols-outlined text-sm">payments</span> Add Payment</a></td>
-        `;
-        pendingTbody.appendChild(tr);
-    });
-    pendingCount.textContent = candidates.length + ' Student(s)';
+    allPending = candidates; filteredPending = candidates.slice();
+    if(pendingCount) pendingCount.textContent = candidates.length + ' Student(s)';
+    renderPendingPage(1);
 
     let payments = [];
     try{ payments = await fetchJson('/api/payments'); }catch(e){ console.warn('payments fetch failed', e); }
     payments.sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
-    payments.forEach(p=>{
-        const tr = document.createElement('tr'); tr.className='hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors';
-        const modeClass = (m)=>{ if(m==='Cash') return 'bg-green-100 text-green-800'; if(m==='Card') return 'bg-blue-100 text-blue-800'; if(m==='Cheque') return 'bg-orange-100 text-orange-800'; if(m==='Bank Transfer') return 'bg-purple-100 text-purple-800'; return 'bg-gray-100 text-gray-800'; };
-        tr.innerHTML = `
-            <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">#${p.app_id}</span></td>
-            <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">${p.student_name || ''}</td>
-            <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${p.unique_id || ''}</td>
-            <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-bold">${p.bill_no}</td>
-            <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${modeClass(p.mode_of_payment)}">${p.mode_of_payment}</span>${p.mode_of_payment==='UPI' && p.upi_id?('<div class="text-xs text-slate-500 mt-1">'+p.upi_id+'</div>'):''}</td>
-            <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-bold">₹ ${Number(p.amount).toFixed(2)}</td>
-        `;
-        completedTbody.appendChild(tr);
-    });
-    completedCount.textContent = payments.length + ' Student(s)';
+    allCompleted = payments; filteredCompleted = payments.slice();
+    if(completedCount) completedCount.textContent = payments.length + ' Student(s)';
+    renderCompletedPage(1);
 
     // wire search inputs
     const pendingInput = document.getElementById('pendingSearch');
     const completedInput = document.getElementById('completedSearch');
-    function filterTable(selector, query){ const q=(query||'').trim().toLowerCase(); document.querySelectorAll(selector+' tbody tr').forEach(r=>{ r.style.display=(q===''|| r.textContent.toLowerCase().indexOf(q)!==-1)?'':'none'; }); }
-    if(pendingInput) pendingInput.addEventListener('input', debounce(e=>filterTable('#pendingTable', e.target.value),200));
-    if(completedInput) completedInput.addEventListener('input', debounce(e=>filterTable('#completedTable', e.target.value),200));
+    if(pendingInput) pendingInput.addEventListener('input', debounce(applyPendingSearch, 200));
+    if(completedInput) completedInput.addEventListener('input', debounce(applyCompletedSearch, 200));
 }
 
 document.addEventListener('DOMContentLoaded', ()=>{ loadPaymentsPage().catch(e=>{ console.error(e); const fc=document.getElementById('flashContainer'); if(fc) fc.innerHTML='<div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">Failed to load payments</div>'; }); });
