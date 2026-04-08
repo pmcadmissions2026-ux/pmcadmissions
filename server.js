@@ -1573,5 +1573,24 @@ app.get('/auth/logout', (req, res) => {
 // Endpoint to inspect current session
 app.get('/auth/me', (req,res) => { res.json({ user: req.session && req.session.user ? req.session.user : null }); });
 
+// Lightweight health-check used by the self-ping keep-alive
+app.get('/health', (req, res) => res.json({ ok: true, ts: Date.now() }));
+
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`Server listening on http://localhost:${port}`));
+app.listen(port, () => {
+  console.log(`Server listening on http://localhost:${port}`);
+
+  // Self-ping to prevent Render free-tier from sleeping after 15 min of inactivity.
+  // Pings every 10 minutes so Render never sees a 15-min silence window.
+  const SELF_URL = process.env.RENDER_EXTERNAL_URL;
+  if (SELF_URL) {
+    const https = require('https');
+    setInterval(() => {
+      https.get(SELF_URL + '/health', (res) => {
+        console.log(`[keep-alive] ping → ${res.statusCode}`);
+      }).on('error', (err) => {
+        console.warn('[keep-alive] ping failed:', err.message);
+      });
+    }, 10 * 60 * 1000); // every 10 minutes
+  }
+});

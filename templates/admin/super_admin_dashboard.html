@@ -491,33 +491,35 @@ async function loadDashboardData() {
         // attach email map for resolver
         window._studentsMapByEmail = studentsMapByEmail;
 
-        // Metrics
-        document.getElementById('total-enquiries').textContent = enquiries.length;
-        document.getElementById('open-enquiries').textContent = enquiries.filter(e => (e.status||'').toLowerCase() === 'open').length;
+        // Metrics (guarded updates)
+        function setText(id, v){ const el = document.getElementById(id); if(el) el.textContent = v; }
 
-        document.getElementById('total-applications').textContent = applications.length;
-        document.getElementById('approved-applications').textContent = applications.filter(a => (a.application_status||'').toLowerCase() === 'approved').length;
+        setText('total-enquiries', enquiries.length);
+        setText('open-enquiries', enquiries.filter(e => (e.status||'').toLowerCase() === 'open').length);
+
+        setText('total-applications', applications.length);
+        setText('approved-applications', applications.filter(a => (a.application_status||'').toLowerCase() === 'approved').length);
 
         const counselledCount = counselling.filter(c => c.allotment_order_number || c.consortium_number || c.allotted_department_id || c.allotted_dept_id).length;
-        document.getElementById('total-counselled').textContent = counselledCount;
+        setText('total-counselled', counselledCount);
         // per-tab counts
-        document.getElementById('count-counselling').textContent = counselling.length;
+        setText('count-counselling', counselling.length);
 
         const totalPayment = payments.reduce((s, p) => s + Number(p.amount || p.fee_amount || p.payment_amount || 0), 0);
-        document.getElementById('total-payment-amount').textContent = totalPayment;
-        document.getElementById('payment-count').textContent = payments.length;
-        document.getElementById('count-payments').textContent = payments.length;
+        setText('total-payment-amount', totalPayment);
+        setText('payment-count', payments.length);
+        setText('count-payments', payments.length);
 
-        document.getElementById('documents-uploaded').textContent = documents.length;
-        document.getElementById('documents-pending').textContent = documents.filter(d => (d.verification_status||'').toLowerCase() !== 'approved').length;
+        setText('documents-uploaded', documents.length);
+        setText('documents-pending', documents.filter(d => (d.verification_status||'').toLowerCase() !== 'approved').length);
 
         // Tab counts
-        document.getElementById('count-enquiries').textContent = enquiries.length;
-        document.getElementById('count-documents').textContent = applications.length;
-        document.getElementById('count-students').textContent = students.length;
-        document.getElementById('count-admissions').textContent = admissions.length;
-        document.getElementById('count-doc-items').textContent = documents.length;
-        document.getElementById('count-flow-summary').textContent = students.length;
+        setText('count-enquiries', enquiries.length);
+        setText('count-documents', applications.length);
+        setText('count-students', students.length);
+        setText('count-admissions', admissions.length);
+        setText('count-doc-items', documents.length);
+        setText('count-flow-summary', students.length);
 
         // Render tables
         renderTableData('enquiries', enquiries.slice(0, 200));
