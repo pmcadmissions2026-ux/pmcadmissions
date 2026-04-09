@@ -49,14 +49,10 @@
 <!-- Top Navigation Bar Component (Modified) -->
 <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-10 py-3">
 <div class="flex items-center gap-4 text-slate-900 dark:text-white">
-<div class="size-8 text-primary">
-<svg fill="currentColor" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-<path d="M24 45.8096C19.6865 45.8096 15.4698 44.5305 11.8832 42.134C8.29667 39.7376 5.50128 36.3314 3.85056 32.3462C2.19985 28.361 1.76794 23.9758 2.60947 19.7452C3.451 15.5145 5.52816 11.6284 8.57829 8.5783C11.6284 5.52817 15.5145 3.45101 19.7452 2.60948C23.9758 1.76795 28.361 2.19986 32.3462 3.85057C36.3314 5.50129 39.7376 8.29668 42.134 11.8833C44.5305 15.4698 45.8096 19.6865 45.8096 24L24 24L24 45.8096Z"></path>
-</svg>
+<img src="/static/img/pmc logo.jpeg" alt="PMC Engineering" class="h-12 w-auto object-contain rounded mx-auto mt-2" />
+<h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">Admission Portal</h2>
 </div>
-<h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em]">PMC Admission Portal</h2>
-</div>
-<button class="flex min-w-[84px] cursor-pointer items-center justify-center rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal hover:bg-primary/90 transition-colors">
+<button id="techSupportBtn" type="button" aria-haspopup="dialog" aria-controls="techSupportModal" class="flex min-w-[84px] cursor-pointer items-center justify-center rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold leading-normal hover:bg-primary/90 transition-colors">
 <span class="truncate">Technical Support</span>
 </button>
 </header>
@@ -67,11 +63,9 @@
 <div class="bg-white dark:bg-slate-900 shadow-xl rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800">
 <!-- Header Image/Logo Section -->
 <div class="p-8 pb-0 flex flex-col items-center">
-<div class="w-20 h-20 mb-4 bg-primary/10 rounded-full flex items-center justify-center">
-<span class="material-symbols-outlined text-primary text-4xl">school</span>
-</div>
-<h2 class="text-slate-900 dark:text-white tracking-tight text-2xl font-bold text-center">Staff Login</h2>
-<img src="/static/img/pmc-logo.jpeg" alt="PMC Engineering" class="h-12 w-auto object-contain rounded mx-auto mt-2" />
+<img src="/static/img/pmc logo.jpeg" alt="PMC Engineering" class="h-16 w-auto object-contain rounded mx-auto my-4 mt-2" />
+
+<h2 class="text-slate-900 dark:text-white tracking-tight text-2xl font-bold text-center">Admissions Portal</h2>
 </div>
 <!-- Form Section -->
 <div class="p-8">
@@ -121,7 +115,7 @@
 </div>
 <!-- Global Footer -->
 <footer class="mt-8 text-center text-slate-400 dark:text-slate-500 text-xs">
-<p>© 2024 Er. Perumal Manimekalai College of Engineering. All rights reserved.</p>
+<p>© 2026 <a href="https://zeonytechnologies.com/">Zeony Technologies</a>. All rights reserved.</p>
 <div class="mt-2 flex justify-center gap-4">
 <a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
 <a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
@@ -148,6 +142,52 @@ function togglePassword() {
     toggleIcon.textContent = 'visibility';
   }
 }
+</script>
+<!-- Technical Support Modal -->
+<div id="techSupportModal" class="fixed inset-0 z-50 hidden items-center justify-center">
+  <div id="techSupportOverlay" class="absolute inset-0 bg-black/50"></div>
+  <div class="relative bg-white dark:bg-slate-900 rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+    <div class="flex items-start justify-between mb-4">
+      <div>
+        <h3 class="text-lg font-bold text-[#111418] dark:text-white">Zeony technologies</h3>
+        <p class="text-sm text-[#617589] dark:text-[#a0aec0]">Technical Support Contacts</p>
+      </div>
+      <button id="techSupportClose" aria-label="Close" class="text-slate-500 hover:text-slate-800 dark:hover:text-white">✕</button>
+    </div>
+    <div class="space-y-3">
+      <p class="text-sm text-[#111418] dark:text-white">Call any of the numbers below to reach support. Tap a number to dial from a mobile device.</p>
+      <ul class="space-y-2">
+        <li><a class="text-primary font-medium hover:underline" href="tel:9790256404">9790256404</a></li>
+        <li><a class="text-primary font-medium hover:underline" href="tel:6382654365">6382654365</a></li>
+        <li><a class="text-primary font-medium hover:underline" href="tel:6369077291">6369077291</a></li>
+        <li><a class="text-primary font-medium hover:underline" href="tel:8946098018">8946098018</a></li>
+      </ul>
+    </div>
+    <div class="mt-6 text-right">
+      <button id="techSupportClose2" class="px-4 py-2 bg-gray-100 dark:bg-slate-800 rounded hover:bg-gray-200 dark:hover:bg-slate-700">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Modal logic for Technical Support
+  (function(){
+    const openBtn = document.getElementById('techSupportBtn');
+    const modal = document.getElementById('techSupportModal');
+    const overlay = document.getElementById('techSupportOverlay');
+    const closeBtn = document.getElementById('techSupportClose');
+    const closeBtn2 = document.getElementById('techSupportClose2');
+
+    function showModal(){ if(modal) modal.classList.remove('hidden'); }
+    function hideModal(){ if(modal) modal.classList.add('hidden'); }
+
+    if(openBtn) openBtn.addEventListener('click', (e)=>{ e.preventDefault(); showModal(); });
+    if(overlay) overlay.addEventListener('click', hideModal);
+    if(closeBtn) closeBtn.addEventListener('click', hideModal);
+    if(closeBtn2) closeBtn2.addEventListener('click', hideModal);
+    // Escape key closes
+    document.addEventListener('keydown', (ev)=>{ if(ev.key === 'Escape') hideModal(); });
+  })();
 </script>
 <!-- Client config and login handler -->
 <script src="/config.js"></script>
