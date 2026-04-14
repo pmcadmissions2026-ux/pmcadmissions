@@ -5,7 +5,7 @@ Thank you for contacting {{ college_name or 'our admissions office' }}. We have 
 Student Unique ID: {{ unique_id }}
 Subject: {{ subject }}
 
-Contact No: +91 6369077291
+Contact No: +91 9894583832 , 04344257242
 
 Our admissions team will review your query and get back to you shortly.
 
