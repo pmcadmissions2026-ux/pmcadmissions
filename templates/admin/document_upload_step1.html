@@ -56,13 +56,12 @@
 			try{
 				// Fetch admissions and students (avoid cached 304 responses)
 				const fetchOpts = { cache: 'no-store', headers: { 'Accept': 'application/json' } };
-				// Fetch admission_applications (we need application_number and app_id)
-				const admRes = await fetch('/api/_admission_applications', fetchOpts);
+				// Fetch from admissions table (source of truth after branch assignment)
+				const admRes = await fetch('/api/admissions', fetchOpts);
 				let admissions = [];
 				if(admRes.status >= 200 && admRes.status < 300){
 					const admJson = await admRes.json();
-					// diagnostic endpoint returns { ok:true, items: [...] } or an array
-					admissions = Array.isArray(admJson) ? admJson : (admJson && admJson.items ? admJson.items : (admJson && admJson.data ? admJson.data : []));
+					admissions = Array.isArray(admJson) ? admJson : (admJson && admJson.data ? admJson.data : []);
 				} else if(admRes.status === 304 || admRes.status === 204){
 					const txt = await admRes.text().catch(()=> '');
 					admissions = txt ? JSON.parse(txt) : [];
@@ -85,34 +84,22 @@
 				// Build lookup by student_id
 				const studentById = {};
 				students.forEach(s => { studentById[String(s.id)] = s; });
-				// Merge admissions with student info
+				// Merge admissions (from admissions table) with student info
+				// admissions row: { id, student_id, preferred_dept_id, status, cutoff, documents_uploaded, ... }
 				const searchVal = document.getElementById('search-input').value.trim().toLowerCase();
-				let merged = admissions.map(a => {
-					let st = a.student_id ? studentById[String(a.student_id)] : null;
+				const merged = admissions.map(a => {
+					const st = a.student_id ? studentById[String(a.student_id)] : null;
 					return {
-						// keep numeric app_id for server operations, but expose application_number for display
-						app_id: a.app_id || a.id || '-',
-						application_number: a.application_number || null,
-						unique_id: st ? (st.unique_id || '-') : (a.unique_id || '-'),
-						student_name: st ? (st.full_name || st.name || '-') : (a.student_name || a.name || '-'),
-						community: st ? (st.community || a.community || '-') : (a.community || '-'),
-						phone: st ? (st.phone || a.phone || '-') : (a.phone || '-'),
+						app_id: a.id,                                        // admissions.id used as handle
+						application_number: null,                            // admissions table has no app number
+						unique_id: st ? (st.unique_id || '-') : '-',
+						student_name: st ? (st.full_name || st.name || '-') : '-',
+						community: st ? (st.community || '-') : '-',
+						phone: st ? (st.phone || st.whatsapp_number || '-') : '-',
+						status: a.status || '',
+						documents_uploaded: a.documents_uploaded || false,
 					};
 				});
-								// Also include students that exist without an admission application (newly created students)
-								try{
-									const admissionStudentIds = new Set(admissions.map(a=> String(a.student_id)));
-									const orphanStudents = students.filter(s => !admissionStudentIds.has(String(s.id)));
-									const orphanMapped = orphanStudents.map(st => ({
-										app_id: '-',
-										application_number: null,
-										unique_id: st.unique_id || String(st.id || '-'),
-										student_name: st.full_name || st.name || '-',
-										community: st.community || '-',
-										phone: st.phone || st.whatsapp_number || '-',
-									}));
-									if(orphanMapped.length) merged = merged.concat(orphanMapped);
-								}catch(e){ console.warn('failed to merge orphan students', e); }
 				// Filter
 				const filtered = merged.filter(a => {
 					if(!searchVal) return true;
@@ -166,18 +153,9 @@
 				const start = (page - 1) * perPage;
 				const paged = filtered.slice(start, start + perPage);
 
-				const noDocs = paged.filter(f => !(counts[f.unique_id] > 0));
-				const withDocs = paged.filter(f => (counts[f.unique_id] > 0));
-
-				// Fetch bill numbers for apps present in this page (so we can display below App #)
-				const appIds = Array.from(new Set(paged.map(p => p.app_id).filter(x => x && x !== '-')));
-				let bills = {};
-				try{
-					if(appIds.length > 0){
-						const res = await fetch('/api/documents/bills?app_ids=' + encodeURIComponent(appIds.join(',')));
-						if(res.ok) bills = await res.json();
-					}
-				}catch(e){ console.warn('failed to fetch bills', e); }
+				// Use documents_uploaded from admissions row OR counts from document store
+				const noDocs = paged.filter(f => !f.documents_uploaded && !(counts[f.unique_id] > 0));
+				const withDocs = paged.filter(f => f.documents_uploaded || (counts[f.unique_id] > 0));
 
 				pendingEl.innerHTML = '';
 				uploadedEl.innerHTML = '';
@@ -189,9 +167,7 @@
 					noDocs.forEach(a => {
 						const card = document.createElement('div');
 						card.className = 'bg-white rounded-lg shadow-md p-6 flex flex-col gap-2';
-						const billForA = bills && bills[a.app_id] ? bills[a.app_id] : '-';
-						const displayApp = a.application_number || a.app_id || '-';
-						card.innerHTML = `<div class="flex items-center gap-3 mb-2"><span class="material-symbols-outlined text-blue-600 text-2xl">person</span><div><div class="text-lg font-bold text-gray-800">${a.student_name||'-'}</div><div class="text-xs text-gray-500">App #: <span class="font-mono font-bold text-blue-700">${displayApp}</span></div><div class="text-xs text-gray-500 mt-1">Bill #: <span class="font-mono font-semibold text-indigo-600">${billForA}</span></div></div></div><div class="flex items-center gap-2"><span class="material-symbols-outlined text-green-600">badge</span><span class="text-sm font-mono text-green-700">${a.unique_id||'-'}</span></div><div class="flex gap-2 mt-4"><button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 select-student-btn" data-app-id="${a.app_id}" data-unique-id="${a.unique_id}" data-name="${a.student_name}"><span class="material-symbols-outlined">check_circle</span>Select Student</button></div>`;
+						card.innerHTML = `<div class="flex items-center gap-3 mb-2"><span class="material-symbols-outlined text-blue-600 text-2xl">person</span><div><div class="text-lg font-bold text-gray-800">${a.student_name||'-'}</div><div class="text-xs text-gray-500">Admission #: <span class="font-mono font-bold text-blue-700">${a.app_id||'-'}</span></div><div class="text-xs text-gray-500 mt-1">Community: <span class="font-mono text-indigo-600">${a.community||'-'}</span></div></div></div><div class="flex items-center gap-2"><span class="material-symbols-outlined text-green-600">badge</span><span class="text-sm font-mono text-green-700">${a.unique_id||'-'}</span></div><div class="flex gap-2 mt-4"><button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 select-student-btn" data-app-id="${a.app_id}" data-unique-id="${a.unique_id}" data-name="${a.student_name}"><span class="material-symbols-outlined">check_circle</span>Select Student</button></div>`;
 						pendingEl.appendChild(card);
 					});
 				}
@@ -203,9 +179,7 @@
 					withDocs.forEach(a => {
 						const card = document.createElement('div');
 						card.className = 'bg-gray-50 rounded-lg shadow-md p-6 flex flex-col gap-2';
-						const billForA = bills && bills[a.app_id] ? bills[a.app_id] : '-';
-						const displayApp = a.application_number || a.app_id || '-';
-						card.innerHTML = `<div class="flex items-center gap-3 mb-2"><span class="material-symbols-outlined text-blue-600 text-2xl">person</span><div><div class="text-lg font-bold text-gray-800">${a.student_name||'-'}</div><div class="text-xs text-gray-500">App #: <span class="font-mono font-bold text-blue-700">${displayApp}</span></div><div class="text-xs text-gray-500 mt-1">Bill #: <span class="font-mono font-semibold text-indigo-600">${billForA}</span></div></div></div><div class="flex items-center gap-2"><span class="material-symbols-outlined text-green-600">badge</span><span class="text-sm font-mono text-green-700">${a.unique_id||'-'}</span></div><div class="flex gap-2 mt-4"><button class="ml-2 bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded view-docs-btn" data-app-id="${a.app_id}" data-unique-id="${a.unique_id}">View Uploaded Docs (${counts[a.unique_id]||0})</button></div>`;
+						card.innerHTML = `<div class="flex items-center gap-3 mb-2"><span class="material-symbols-outlined text-blue-600 text-2xl">person</span><div><div class="text-lg font-bold text-gray-800">${a.student_name||'-'}</div><div class="text-xs text-gray-500">Admission #: <span class="font-mono font-bold text-blue-700">${a.app_id||'-'}</span></div><div class="text-xs text-gray-500 mt-1">Community: <span class="font-mono text-indigo-600">${a.community||'-'}</span></div></div></div><div class="flex items-center gap-2"><span class="material-symbols-outlined text-green-600">badge</span><span class="text-sm font-mono text-green-700">${a.unique_id||'-'}</span></div><div class="flex gap-2 mt-4"><button class="ml-2 bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded view-docs-btn" data-app-id="${a.app_id}" data-unique-id="${a.unique_id}">View Uploaded Docs (${counts[a.unique_id]||0})</button></div>`;
 						uploadedEl.appendChild(card);
 					});
 				}
