@@ -87,7 +87,7 @@
 				students.forEach(s => { studentById[String(s.id)] = s; });
 				// Merge admissions with student info
 				const searchVal = document.getElementById('search-input').value.trim().toLowerCase();
-				const merged = admissions.map(a => {
+				let merged = admissions.map(a => {
 					let st = a.student_id ? studentById[String(a.student_id)] : null;
 					return {
 						// keep numeric app_id for server operations, but expose application_number for display
@@ -99,6 +99,20 @@
 						phone: st ? (st.phone || a.phone || '-') : (a.phone || '-'),
 					};
 				});
+								// Also include students that exist without an admission application (newly created students)
+								try{
+									const admissionStudentIds = new Set(admissions.map(a=> String(a.student_id)));
+									const orphanStudents = students.filter(s => !admissionStudentIds.has(String(s.id)));
+									const orphanMapped = orphanStudents.map(st => ({
+										app_id: '-',
+										application_number: null,
+										unique_id: st.unique_id || String(st.id || '-'),
+										student_name: st.full_name || st.name || '-',
+										community: st.community || '-',
+										phone: st.phone || st.whatsapp_number || '-',
+									}));
+									if(orphanMapped.length) merged = merged.concat(orphanMapped);
+								}catch(e){ console.warn('failed to merge orphan students', e); }
 				// Filter
 				const filtered = merged.filter(a => {
 					if(!searchVal) return true;
@@ -165,8 +179,6 @@
 					}
 				}catch(e){ console.warn('failed to fetch bills', e); }
 
-				const pendingEl = document.getElementById('pending-list');
-				const uploadedEl = document.getElementById('uploaded-list');
 				pendingEl.innerHTML = '';
 				uploadedEl.innerHTML = '';
 
