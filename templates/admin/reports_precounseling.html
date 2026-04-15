@@ -99,7 +99,6 @@
 <th colspan="3">Preferred Dept Selections Upto<br/><span class="selected-date-hdr"></span></th>
 <th colspan="3">Preferred Dept Selections On<br/><span class="selected-date-hdr"></span></th>
 <th colspan="2">Vacancy</th>
-<th colspan="2">Waiting</th>
 <th colspan="2">Admitted</th>
 </tr>
 <tr>
@@ -113,8 +112,6 @@
 <th class="w-16">GQ(S)</th>
 <th class="w-16">MQ</th>
 <th class="w-16">GQ</th>
-<th class="w-14">Upto</th>
-<th class="w-14">On</th>
 <th class="w-14">Upto</th>
 <th class="w-14">On</th>
 </tr>
@@ -151,7 +148,7 @@
 </div>
 <div class="mt-6 grid grid-cols-3 gap-4">
   <div class="flex items-center justify-between p-3 border border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50 dark:bg-blue-900/20">
-    <div><div class="text-sm font-medium text-blue-800 dark:text-blue-300">Total Enquiries</div><div class="text-xs text-slate-500">Students without branch assignment</div></div>
+    <div><div class="text-sm font-medium text-blue-800 dark:text-blue-300">Total Enquiries</div><div class="text-xs text-slate-500">All enquired students in system</div></div>
     <span id="card-total-enquiries" class="text-2xl font-bold text-blue-700 dark:text-blue-400">0</span>
   </div>
   <div class="flex items-center justify-between p-3 border border-amber-200 dark:border-amber-800 rounded-lg bg-amber-50 dark:bg-amber-900/20">
@@ -249,7 +246,7 @@
           // overall counts for summary cards
           const admStudentIds = new Set(adm.map(a => a.student_id ? String(a.student_id) : null).filter(Boolean));
           const allStudentIds = new Set(studentsArr.map(s => s.id ? String(s.id) : null).filter(Boolean));
-          const totalEnquiries = Array.from(allStudentIds).filter(sid => !admStudentIds.has(sid)).length;
+          const totalEnquiries = allStudentIds.size;
           const totalWaiting = Array.from(admStudentIds).filter(sid => !paidStudentIds.has(sid)).length;
           const totalAdmitted = Array.from(admStudentIds).filter(sid => paidStudentIds.has(sid)).length;
 
@@ -293,7 +290,7 @@
           });
 
 
-          let totalMqSeats=0, totalGqSeats=0, totalMqSelUpto=0, totalGqSelUpto=0, totalGqsSelUpto=0, totalMqSelOn=0, totalGqSelOn=0, totalGqsSelOn=0, totalWaitUpto=0, totalWaitOn=0, totalAdmUpto=0, totalAdmOn=0;
+          let totalMqSeats=0, totalGqSeats=0, totalMqSelUpto=0, totalGqSelUpto=0, totalGqsSelUpto=0, totalMqSelOn=0, totalGqSelOn=0, totalGqsSelOn=0, totalAdmUpto=0, totalAdmOn=0;
 
           rowsContainer.innerHTML = '';
           depts.forEach((d, idx) => {
@@ -332,11 +329,9 @@
             const deptAdm = adm.filter(a => String(a.preferred_dept_id||a.preferred_dept||'') === String(deptId));
             const deptAdmUpto = deptAdm.filter(a => { const d=parseAdmDate(a); return d && d<=uptoDate; });
             const deptAdmOn   = deptAdm.filter(a => { const d=parseAdmDate(a); return d && d>=onStart && d<=onEnd; });
-            const waitUpto = deptAdmUpto.filter(a => !paidStudentIds.has(String(a.student_id))).length;
-            const waitOn   = deptAdmOn.filter(a => !paidStudentIds.has(String(a.student_id))).length;
             const admUpto  = deptAdmUpto.filter(a => { const pd=paidDateByStudent[String(a.student_id)]; return pd && pd<=uptoDate; }).length;
             const admOn    = deptAdmOn.filter(a => { const pd=paidDateByStudent[String(a.student_id)]; return pd && pd<=onEnd; }).length;
-            totalWaitUpto += waitUpto; totalWaitOn += waitOn; totalAdmUpto += admUpto; totalAdmOn += admOn;
+            totalAdmUpto += admUpto; totalAdmOn += admOn;
 
             const tr = document.createElement('tr');
             tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors';
@@ -353,8 +348,6 @@
               <td class="bg-slate-50 dark:bg-slate-800/50 font-semibold">${selOnGQS}</td>
               <td class="text-red-600 dark:text-red-400 font-medium">${vacMq}</td>
               <td class="text-red-600 dark:text-red-400 font-medium">${vacGq}</td>
-              <td class="text-amber-600 dark:text-amber-400 font-medium">${waitUpto}</td>
-              <td class="text-amber-600 dark:text-amber-400 font-medium">${waitOn}</td>
               <td class="text-green-700 dark:text-green-400 font-medium">${admUpto}</td>
               <td class="text-green-700 dark:text-green-400 font-medium">${admOn}</td>
             `;
@@ -374,8 +367,6 @@
               <td>${totalGqsSelOn}</td>
               <td class="text-red-600 dark:text-red-400">${Math.max(0, totalMqSeats - totalMqSelUpto)}</td>
               <td class="text-red-600 dark:text-red-400">${Math.max(0, totalGqSeats - totalGqSelUpto)}</td>
-              <td class="text-amber-600 dark:text-amber-400">${totalWaitUpto}</td>
-              <td class="text-amber-600 dark:text-amber-400">${totalWaitOn}</td>
               <td class="text-green-700 dark:text-green-400">${totalAdmUpto}</td>
               <td class="text-green-700 dark:text-green-400">${totalAdmOn}</td>
             </tr>
@@ -494,8 +485,8 @@
             ['Report Date: ' + selDateDisp],
             ['B.E - First Year'],
             [],
-            ['S.No', 'Dept', 'Actual No of Seats', '', 'Selections Upto ' + selDateDisp, '', '', 'Selections On ' + selDateDisp, '', '', 'Vacancy', '', 'Waiting', '', 'Admitted', ''],
-            ['', '', 'MQ', 'GQ', 'MQ', 'GQ', 'GQ(S)', 'MQ', 'GQ', 'GQ(S)', 'MQ', 'GQ', 'Upto', 'On', 'Upto', 'On'],
+            ['S.No', 'Dept', 'Actual No of Seats', '', 'Selections Upto ' + selDateDisp, '', '', 'Selections On ' + selDateDisp, '', '', 'Vacancy', '', 'Admitted', ''],
+            ['', '', 'MQ', 'GQ', 'MQ', 'GQ', 'GQ(S)', 'MQ', 'GQ', 'GQ(S)', 'MQ', 'GQ', 'Upto', 'On'],
           ];
 
           Array.from(rowsTbody.querySelectorAll('tr')).forEach(tr => {

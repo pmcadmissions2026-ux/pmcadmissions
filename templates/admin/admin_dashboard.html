@@ -83,6 +83,7 @@
             <tbody id="accepted-tbody" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"><tr><td colspan="5" class="px-6 py-12 text-center text-slate-500"><span class="material-symbols-outlined text-4xl mb-2">check_circle</span><p class="text-sm font-medium">No accepted students loaded</p></td></tr></tbody>
           </table>
         </div>
+        <div class="px-6 py-4 flex items-center justify-between border-t border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c]"><p class="text-sm text-[#617589]" id="accepted-count">Showing 0 records</p><div class="flex gap-2" id="accepted-pager"></div></div>
       </div>
 
       <!-- Tables (empty tbody; client injector will fill) -->
@@ -105,6 +106,7 @@
             <tbody id="pending-tbody" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"><tr><td colspan="5" class="px-6 py-12 text-center text-slate-500"><span class="material-symbols-outlined text-4xl mb-2">hourglass_empty</span><p class="text-sm font-medium">No pending students loaded</p></td></tr></tbody>
           </table>
         </div>
+        <div class="px-6 py-4 flex items-center justify-between border-t border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c]"><p class="text-sm text-[#617589]" id="pending-count">Showing 0 records</p><div class="flex gap-2" id="pending-pager"></div></div>
       </div>
 
       <!-- Assigned / Accepted placeholders -->
@@ -113,6 +115,7 @@
         <div class="rounded-xl shadow-sm border border-[#f0f2f4] dark:border-gray-800 overflow-hidden bg-white dark:bg-[#1a202c]">
           <div class="px-6 py-4 border-b border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#0f1419]"><div class="flex items-center justify-between"><h2 class="text-[#111418] dark:text-white text-xl font-bold leading-tight flex items-center gap-3"><span class="material-symbols-outlined text-primary text-2xl">check_circle</span>Assigned Branches</h2><span id="assigned-count" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">0 Assigned</span></div></div>
           <div class="overflow-x-auto"><table class="w-full"><thead class="bg-gray-50 dark:bg-gray-800"><tr class="border-b border-[#e5e7eb] dark:border-[#2d3748]"><th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">App #</th><th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Name</th><th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Unique ID</th><th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Preferred Dept</th><th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Optional Dept</th><th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Allotted Dept</th><th class="px-6 py-3 text-left text-xs font-bold text-[#111418] dark:text-white uppercase">Cutoff</th></tr></thead><tbody id="assigned-tbody" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"><tr><td colspan="7" class="px-6 py-12 text-center text-slate-500">No assigned students loaded</td></tr></tbody></table></div>
+          <div class="px-6 py-4 flex items-center justify-between border-t border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c]"><p class="text-sm text-[#617589]" id="assigned-count-text">Showing 0 records</p><div class="flex gap-2" id="assigned-pager"></div></div>
         </div>
       </div>
 
@@ -126,6 +129,25 @@
 
 <script>
 // Lightweight client injector: populate debug email and wire AdminAPI-populated data to tables.
+const PAGE_SIZE = 10;
+const pages = { pending: 1, accepted: 1, assigned: 1 };
+let allData = null;
+
+function buildPager(pagerEl, countEl, total, page, onPage){
+  if(!pagerEl) return;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const from = total===0 ? 0 : (page-1)*PAGE_SIZE+1;
+  const to = Math.min(page*PAGE_SIZE, total);
+  if(countEl) countEl.textContent = total===0 ? 'Showing 0 records' : `Showing ${from}–${to} of ${total}`;
+  let html = `<button class="px-3 py-1 text-sm border border-[#e5e7eb] dark:border-[#2d3748] rounded hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors${page<=1?' opacity-40 cursor-not-allowed':''}" data-dir="prev" ${page<=1?'disabled':''}>Previous</button>`;
+  const ps=Math.max(1,page-2), pe=Math.min(totalPages,page+2);
+  for(let p=ps;p<=pe;p++) html+=`<button class="px-3 py-1 text-sm border rounded${p===page?' border-primary bg-primary text-white':' border-[#e5e7eb] dark:border-[#2d3748] hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors'}" data-pg="${p}">${p}</button>`;
+  html+=`<button class="px-3 py-1 text-sm border border-[#e5e7eb] dark:border-[#2d3748] rounded hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors${page>=totalPages?' opacity-40 cursor-not-allowed':''}" data-dir="next" ${page>=totalPages?'disabled':''}>Next</button>`;
+  pagerEl.innerHTML=html;
+  pagerEl.querySelectorAll('[data-pg]').forEach(btn=>btn.addEventListener('click',()=>onPage(Number(btn.dataset.pg))));
+  pagerEl.querySelectorAll('[data-dir]').forEach(btn=>btn.addEventListener('click',()=>{ if(btn.disabled) return; const d=btn.dataset.dir; if(d==='prev'&&page>1) onPage(page-1); if(d==='next'&&page<totalPages) onPage(page+1); }));
+}
+
 function safeJsonParse(s){ try{ return JSON.parse(s); }catch(e){ return null; } }
 function setText(id, txt){ const el = document.getElementById(id); if(el) el.textContent = txt; }
 function normalizeText(v){ return String(v||'').trim().toLowerCase().replace(/\s+/g,' '); }
@@ -288,11 +310,12 @@ document.addEventListener('DOMContentLoaded', function(){
 
   // When AdminAPI populates window.__SERVER_DATA, render tables
   function renderFromServerData(){
-    const data = window.__SERVER_DATA || {};
+    allData = window.__SERVER_DATA || {};
+    const data = allData;
     try{
       // pending
       const pendingTbody = document.getElementById('pending-tbody');
-      if(pendingTbody){ pendingTbody.innerHTML = ''; const list = data.pending || []; if(list.length===0){ pendingTbody.innerHTML = '<tr><td colspan="5" class="px-6 py-12 text-center text-slate-500">No pending students</td></tr>'; } else { list.forEach(s=>{ const cutoff = s.cutoff ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${s.cutoff>=190? 'bg-green-100 text-green-800' : (s.cutoff>=180? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800')}">${Number(s.cutoff).toFixed(2)}</span>` : '<span class="text-xs text-slate-400">Pending</span>'; const row = document.createElement('tr'); row.className='hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors group'; row.innerHTML=`<td class="px-6 py-4"><div class="text-sm font-semibold text-[#111418] dark:text-white">${s.name||''}</div><div class="text-xs text-[#617589]">${s.time_ago||''}</div></td><td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${s.unique_id||'N/A'}</td><td class="px-6 py-4">${cutoff}</td><td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">${s.community||'General'}</td><td class="px-6 py-4 text-right"><a href="#" data-action="assign_branch" data-student-id="${s.student_id||''}" class="inline-flex items-center gap-2 bg-primary text-white text-xs font-bold py-2 px-4 rounded-lg">Assign Branch</a></td>`; pendingTbody.appendChild(row); }); } }
+      if(pendingTbody){ pendingTbody.innerHTML = ''; const list = data.pending || []; if(list.length===0){ pendingTbody.innerHTML = '<tr><td colspan="5" class="px-6 py-12 text-center text-slate-500">No pending students</td></tr>'; buildPager(document.getElementById('pending-pager'), document.getElementById('pending-count'), 0, 1, ()=>{}); } else { const pPage=list.slice((pages.pending-1)*PAGE_SIZE, pages.pending*PAGE_SIZE); pPage.forEach(s=>{ const cutoff = s.cutoff ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${s.cutoff>=190? 'bg-green-100 text-green-800' : (s.cutoff>=180? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800')}">${Number(s.cutoff).toFixed(2)}</span>` : '<span class="text-xs text-slate-400">Pending</span>'; const row = document.createElement('tr'); row.className='hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors group'; row.innerHTML=`<td class="px-6 py-4"><div class="text-sm font-semibold text-[#111418] dark:text-white">${s.name||''}</div><div class="text-xs text-[#617589]">${s.time_ago||''}</div></td><td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${s.unique_id||'N/A'}</td><td class="px-6 py-4">${cutoff}</td><td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">${s.community||'General'}</td><td class="px-6 py-4 text-right"><a href="#" data-action="assign_branch" data-student-id="${s.student_id||''}" class="inline-flex items-center gap-2 bg-primary text-white text-xs font-bold py-2 px-4 rounded-lg">Assign Branch</a></td>`; pendingTbody.appendChild(row); }); buildPager(document.getElementById('pending-pager'), document.getElementById('pending-count'), list.length, pages.pending, (p)=>{ pages.pending=p; renderFromServerData(); }); } }
 
           // accepted - determine assignment status from admissions table when available
           const acceptedTbody = document.getElementById('accepted-tbody');
@@ -315,8 +338,10 @@ document.addEventListener('DOMContentLoaded', function(){
 
             if(listA.length===0){
               acceptedTbody.innerHTML = '<tr><td colspan="5" class="px-6 py-12 text-center text-slate-500">No accepted students loaded</td></tr>';
+              buildPager(document.getElementById('accepted-pager'), document.getElementById('accepted-count'), 0, 1, ()=>{});
             } else {
-              listA.forEach(s=>{
+              const aPage=listA.slice((pages.accepted-1)*PAGE_SIZE, pages.accepted*PAGE_SIZE);
+              aPage.forEach(s=>{
                 const cutoff = s.cutoff ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${s.cutoff>=190? 'bg-green-100 text-green-800' : (s.cutoff>=180? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800')}">${Number(s.cutoff).toFixed(2)}</span>` : '<span class="text-xs text-slate-400">-</span>';
                 const row = document.createElement('tr');
                 row.className='hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors group';
@@ -340,6 +365,7 @@ document.addEventListener('DOMContentLoaded', function(){
                 row.innerHTML = `<td class="px-6 py-4"><div class="text-sm font-semibold text-[#111418] dark:text-white">${s.full_name||s.name||''}</div><div class="text-xs text-[#617589]">Accepted</div></td><td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${s.unique_id||'N/A'}</td><td class="px-6 py-4">${cutoff}</td><td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">${s.community||'General'}</td><td class="px-6 py-4 text-right">${actionHtml}</td>`;
                 acceptedTbody.appendChild(row);
               });
+              buildPager(document.getElementById('accepted-pager'), document.getElementById('accepted-count'), listA.length, pages.accepted, (p)=>{ pages.accepted=p; renderFromServerData(); });
             }
           }
 
@@ -348,11 +374,13 @@ document.addEventListener('DOMContentLoaded', function(){
       if(assignedTbody){
         assignedTbody.innerHTML = '';
         const list = (data.assigned || []).filter(isOwnedByCurrentAdmin);
-        setText('assigned-count', (list.length||0) + ' Assigned');
+        const countTextEl = document.getElementById('assigned-count-text');
         if(list.length===0){
           assignedTbody.innerHTML = '<tr><td colspan="7" class="px-6 py-12 text-center text-slate-500">No assigned students</td></tr>';
+          buildPager(document.getElementById('assigned-pager'), countTextEl, 0, 1, ()=>{});
         } else {
-          list.forEach(st => {
+          const asPage=list.slice((pages.assigned-1)*PAGE_SIZE, pages.assigned*PAGE_SIZE);
+          asPage.forEach(st => {
             const optional = (st.optional_depts||[]).map(d=>`<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">${d.dept_code||''}</span>`).join('');
             const cutoffLabel = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${st.cutoff>=190? 'bg-green-100 text-green-800' : (st.cutoff>=180? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800')}">${Number(st.cutoff||0).toFixed(2)}</span>`;
             const row = document.createElement('tr');
@@ -361,6 +389,7 @@ document.addEventListener('DOMContentLoaded', function(){
             row.innerHTML = `<td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono font-bold">${appCell}</td><td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">${st.name||''}</td><td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${st.unique_id||'N/A'}</td><td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">${st.preferred_dept_code||''}</span></td><td class="px-6 py-4">${optional||'<span class="text-xs text-[#617589] dark:text-gray-500">-</span>'}</td><td class="px-6 py-4">${st.allotted_dept_code?('<div class="flex items-center gap-2"><span class="material-symbols-outlined text-green-600 text-sm">check</span><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400>'+st.allotted_dept_code+'</span></div>'):'<span class="text-xs text-[#617589] dark:text-gray-500">Pending</span>'}</td><td class="px-6 py-4">${cutoffLabel}</td>`;
             assignedTbody.appendChild(row);
           });
+          buildPager(document.getElementById('assigned-pager'), countTextEl, list.length, pages.assigned, (p)=>{ pages.assigned=p; renderFromServerData(); });
         }
       }
 
