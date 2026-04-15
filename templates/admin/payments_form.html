@@ -32,6 +32,12 @@
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
+    #uniqueid-dropdown { position:absolute; z-index:50; max-height:220px; overflow-y:auto; }
+    @media print {
+      body * { visibility: hidden !important; }
+      #printBillArea, #printBillArea * { visibility: visible !important; }
+      #printBillArea { position: fixed !important; inset: 0; width: 100%; z-index: 9999; background: white; padding: 32px; }
+    }
     </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white min-h-screen flex flex-col">
@@ -46,201 +52,422 @@
 
 <main class="flex-1 overflow-y-auto">
 <div class="max-w-4xl mx-auto p-6 flex flex-col gap-6">
-<a href="payments_list.html" class="flex items-center gap-2 text-primary hover:text-primary/80 font-semibold mb-4">
-<span class="material-symbols-outlined">arrow_back</span>
-Back to Payments
-</a>
 
-<div id="flashContainer"></div>
+  <a href="payments_list.html" class="flex items-center gap-2 text-primary hover:text-primary/80 font-semibold">
+    <span class="material-symbols-outlined">arrow_back</span> Back to Payments
+  </a>
 
-<!-- Page Header -->
-<div class="flex flex-wrap justify-between items-end gap-3">
-<div class="flex min-w-72 flex-col gap-1">
-<p class="text-[#111418] dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">Initial Payment</p>
-<p class="text-[#617589] dark:text-[#a0aec0] text-base font-normal leading-normal">Collect initial payment for admission</p>
-</div>
-</div>
+  <div id="flashContainer"></div>
 
-<!-- Student Information Card -->
-<div class="bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] p-6">
-<h3 class="text-lg font-bold text-[#111418] dark:text-white mb-4">Student Information</h3>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-            <label class="block text-sm font-semibold text-gray-600 mb-1">Student Name</label>
-            <p id="studentName" class="text-lg font-bold text-gray-800">-</p>
-        </div>
-        <div>
-            <label class="block text-sm font-semibold text-gray-600 mb-1">Unique ID</label>
-            <p id="studentUnique" class="text-lg font-bold text-blue-600">-</p>
-        </div>
-        <div>
-            <label class="block text-sm font-semibold text-gray-600 mb-1">Registration ID</label>
-            <p id="registrationId" class="text-lg font-bold text-green-600">-</p>
-        </div>
-    </div>
-    
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-200">
-        <div>
-            <label class="block text-sm font-semibold text-gray-600 mb-1">Allotted Department</label>
-            <p id="deptName" class="text-lg font-bold text-gray-800">-</p>
-        </div>
-        <div>
-            <label class="block text-sm font-semibold text-gray-600 mb-1">Allotted Quota</label>
-            <p id="quotaType" class="text-sm text-gray-500">-</p>
-        </div>
-    </div>
-</div>
-
-<!-- Payment Form Card -->
-<div class="bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] p-6">
-<h3 class="text-lg font-bold text-[#111418] dark:text-white mb-6">Payment Details</h3>
-
-<form id="paymentForm" class="space-y-6">
+  <div class="flex flex-wrap justify-between items-end gap-3">
     <div>
-        <label for="bill_no" class="block text-sm font-semibold text-gray-700 mb-2">
-            <span class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-lg">receipt_long</span>
-                Bill Number
-            </span>
-        </label>
-        <input type="text" id="bill_no" name="bill_no" placeholder="e.g., BILL-001" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg" required />
-        <p class="text-xs text-gray-500 mt-1">Unique bill/invoice number for this payment</p>
+      <p class="text-3xl font-black leading-tight tracking-[-0.033em]">Add Payment</p>
+      <p class="text-[#617589] text-base">Record a new payment for a student</p>
+    </div>
+  </div>
+
+  <!-- Student Search Card -->
+  <div class="bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] p-6">
+    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+      <span class="material-symbols-outlined text-primary">search</span> Find Student
+    </h3>
+    <div class="relative">
+      <label class="block text-sm font-semibold text-gray-600 dark:text-gray-400 mb-1">Unique ID / Name <span class="text-red-500">*</span></label>
+      <input id="uniqueid-search" type="text" autocomplete="off"
+        placeholder="Type Unique ID or Name to search…"
+        class="w-full px-4 py-2.5 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary outline-none bg-white dark:bg-[#1a202c]"/>
+      <div id="uniqueid-dropdown" class="hidden w-full bg-white dark:bg-[#253141] border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg mt-1"></div>
     </div>
 
-    <div>
-        <label for="mode_of_payment" class="block text-sm font-semibold text-gray-700 mb-2">
-            <span class="flex items-center gap-2"><span class="material-symbols-outlined text-lg">account_balance_wallet</span> Mode of Payment</span>
+    <!-- Auto-fetched student info -->
+    <div id="student-info-block" class="hidden mt-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div>
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Student Name</p>
+        <p id="disp-name" class="text-base font-bold text-gray-800 dark:text-white">—</p>
+      </div>
+      <div>
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Unique ID</p>
+        <p id="disp-uid" class="text-base font-bold text-blue-600">—</p>
+      </div>
+      <div>
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Branch</p>
+        <p id="disp-branch" class="text-base font-bold text-purple-600">—</p>
+      </div>
+      <div>
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Community</p>
+        <p id="disp-community" class="text-base font-semibold text-gray-700 dark:text-gray-300">—</p>
+      </div>
+      <div>
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Phone</p>
+        <p id="disp-phone" class="text-base font-semibold text-gray-700 dark:text-gray-300">—</p>
+      </div>
+    </div>
+    <input type="hidden" id="selected-student-id"/>
+    <input type="hidden" id="selected-unique-id"/>
+    <input type="hidden" id="selected-branch-name"/>
+  </div>
+
+  <!-- Payment Details Card -->
+  <div class="bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] p-6">
+    <h3 class="text-lg font-bold mb-6 flex items-center gap-2">
+      <span class="material-symbols-outlined text-primary">payments</span> Payment Details
+    </h3>
+
+    <form id="paymentForm" class="space-y-5">
+
+      <!-- Bill No + Date -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div>
+          <label for="bill_no" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
+            <span class="material-symbols-outlined text-base">receipt_long</span> Bill Number
+          </label>
+          <div class="flex gap-2">
+            <input type="text" id="bill_no" name="bill_no" placeholder="Auto-generated…"
+              class="flex-1 px-4 py-2.5 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:border-primary outline-none bg-white dark:bg-[#1a202c]" required/>
+            <button type="button" id="gen-bill-btn" title="Generate new bill number"
+              class="px-3 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300">
+              <span class="material-symbols-outlined text-base">refresh</span>
+            </button>
+          </div>
+          <p class="text-xs text-gray-400 mt-1">Auto-generated; tap refresh to regenerate</p>
+        </div>
+        <div>
+          <label for="payment_date" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
+            <span class="material-symbols-outlined text-base">calendar_today</span> Payment Date
+          </label>
+          <input type="date" id="payment_date" name="payment_date"
+            class="w-full px-4 py-2.5 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:border-primary outline-none bg-white dark:bg-[#1a202c]" required/>
+        </div>
+      </div>
+
+      <!-- Payment Type -->
+      <div>
+        <label for="payment_type" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
+          <span class="material-symbols-outlined text-base">category</span> Payment Type
         </label>
-        <select id="mode_of_payment" name="mode_of_payment" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg" required>
-            <option value="">-- Select Mode of Payment --</option>
-            <option value="Cash">Cash</option>
-            <option value="Card">Card (Debit/Credit)</option>
-            <option value="Cheque">Cheque</option>
-            <option value="Bank Transfer">Bank Transfer</option>
-            <option value="UPI">UPI</option>
+        <select id="payment_type" name="payment_type"
+          class="w-full px-4 py-2.5 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:border-primary outline-none bg-white dark:bg-[#1a202c]" required>
+          <option value="">-- Select Payment Type --</option>
+          <option value="Application Form">Application Form</option>
+          <option value="Tuition Fee">Tuition Fee</option>
+          <option value="Bus Fee">Bus Fee</option>
+          <option value="Hostel Fee">Hostel Fee</option>
+          <option value="Exam Fee">Exam Fee</option>
+          <option value="Others">Others</option>
         </select>
-        <p class="text-xs text-gray-500 mt-1">Select the method used for payment</p>
-    </div>
+      </div>
 
-    <div>
-        <label for="amount" class="block text-sm font-semibold text-gray-700 mb-2">
-            <span class="flex items-center gap-2"><span class="material-symbols-outlined text-lg">currency_rupee</span> Amount (₹)</span>
+      <!-- Amount -->
+      <div>
+        <label for="amount" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
+          <span class="material-symbols-outlined text-base">currency_rupee</span> Amount (₹)
         </label>
-        <input type="number" id="amount" name="amount" step="0.01" min="0" placeholder="e.g., 50000" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg" required />
-        <p class="text-xs text-gray-500 mt-1">Enter the payment amount in rupees</p>
-    </div>
+        <input type="number" id="amount" name="amount" step="0.01" min="0" placeholder="e.g. 5000"
+          class="w-full px-4 py-2.5 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:border-primary outline-none bg-white dark:bg-[#1a202c]" required/>
+      </div>
 
-    <div id="upi-row" style="display:none;">
-        <label for="upi_id" class="block text-sm font-semibold text-gray-700 mb-2">UPI ID (e.g., name@bank)</label>
-        <input type="text" id="upi_id" name="upi_id" placeholder="e.g., name@upi" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg" />
-    </div>
+      <!-- Mode of Payment -->
+      <div>
+        <label for="mode_of_payment" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1">
+          <span class="material-symbols-outlined text-base">account_balance_wallet</span> Mode of Payment
+        </label>
+        <select id="mode_of_payment" name="mode_of_payment"
+          class="w-full px-4 py-2.5 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:border-primary outline-none bg-white dark:bg-[#1a202c]" required>
+          <option value="">-- Select Mode --</option>
+          <option value="Cash">Cash</option>
+          <option value="Card">Card (Debit/Credit)</option>
+          <option value="Cheque">Cheque</option>
+          <option value="Bank Transfer">Bank Transfer / NEFT / RTGS</option>
+          <option value="UPI">UPI</option>
+          <option value="DD">Demand Draft (DD)</option>
+        </select>
+      </div>
 
-    <div class="flex gap-4 pt-4 border-t border-gray-200">
-        <button type="submit" class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-lg">
-            <span class="material-symbols-outlined">check_circle</span>
-            Save Payment
+      <!-- Dynamic reference field -->
+      <div id="ref-row" class="hidden">
+        <label for="reference_number" id="ref-label" class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Reference Number</label>
+        <input type="text" id="reference_number" name="reference_number"
+          class="w-full px-4 py-2.5 border-2 border-gray-300 dark:border-gray-600 rounded-lg focus:border-primary outline-none bg-white dark:bg-[#1a202c]"/>
+        <p id="ref-hint" class="text-xs text-gray-400 mt-1"></p>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <button type="submit" class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-bold py-3 px-6 rounded-lg transition-colors">
+          <span class="material-symbols-outlined">check_circle</span> Save Payment
         </button>
-        <a href="payments_list.html" class="flex items-center gap-2 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-lg">
-            <span class="material-symbols-outlined">close</span>
-            Cancel
+        <a href="payments_list.html" class="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-6 rounded-lg transition-colors">
+          <span class="material-symbols-outlined">close</span> Cancel
         </a>
-    </div>
-</form>
-</div>
+      </div>
+    </form>
+  </div>
+
 </div>
 </main>
 
 <script>
 function $(id){ return document.getElementById(id); }
 function showFlash(msg, type='error'){
-    const fc = document.getElementById('flashContainer'); if(!fc) return; fc.innerHTML = `<div class="bg-${type==='success'?'green':'red'}-50 border border-${type==='success'?'green':'red'}-200 text-${type==='success'?'green':'red'}-800 px-4 py-3 rounded-lg">${msg}</div>`;
+  const fc = $('flashContainer'); if(!fc) return;
+  const c = type==='success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800';
+  fc.innerHTML = `<div class="border ${c} px-4 py-3 rounded-lg text-sm mb-2">${msg}</div>`;
+}
+function debounce(fn, d){ let t; return function(){ clearTimeout(t); const a=arguments,c=this; t=setTimeout(()=>fn.apply(c,a),d); }; }
+async function fetchJson(url){ const r=await fetch(url,{cache:'no-store'}); if(!r.ok) throw new Error('HTTP '+r.status+' '+url); return r.json(); }
+function getQP(n){ return new URLSearchParams(window.location.search).get(n); }
+
+let allStudents=[], deptMap={}, admissionsMap={}, counsellingMap={};
+
+/* ── reference field ── */
+const REF_CFG = {
+  'Card':          {label:'Card / POS Transaction Reference',  hint:'POS receipt or transaction ID'},
+  'Cheque':        {label:'Cheque Number',                      hint:'6-digit cheque number on the leaf'},
+  'Bank Transfer': {label:'UTR Number',                         hint:'NEFT / RTGS UTR reference'},
+  'UPI':           {label:'UPI Transaction ID / UTR',           hint:'Transaction ID or 12-digit UTR'},
+  'DD':            {label:'DD Number',                          hint:'Demand Draft number'}
+};
+$('mode_of_payment').addEventListener('change', function(){
+  const cfg = REF_CFG[this.value];
+  const row=$('ref-row'); const lbl=$('ref-label'); const inp=$('reference_number'); const hint=$('ref-hint');
+  if(cfg){ row.classList.remove('hidden'); lbl.textContent=cfg.label; inp.placeholder=cfg.hint; hint.textContent=cfg.hint; inp.required=true; }
+  else { row.classList.add('hidden'); inp.required=false; }
+});
+
+/* ── student search autocomplete ── */
+const searchInput = $('uniqueid-search');
+const dropdown = $('uniqueid-dropdown');
+searchInput.addEventListener('input', debounce(renderDropdown, 200));
+searchInput.addEventListener('focus', renderDropdown);
+document.addEventListener('click', e=>{ if(!e.target.closest('#uniqueid-search')&&!e.target.closest('#uniqueid-dropdown')) dropdown.classList.add('hidden'); });
+
+function renderDropdown(){
+  const q = searchInput.value.trim().toLowerCase();
+  dropdown.innerHTML='';
+  const list = allStudents.filter(s=> !q || (s.unique_id||'').toLowerCase().includes(q)||(s.full_name||'').toLowerCase().includes(q)).slice(0,20);
+  if(!list.length){ dropdown.classList.add('hidden'); return; }
+  list.forEach(s=>{
+    const div=document.createElement('div');
+    div.className='px-4 py-2.5 cursor-pointer hover:bg-primary/10 text-sm border-b border-gray-100 dark:border-gray-700 last:border-0';
+    div.innerHTML=`<span class="font-bold text-primary">${s.unique_id||'—'}</span> — <span class="text-gray-700 dark:text-gray-300">${s.full_name||'—'}</span>`;
+    div.addEventListener('click',()=>{ selectStudent(s); dropdown.classList.add('hidden'); });
+    dropdown.appendChild(div);
+  });
+  dropdown.classList.remove('hidden');
 }
 
-function debounce(fn, delay){ let t; return function(){ const args=arguments; const ctx=this; clearTimeout(t); t=setTimeout(function(){ fn.apply(ctx, args); }, delay); }; }
-
-async function fetchJson(url){ const r = await fetch(url); if(!r.ok) throw new Error('fetch failed '+url); return r.json(); }
-
-function getQueryParam(name){ const params = new URLSearchParams(window.location.search); return params.get(name); }
-
-async function loadPaymentForm(){
-    const appId = getQueryParam('app_id');
-    if(!appId){ showFlash('app_id query param required'); return; }
-
-    try{
-        // fetch admission_application by app_id first, fall back to diagnostics and counselling_records
-        let app = null;
-        try{
-            const appRes = await fetchJson('/api/admission_applications?app_id='+encodeURIComponent(appId));
-            if(appRes && appRes.ok && appRes.item) app = appRes.item;
-            else if(appRes && appRes.item) app = appRes.item;
-        }catch(e){ /* not found or error, we'll fallback */ }
-
-        if(!app){
-            // try diagnostic list as a fallback
-            let apps = await fetchJson('/api/_admission_applications');
-            if(!Array.isArray(apps) && apps && Array.isArray(apps.items)) apps = apps.items;
-            if(!Array.isArray(apps)) apps = [];
-            app = apps.find(a=>String(a.app_id)===String(appId));
-        }
-        // If admission application row not found, try to recover from counselling_records
-        if(!app){
-            try{
-                let crs = await fetchJson('/api/counselling_records');
-                if(!Array.isArray(crs) && crs && Array.isArray(crs.data)) crs = crs.data;
-                if(!Array.isArray(crs)) crs = [];
-                const cr = crs.find(c=>String(c.app_id)===String(appId));
-                if(cr){
-                    app = {
-                        app_id: Number(cr.app_id),
-                        student_id: cr.student_id || null,
-                        preferred_dept_id: cr.allotted_dept_id || null,
-                        quota_type: cr.quota_type || null,
-                        registration_id: null
-                    };
-                }
-            }catch(e){ console.warn('counselling_records fetch failed', e); }
-        }
-
-        if(!app){ showFlash('Admission application not found'); return; }
-
-        let students = await fetchJson('/api/students');
-        if(!Array.isArray(students) && students && Array.isArray(students.data)) students = students.data;
-        if(!Array.isArray(students)) students = [];
-        const stud = students.find(s=>String(s.id)===String(app.student_id));
-
-        let deps = await fetchJson('/api/departments');
-        if(!Array.isArray(deps) && deps && Array.isArray(deps.data)) deps = deps.data;
-        if(!Array.isArray(deps)) deps = [];
-        const deptMap = {}; deps.forEach(d=>{ deptMap[String(d.id)] = d.dept_name || d.name; });
-
-        $('studentName').textContent = stud ? (stud.full_name || stud.student_name || '') : '-';
-        $('studentUnique').textContent = stud ? (stud.unique_id || '') : '-';
-        $('registrationId').textContent = app.registration_id || '-';
-        $('deptName').textContent = (app.preferred_dept_id ? (deptMap[String(app.preferred_dept_id)] || ('Dept #'+app.preferred_dept_id)) : '-');
-        $('quotaType').textContent = app.quota_type || '-';
-
-        // wire UPI visibility
-        $('mode_of_payment').addEventListener('change', function(e){ const upiRow = $('upi-row'); if(this.value==='UPI'){ upiRow.style.display='block'; $('upi_id').required = true; } else { upiRow.style.display='none'; $('upi_id').required = false; } });
-
-        // submit handler
-        $('paymentForm').addEventListener('submit', async function(ev){ ev.preventDefault();
-            const bill_no = $('bill_no').value.trim(); const mode_of_payment = $('mode_of_payment').value; const amount = $('amount').value; const upi_id = $('upi_id').value.trim();
-            if(!bill_no || !mode_of_payment || !amount) { showFlash('Please fill required fields'); return; }
-            const payload = { app_id: Number(appId), bill_no, mode_of_payment, amount: Number(amount) };
-            if(mode_of_payment==='UPI' && upi_id) payload.upi_id = upi_id;
-            try{
-                const r = await fetch('/api/payments', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
-                const j = await r.json();
-                if(!r.ok) { showFlash(j && j.error ? j.error : 'Failed to create payment'); return; }
-                showFlash('Payment saved', 'success');
-                setTimeout(()=> location.href = 'payments_list.html', 800);
-            }catch(e){ console.error(e); showFlash('Request failed'); }
-        });
-
-    }catch(e){ console.error(e); showFlash('Failed to load form'); }
+async function selectStudent(s){
+  searchInput.value=(s.unique_id||'')+' — '+(s.full_name||'');
+  $('selected-student-id').value=s.id||'';
+  $('selected-unique-id').value=s.unique_id||'';
+  $('disp-name').textContent=s.full_name||s.name||'—';
+  $('disp-uid').textContent=s.unique_id||'—';
+  $('disp-community').textContent=s.community||'—';
+  $('disp-phone').textContent=s.phone||s.whatsapp_number||'—';
+  let branch='—';
+  const sid=String(s.id);
+  const counsel=counsellingMap[sid];
+  if(counsel&&counsel.allotted_dept_id){ branch=deptMap[String(counsel.allotted_dept_id)]||('Dept #'+counsel.allotted_dept_id); }
+  else { const adm=admissionsMap[sid]; if(adm){ const did=adm.allotted_dept_id||adm.preferred_dept_id; branch=did?(deptMap[String(did)]||('Dept #'+did)):'—'; } }
+  $('disp-branch').textContent=branch;
+  $('selected-branch-name').value=branch;
+  $('student-info-block').classList.remove('hidden');
 }
 
-document.addEventListener('DOMContentLoaded', ()=>{ loadPaymentForm(); });
+/* ── bill number ── */
+async function fetchNextBill(){
+  try{ const d=await fetchJson('/api/payments/next_bill'); if(d&&d.bill_no) $('bill_no').value=d.bill_no; }
+  catch(e){ const y=new Date().getFullYear(); $('bill_no').value='BILL-'+y+'-'+String(Date.now()).slice(-4); }
+}
+$('gen-bill-btn').addEventListener('click', fetchNextBill);
+
+/* ── form submit ── */
+$('paymentForm').addEventListener('submit', async function(ev){
+  ev.preventDefault();
+  const studentId=$('selected-student-id').value;
+  if(!studentId){ showFlash('Please search and select a student first.'); return; }
+  const payload={
+    student_id: Number(studentId),
+    unique_id: $('selected-unique-id').value||null,
+    bill_no: $('bill_no').value.trim(),
+    payment_date: $('payment_date').value,
+    payment_type: $('payment_type').value,
+    mode_of_payment: $('mode_of_payment').value,
+    amount: Number($('amount').value),
+    branch_name: $('selected-branch-name').value||null,
+    reference_number: $('reference_number').value.trim()||null
+  };
+  if(!payload.bill_no||!payload.payment_type||!payload.mode_of_payment||!payload.amount){ showFlash('Please fill all required fields.'); return; }
+  try{
+    const r=await fetch('/api/payments',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const j=await r.json();
+    if(!r.ok){ showFlash(j&&j.error?j.error:'Failed to save payment.'); return; }
+    showFlash('Payment saved successfully!','success');
+    // build and show print bill
+    buildPrintBill(payload, j.payment);
+    $('printBillModal').classList.remove('hidden');
+  }catch(e){ showFlash('Request failed: '+e.message); }
+});
+
+/* ── init ── */
+async function init(){
+  $('payment_date').value=new Date().toISOString().slice(0,10);
+  await fetchNextBill();
+  const preStudentId=getQP('student_id');
+  try{
+    const [studs,depts,adms,counselRaw]=await Promise.all([
+      fetchJson('/api/students'),
+      fetchJson('/api/departments'),
+      fetchJson('/api/admissions'),
+      fetchJson('/api/counselling_records').catch(()=>[])
+    ]);
+    allStudents=Array.isArray(studs)?studs:(studs.data||[]);
+    (Array.isArray(depts)?depts:(depts.data||[])).forEach(d=>{ if(d&&d.id) deptMap[String(d.id)]=d.dept_name||d.name||''; });
+    (Array.isArray(adms)?adms:(adms.data||[])).forEach(a=>{ if(a&&a.student_id) admissionsMap[String(a.student_id)]=a; });
+    (Array.isArray(counselRaw)?counselRaw:(counselRaw.data||[])).forEach(c=>{ if(c&&c.student_id) counsellingMap[String(c.student_id)]=c; });
+    if(preStudentId){ const s=allStudents.find(x=>String(x.id)===String(preStudentId)); if(s) await selectStudent(s); }
+  }catch(e){ console.error('init error',e); showFlash('Failed to load student data: '+e.message); }
+}
+
+/* ── print bill ── */
+function buildPrintBill(payload, saved){
+  const p = saved || payload;
+  const dateStr = (p.payment_date||payload.payment_date||new Date().toISOString().slice(0,10));
+  const fmtDate = d => { try{ return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}); }catch(e){ return d; } };
+  const studentName = $('disp-name').textContent;
+  const uid = $('disp-uid').textContent;
+  const community = $('disp-community').textContent;
+  const branch = $('selected-branch-name').value||'—';
+  const mode = payload.mode_of_payment;
+  const refNumber = payload.reference_number||'—';
+  const refLabel = payload.mode_of_payment==='Cheque'?'Cheque No.':payload.mode_of_payment==='Bank Transfer'?'UTR No.':payload.mode_of_payment==='UPI'?'UTR / Txn ID':'Reference No.';
+  const amtWords = amountInWords(Number(payload.amount||0));
+
+  document.getElementById('printBillArea').innerHTML = `
+  <div style="max-width:700px;margin:0 auto;font-family:'Lexend',sans-serif;border:2px solid #137fec;border-radius:12px;overflow:hidden;">
+    <!-- Header -->
+    <div style="background:#137fec;padding:20px 28px;display:flex;align-items:center;gap:16px;">
+      <img src="/static/img/pmc-logo.jpeg" alt="PMC Logo" style="height:60px;width:auto;border-radius:6px;background:white;padding:3px;"/>
+      <div style="color:white;">
+        <p style="margin:0;font-size:13px;font-weight:700;opacity:0.95;">Admission Office | Payment Receipt</p>
+      </div>
+      <div style="margin-left:auto;text-align:right;color:white;">
+        <p style="font-size:11px;opacity:0.8;margin:0;">BILL NO</p>
+        <p style="font-size:20px;font-weight:900;margin:0;">${payload.bill_no||'—'}</p>
+        <p style="font-size:11px;opacity:0.8;margin:2px 0 0;">${fmtDate(dateStr)}</p>
+      </div>
+    </div>
+    <!-- Body -->
+    <div style="padding:24px 28px;background:white;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+        <div>
+          <p style="font-size:11px;color:#6b7280;font-weight:600;margin:0 0 3px;text-transform:uppercase;letter-spacing:.5px;">Student Name</p>
+          <p style="font-size:16px;font-weight:900;color:#111418;margin:0;">${studentName||'—'}</p>
+        </div>
+        <div>
+          <p style="font-size:11px;color:#6b7280;font-weight:600;margin:0 0 3px;text-transform:uppercase;letter-spacing:.5px;">Unique ID</p>
+          <p style="font-size:15px;font-weight:700;color:#137fec;margin:0;">${uid||'—'}</p>
+        </div>
+        <div>
+          <p style="font-size:11px;color:#6b7280;font-weight:600;margin:0 0 3px;text-transform:uppercase;letter-spacing:.5px;">Department / Branch</p>
+          <p style="font-size:14px;font-weight:700;color:#7c3aed;margin:0;">${branch||'—'}</p>
+        </div>
+        <div>
+          <p style="font-size:11px;color:#6b7280;font-weight:600;margin:0 0 3px;text-transform:uppercase;letter-spacing:.5px;">Community</p>
+          <p style="font-size:14px;font-weight:600;color:#374151;margin:0;">${community||'—'}</p>
+        </div>
+      </div>
+
+      <!-- Payment Details Table -->
+      <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
+        <thead>
+          <tr style="background:#f1f5f9;">
+            <th style="padding:10px 14px;text-align:left;font-size:11px;color:#475569;font-weight:700;border:1px solid #e2e8f0;">Payment Type</th>
+            <th style="padding:10px 14px;text-align:left;font-size:11px;color:#475569;font-weight:700;border:1px solid #e2e8f0;">Mode</th>
+            ${refNumber!=='—'?`<th style="padding:10px 14px;text-align:left;font-size:11px;color:#475569;font-weight:700;border:1px solid #e2e8f0;">${refLabel}</th>`:''}
+            <th style="padding:10px 14px;text-align:right;font-size:11px;color:#475569;font-weight:700;border:1px solid #e2e8f0;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:12px 14px;font-size:14px;font-weight:700;border:1px solid #e2e8f0;color:#1e293b;">${payload.payment_type||'—'}</td>
+            <td style="padding:12px 14px;font-size:13px;border:1px solid #e2e8f0;color:#374151;">${mode||'—'}</td>
+            ${refNumber!=='—'?`<td style="padding:12px 14px;font-size:12px;font-family:monospace;border:1px solid #e2e8f0;color:#6b7280;">${refNumber}</td>`:''}
+            <td style="padding:12px 14px;font-size:18px;font-weight:900;text-align:right;border:1px solid #e2e8f0;color:#16a34a;">₹ ${Number(payload.amount||0).toLocaleString('en-IN',{minimumFractionDigits:2})}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr style="background:#f0fdf4;">
+            <td colspan="${refNumber!=='—'?3:2}" style="padding:12px 14px;font-size:12px;font-weight:700;border:1px solid #d1fae5;color:#166534;text-align:right;">Total Amount</td>
+            <td style="padding:12px 14px;font-size:20px;font-weight:900;text-align:right;border:1px solid #d1fae5;color:#15803d;">₹ ${Number(payload.amount||0).toLocaleString('en-IN',{minimumFractionDigits:2})}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <!-- Amount in words -->
+      <div style="background:#fafafa;border:1px dashed #d1d5db;border-radius:8px;padding:10px 14px;margin-bottom:20px;">
+        <span style="font-size:11px;color:#9ca3af;font-weight:600;">AMOUNT IN WORDS: </span>
+        <span style="font-size:12px;color:#374151;font-weight:700;">${amtWords} Only</span>
+      </div>
+
+      <!-- Footer -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid #e5e7eb;padding-top:16px;">
+        <div>
+          <p style="font-size:11px;color:#9ca3af;margin:0;">Generated on: ${fmtDate(new Date().toISOString().slice(0,10))}</p>
+          <p style="font-size:11px;color:#9ca3af;margin:2px 0;">This is a computer-generated receipt.</p>
+        </div>
+        <div style="text-align:right;">
+          <div style="border-top:1.5px solid #374151;width:160px;margin-left:auto;padding-top:4px;">
+            <p style="font-size:11px;color:#6b7280;font-weight:600;margin:0;text-align:center;">Authorized Signature</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function amountInWords(n){
+  const ones=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  const tens=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  function h(n){ if(n===0)return''; if(n<20)return ones[n]+' '; if(n<100)return tens[Math.floor(n/10)]+' '+(n%10?ones[n%10]+' ':''); return ones[Math.floor(n/100)]+' Hundred '+(n%100?h(n%100):''); }
+  if(!n||n===0) return 'Zero Rupees';
+  const intPart=Math.floor(n);
+  const dec=Math.round((n-intPart)*100);
+  let s='';
+  if(intPart>=10000000) s+=h(Math.floor(intPart/10000000))+'Crore ';
+  if(intPart>=100000) s+=h(Math.floor((intPart%10000000)/100000))+'Lakh ';
+  if(intPart>=1000) s+=h(Math.floor((intPart%100000)/1000))+'Thousand ';
+  if(intPart>=100) s+=h(Math.floor((intPart%1000)/100));
+  s+=h(intPart%100);
+  s=(s.trim()||'Zero')+' Rupees';
+  if(dec>0) s+=' and '+h(dec).trim()+' Paise';
+  return s.trim();
+}
+
+document.addEventListener('DOMContentLoaded', init);
 </script>
+<!-- Print Bill Modal -->
+<div id="printBillModal" class="hidden fixed inset-0 z-50 flex items-start justify-center p-4 pt-10" style="background:rgba(0,0,0,0.6)">
+  <div class="bg-white dark:bg-[#1a202c] rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary">receipt_long</span> Payment Receipt
+      </h3>
+      <div class="flex items-center gap-3">
+        <button onclick="window.print()" class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-bold py-2 px-5 rounded-lg">
+          <span class="material-symbols-outlined">print</span> Print
+        </button>
+        <button onclick="document.getElementById('printBillModal').classList.add('hidden'); location.href='payments_list.html';"
+          class="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-5 rounded-lg">
+          <span class="material-symbols-outlined">check</span> Done
+        </button>
+      </div>
+    </div>
+    <div class="overflow-auto flex-1 p-6">
+      <div id="printBillArea"></div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

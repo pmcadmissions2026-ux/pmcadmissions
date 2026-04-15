@@ -300,7 +300,9 @@ app.post('/api/counselling_records', uploadMemory.any(), async (req, res) => {
       gq_applied_at: body.gq_applied_at || null,
       applied_mq: body.applied_mq === 'true' || body.applied_mq === true || body.applied_mq === '1' || false,
       mq_consortium_number: body.mq_consortium_number || null,
-      mq_applied_at: body.mq_applied_at || null
+      mq_applied_at: body.mq_applied_at || null,
+      is_first_generation: body.is_first_generation === 'true' || body.is_first_generation === true || body.is_first_generation === '1' || false,
+      is_seven_point_five: body.is_seven_point_five === 'true' || body.is_seven_point_five === true || body.is_seven_point_five === '1' || false
     };
 
     // if file uploaded (allotment_order_pdf), upload to storage and set URL
@@ -335,21 +337,121 @@ app.post('/api/counselling_records', uploadMemory.any(), async (req, res) => {
         }
       }
     }
-
+    let savedRecord = null;
     if(existing && existing.counselling_id){
       // update
       const { data: updated, error: updErr } = await supabase.from('counselling_records').update(record).eq('counselling_id', existing.counselling_id).select().maybeSingle();
       if(updErr) return res.status(500).json({ ok:false, error: updErr.message });
-      return res.json({ ok: true, record: updated });
+      savedRecord = updated;
     } else {
       // insert
       const { data: inserted, error: insErr } = await supabase.from('counselling_records').insert(record).select().maybeSingle();
       if(insErr) return res.status(500).json({ ok:false, error: insErr.message });
-      return res.json({ ok: true, record: inserted });
+      savedRecord = inserted;
     }
+    // ── Background counselling email ──────────────────────────────────────
+    ;(async () => {
+      try{
+        let resolvedStudentId = student_id;
+        // Fallback: if admission_applications.student_id is null, try admissions table
+        if(!resolvedStudentId){
+          const { data: admRow } = await supabase.from('admissions').select('student_id').eq('app_id', Number(app_id)).maybeSingle().catch(() => ({ data: null }));
+          if(admRow && admRow.student_id) resolvedStudentId = admRow.student_id;
+        }
+        // Fallback 2: try counselling_records itself for student_id (another admin may have set it)
+        if(!resolvedStudentId && savedRecord && savedRecord.student_id) resolvedStudentId = savedRecord.student_id;
+        if(!resolvedStudentId){
+          console.warn('[Email] Counselling email skipped: no student_id for app_id', app_id);
+          return;
+        }
+        const { data: student } = await supabase.from('students').select('*').eq('id', Number(resolvedStudentId)).maybeSingle();
+        if(!student) return;
+        const toEmail = (student.email || student.contact_email || '').trim();
+        if(!toEmail) return;
+        let allottedDeptName = record.allotted_dept_id ? String(record.allotted_dept_id) : 'N/A';
+        if(record.allotted_dept_id){
+          const { data: dept } = await supabase.from('departments').select('dept_name,dept_code').eq('id', Number(record.allotted_dept_id)).maybeSingle();
+          if(dept) allottedDeptName = dept.dept_name || dept.dept_code;
+        }
+        function renderTemplate(tpl, data){
+          if(!tpl || typeof tpl !== 'string') return '';
+          return tpl.replace(/\{\{\s*([a-zA-Z0-9_]+)(?:\s+or\s+'([^']*)')?\s*\}\}/g, (m, key, fallback) => {
+            const val = data && (key in data) ? data[key] : undefined;
+            if(val === undefined || val === null || val === '') return (fallback !== undefined ? fallback : '');
+            return String(val);
+          }).replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (m, key) => {
+            const val = data && (key in data) ? data[key] : '';
+            return (val === undefined || val === null) ? '' : String(val);
+          });
+        }
+        let htmlTpl = null, textTpl = null;
+        try{
+          const hp = path.join(__dirname, 'templates', 'emails', 'counselling_notification.html');
+          const tp = path.join(__dirname, 'templates', 'emails', 'counselling_notification.txt');
+          if(fs.existsSync(hp)) htmlTpl = fs.readFileSync(hp, 'utf8');
+          if(fs.existsSync(tp)) textTpl = fs.readFileSync(tp, 'utf8');
+        }catch(e){ console.warn('counselling email template read error', e); }
+        const gq_details = record.quota_type === 'GQ'
+          ? `<div style="background:#f9fafb;border-radius:4px;padding:12px 16px;margin:12px 0;border:1px solid #e5e7eb;"><p style="margin:5px 0"><strong>Allotment Order No:</strong> ${record.allotment_order_number || 'N/A'}</p>${record.allotment_order_url ? `<p style="margin:5px 0"><a href="${record.allotment_order_url}" style="color:#2563eb;font-weight:bold;">View / Download Allotment Order PDF</a></p>` : ''}</div>` : '';
+        const mq_details = record.quota_type === 'MQ'
+          ? `<div style="background:#f9fafb;border-radius:4px;padding:12px 16px;margin:12px 0;border:1px solid #e5e7eb;"><p style="margin:5px 0"><strong>Consortium Number:</strong> ${record.consortium_number || 'N/A'}</p></div>` : '';
+        const gq_details_text = record.quota_type === 'GQ'
+          ? `--- GQ Allotment ---\nAllotment Order No : ${record.allotment_order_number || 'N/A'}\nAllotment PDF      : ${record.allotment_order_url || 'N/A'}` : '';
+        const mq_details_text = record.quota_type === 'MQ'
+          ? `--- MQ Details ---\nConsortium Number  : ${record.consortium_number || 'N/A'}` : '';
+        const fromName = process.env.COLLEGE_NAME || 'PMC Admissions';
+        const fromEmail = (process.env.SMTP_USER || '').trim();
+        const tplData = {
+          full_name: student.full_name || student.name || '',
+          unique_id: student.unique_id || '',
+          allotted_dept: allottedDeptName,
+          quota_type: record.quota_type || '',
+          gq_details, mq_details, gq_details_text, mq_details_text,
+          college_name: process.env.COLLEGE_NAME || 'PMC Admissions',
+        };
+        const htmlBody = renderTemplate(htmlTpl || '', tplData);
+        const textBody = renderTemplate(textTpl || '', tplData) || (htmlBody ? htmlBody.replace(/<[^>]+>/g,'') : '');
+        const subject = `${tplData.college_name} — Counselling Details`;
+        await sendEmail({ from: fromEmail, fromName, to: toEmail, subject, text: textBody, html: htmlBody });
+        console.log('[Email] Counselling email sent to', toEmail);
+      }catch(e){ console.error('counselling email error', e && e.message ? e.message : e); }
+    })();
+    return res.json({ ok: true, record: savedRecord });
   }catch(e){ console.error('counselling_records POST error', e); return res.status(500).json({ ok:false, error: String(e) }); }
 });
 app.get('/admin/admin-branch-management', (req, res) => res.sendFile(path.join(__dirname, 'templates', 'admin', 'admin-branch-management.html')));
+
+// ── Fee Structure API ──────────────────────────────────────────────────────
+app.get('/api/fee_structure', async (req, res) => {
+  try{
+    const { data, error } = await supabase.from('fee_structure').select('*').order('dept_id', { ascending: true });
+    if(error) return res.status(500).json({ ok:false, error: error.message });
+    return res.json({ ok:true, data: data||[] });
+  }catch(e){ return res.status(500).json({ ok:false, error: String(e) }); }
+});
+
+app.post('/api/fee_structure', async (req, res) => {
+  try{
+    const body = req.body || {};
+    const dept_id = body.dept_id ? Number(body.dept_id) : null;
+    const academic_year = body.academic_year || String(new Date().getFullYear())+'-'+(String(new Date().getFullYear()+1).slice(2));
+    if(!dept_id) return res.status(400).json({ ok:false, error:'dept_id is required' });
+    const row = {
+      dept_id,
+      academic_year,
+      gq_fee:    Number(body.gq_fee||0),
+      gq_fg_fee: Number(body.gq_fg_fee||0),
+      mq_fee:    Number(body.mq_fee||0),
+      mq_fg_fee: Number(body.mq_fg_fee||0),
+    };
+    // upsert on (dept_id, academic_year)
+    const { data, error } = await supabase.from('fee_structure').upsert(row, { onConflict: 'dept_id,academic_year' }).select().maybeSingle();
+    if(error) return res.status(500).json({ ok:false, error: error.message });
+    return res.json({ ok:true, data });
+  }catch(e){ return res.status(500).json({ ok:false, error: String(e) }); }
+});
+
+app.get('/admin/fee_allotment', (req, res) => res.sendFile(path.join(__dirname, 'templates', 'admin', 'fee_allotment.html')));
 // Serve admin dashboards
 app.get('/admin/admin_dashboard', (req, res) => {
   const p = path.join(__dirname, 'templates', 'admin', 'admin_dashboard.html');
@@ -449,7 +551,7 @@ app.put('/api/enquiries/:id', async (req, res) => {
     // Update student record if student_id is known
     if(studentId){
       const studentFields = {};
-      const studentKeys = ['full_name','email','whatsapp_number','phone','father_name','mother_name','gender','date_of_birth','aadhar_number','emis_number','plus2_register_number','plus2_school_name','plus2_marks','plus2_percentage','plus2_year','board','study_state','group_studied','medium_of_study','community','caste','religion','mother_tongue','category_7_5','first_graduate','general_quota','reference_details'];
+      const studentKeys = ['full_name','email','whatsapp_number','phone','father_name','mother_name','father_phone','mother_phone','gender','date_of_birth','aadhar_number','emis_number','plus2_register_number','plus2_school_name','plus2_marks','plus2_percentage','plus2_year','board','study_state','group_studied','medium_of_study','community','caste','religion','mother_tongue','category_7_5','first_graduate','general_quota','reference_details'];
       studentKeys.forEach(k => { if(body[k] !== undefined) studentFields[k] = body[k]; });
       if(Object.keys(studentFields).length > 0){
         const { error: sErr } = await supabase.from('students').update(studentFields).eq('id', studentId);
@@ -458,7 +560,7 @@ app.put('/api/enquiries/:id', async (req, res) => {
 
       // Update / upsert academics record
       const academicFields = {};
-      const academicKeys = ['maths_marks','physics_marks','chemistry_marks','language_subject_name','language_subject_marks','cutoff','tnea_average','tnea_eligible','practical1','practical2','theory','maths_voc','school_name','board'];
+      const academicKeys = ['maths_marks','physics_marks','chemistry_marks','language_subject_name','language_subject_marks','cutoff','tnea_average','tnea_eligible','practical1','practical2','theory','maths_voc','school_name','board','plus2_school_address'];
       academicKeys.forEach(k => { if(body[k] !== undefined) academicFields[k] = body[k] === '' ? null : body[k]; });
       if(Object.keys(academicFields).length > 0){
         // Try update first, then insert
@@ -541,7 +643,7 @@ app.post('/api/enquiries', async (req, res) => {
     }
 
     // Insert enquiry (include student email so enquiries table has a recipient)
-    const enquiryRow = Object.assign({}, enquiry || {}, { student_id: studentId, student_name: student.full_name, whatsapp_number: student.whatsapp_number || student.phone || null, email: (student && student.email) ? student.email : (enquiry && enquiry.email ? enquiry.email : null) });
+    const enquiryRow = Object.assign({}, enquiry || {}, { student_id: studentId, student_name: student.full_name, whatsapp_number: student.whatsapp_number || student.phone || null, email: (student && student.email) ? student.email : (enquiry && enquiry.email ? enquiry.email : null), religion: (student && student.religion) || null });
     const { data: createdEnquiry, error: enquiryErr } = await supabase.from('enquiries').insert(enquiryRow).select().maybeSingle();
     if(enquiryErr) return res.status(500).json({ error: enquiryErr.message });
 
@@ -732,7 +834,132 @@ app.post('/api/admissions', async (req, res) => {
     const { data, error } = await supabase.from('admissions').insert(row).select().maybeSingle();
     if(error) return res.status(500).json({ error: error.message });
     res.json(data);
+    // ── Background branch assignment email ────────────────────────────────
+    ;(async () => {
+      try{
+        const { data: student } = await supabase.from('students').select('*').eq('id', Number(student_id)).maybeSingle();
+        if(!student) return;
+        const toEmail = (student.email || student.contact_email || '').trim();
+        if(!toEmail) return;
+        const { data: prefDept } = await supabase.from('departments').select('dept_name,dept_code').eq('id', Number(preferred_dept_id)).maybeSingle();
+        let optDeptNames = 'N/A';
+        const optIds = Array.isArray(optional_dept_ids) ? optional_dept_ids.filter(Boolean).map(Number) : [];
+        if(optIds.length > 0){
+          const { data: optDepts } = await supabase.from('departments').select('dept_name,dept_code').in('id', optIds);
+          if(Array.isArray(optDepts)) optDeptNames = optDepts.map(d => d.dept_name || d.dept_code).join(', ') || 'N/A';
+        }
+        const fromName = process.env.COLLEGE_NAME || 'PMC Admissions';
+        const fromEmail = (process.env.SMTP_USER || '').trim();
+        function renderTemplate(tpl, data){
+          if(!tpl || typeof tpl !== 'string') return '';
+          return tpl.replace(/\{\{\s*([a-zA-Z0-9_]+)(?:\s+or\s+'([^']*)')?\s*\}\}/g, (m, key, fallback) => {
+            const val = data && (key in data) ? data[key] : undefined;
+            if(val === undefined || val === null || val === '') return (fallback !== undefined ? fallback : '');
+            return String(val);
+          }).replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (m, key) => {
+            const val = data && (key in data) ? data[key] : '';
+            return (val === undefined || val === null) ? '' : String(val);
+          });
+        }
+        let htmlTpl = null, textTpl = null;
+        try{
+          const hp = path.join(__dirname, 'templates', 'emails', 'branch_assignment.html');
+          const tp = path.join(__dirname, 'templates', 'emails', 'branch_assignment.txt');
+          if(fs.existsSync(hp)) htmlTpl = fs.readFileSync(hp, 'utf8');
+          if(fs.existsSync(tp)) textTpl = fs.readFileSync(tp, 'utf8');
+        }catch(e){ console.warn('branch assignment email template read error', e); }
+        const tplData = {
+          full_name: student.full_name || student.name || '',
+          unique_id: student.unique_id || '',
+          preferred_dept: prefDept ? (prefDept.dept_name || prefDept.dept_code) : String(preferred_dept_id),
+          optional_depts: optDeptNames,
+          college_name: process.env.COLLEGE_NAME || 'PMC Admissions',
+        };
+        const htmlBody = renderTemplate(htmlTpl || '', tplData);
+        const textBody = renderTemplate(textTpl || '', tplData) || (htmlBody ? htmlBody.replace(/<[^>]+>/g,'') : '');
+        const subject = `${tplData.college_name} — Branch Preferences Recorded`;
+        await sendEmail({ from: fromEmail, fromName, to: toEmail, subject, text: textBody, html: htmlBody });
+        console.log('[Email] Branch assignment email sent to', toEmail);
+      }catch(e){ console.error('branch assignment email error', e && e.message ? e.message : e); }
+    })();
   }catch(e){ res.status(500).json({ error: String(e) }); }
+});
+
+// Send document link email to student
+app.post('/api/send-document-email', async (req, res) => {
+  try{
+    const { unique_id, document_type, document_url } = req.body || {};
+    if(!unique_id || !document_url) return res.status(400).json({ error: 'unique_id and document_url required' });
+    const { data: student } = await supabase.from('students').select('*').eq('unique_id', String(unique_id)).maybeSingle();
+    if(!student) return res.status(404).json({ error: 'Student not found for unique_id: ' + unique_id });
+    const toEmail = (student.email || student.contact_email || '').trim();
+    if(!toEmail) return res.status(400).json({ error: 'No email address found for student ' + unique_id });
+    function renderTemplate(tpl, data){
+      if(!tpl || typeof tpl !== 'string') return '';
+      return tpl.replace(/\{\{\s*([a-zA-Z0-9_]+)(?:\s+or\s+'([^']*)')?\s*\}\}/g, (m, key, fallback) => {
+        const val = data && (key in data) ? data[key] : undefined;
+        if(val === undefined || val === null || val === '') return (fallback !== undefined ? fallback : '');
+        return String(val);
+      }).replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (m, key) => {
+        const val = data && (key in data) ? data[key] : '';
+        return (val === undefined || val === null) ? '' : String(val);
+      });
+    }
+    let htmlTpl = null, textTpl = null;
+    try{
+      const hp = path.join(__dirname, 'templates', 'emails', 'document_share.html');
+      const tp = path.join(__dirname, 'templates', 'emails', 'document_share.txt');
+      if(fs.existsSync(hp)) htmlTpl = fs.readFileSync(hp, 'utf8');
+      if(fs.existsSync(tp)) textTpl = fs.readFileSync(tp, 'utf8');
+    }catch(e){ console.warn('document share email template read error', e); }
+    const fromName  = process.env.COLLEGE_NAME || 'PMC Admissions';
+    const fromEmail = (process.env.SMTP_USER || '').trim();
+    const tplData = {
+      full_name: student.full_name || student.name || '',
+      unique_id: student.unique_id || '',
+      document_type: document_type || 'Document',
+      document_url: document_url,
+      college_name: process.env.COLLEGE_NAME || 'PMC Admissions',
+    };
+    const htmlBody = renderTemplate(htmlTpl || '', tplData);
+    const textBody = renderTemplate(textTpl || '', tplData) || (htmlBody ? htmlBody.replace(/<[^>]+>/g,'') : '');
+    const subject = `${tplData.college_name} — Document Link: ${tplData.document_type}`;
+    const info = await sendEmail({ from: fromEmail, fromName, to: toEmail, subject, text: textBody, html: htmlBody });
+    console.log('[Email] Document share email sent to', toEmail, 'doc type:', document_type);
+    return res.json({ ok: true, messageId: info && info.messageId, sentTo: toEmail });
+  }catch(e){ console.error('send-document-email error', e); return res.status(500).json({ error: String(e) }); }
+});
+
+// Send ALL document links for a student in one email (used by documents_management.html)
+app.post('/api/send-all-documents-email', async (req, res) => {
+  try{
+    const { unique_id, documents } = req.body || {};
+    if(!unique_id) return res.status(400).json({ error: 'unique_id required' });
+    if(!Array.isArray(documents) || documents.length === 0) return res.status(400).json({ error: 'documents array required' });
+    const { data: student } = await supabase.from('students').select('*').eq('unique_id', String(unique_id)).maybeSingle();
+    if(!student) return res.status(404).json({ error: 'Student not found for unique_id: ' + unique_id });
+    const toEmail = (student.email || student.contact_email || '').trim();
+    if(!toEmail) return res.status(400).json({ error: 'No email address found for student ' + unique_id });
+    const collegeName = process.env.COLLEGE_NAME || 'PMC Admissions';
+    const fromName  = collegeName;
+    const fromEmail = (process.env.SMTP_USER || '').trim();
+    const fullName  = student.full_name || student.student_name || '';
+    // Build HTML table of document links
+    const docRowsHtml = documents.map(d => {
+      const label = (d.document_type || 'Document').replace(/_/g, ' ');
+      return `<tr><td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;">${label}</td><td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;"><a href="${d.document_url}" target="_blank" style="color:#2563eb;font-weight:bold;text-decoration:none;">View / Download</a></td></tr>`;
+    }).join('');
+    const docRowsTxt = documents.map(d => {
+      const label = (d.document_type || 'Document').replace(/_/g, ' ');
+      return `- ${label}: ${d.document_url}`;
+    }).join('\n');
+    const htmlBody = `<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;color:#111;margin:0;padding:0;}.container{max-width:600px;margin:0 auto;padding:20px;}.header{background:#004b87;color:#fff;padding:14px 18px;text-align:center;}.header h2{margin:0;font-size:16px;}.content{background:#fff;padding:18px;border:1px solid #e5e5e5;}.footer{font-size:12px;color:#666;padding-top:14px;border-top:1px solid #e5e5e5;margin-top:16px;}table{width:100%;border-collapse:collapse;}th{background:#f0f7ff;padding:8px 12px;text-align:left;font-size:13px;border-bottom:2px solid #bfdbfe;}</style></head><body><div class="container"><div class="header"><h2>${collegeName} — Your Document Links</h2></div><div class="content"><p>Dear <strong>${fullName}</strong>,</p><p>Here are the links to your uploaded documents in the PMC Admission Portal:</p><p><strong>Student ID:</strong> ${unique_id}</p><table><thead><tr><th>Document</th><th>Link</th></tr></thead><tbody>${docRowsHtml}</tbody></table><p style="margin-top:16px;">For any queries, please contact us:</p><p><strong>Phone:</strong> +91 9894583832 &nbsp;|&nbsp; <strong>Office:</strong> 04344257242</p><p class="footer">Best regards,<br><strong>${collegeName}</strong></p></div></div></body></html>`;
+    const textBody = `Dear ${fullName},\n\nHere are the links to your uploaded documents:\nStudent ID: ${unique_id}\n\n${docRowsTxt}\n\nFor queries: +91 9894583832 | 04344257242\n\nBest regards,\n${collegeName}`;
+    const subject = `${collegeName} — Your Document Links`;
+    const info = await sendEmail({ from: fromEmail, fromName, to: toEmail, subject, text: textBody, html: htmlBody });
+    console.log('[Email] All-documents email sent to', toEmail, 'docs count:', documents.length);
+    return res.json({ ok: true, messageId: info && info.messageId, sentTo: toEmail });
+  }catch(e){ console.error('send-all-documents-email error', e); return res.status(500).json({ error: String(e) }); }
 });
 
 // Debug endpoint: send a test email and report result (useful for diagnosing SMTP issues)
@@ -1266,6 +1493,24 @@ app.put('/api/users/:id', async (req, res) => {
   }catch(e){ return res.status(500).json({ ok:false, error: String(e) }); }
 });
 
+// Payments: auto-generate next bill number
+app.get('/api/payments/next_bill', async (req, res) => {
+  try{
+    const year = new Date().getFullYear();
+    const prefix = `BILL-${year}-`;
+    const { data, error } = await supabase.from('payments').select('bill_no').ilike('bill_no', `${prefix}%`).order('bill_no', { ascending: false }).limit(1);
+    if(error) return res.status(500).json({ ok:false, error: error.message });
+    let nextNum = 1;
+    if(data && data.length > 0 && data[0].bill_no){
+      const parts = data[0].bill_no.split('-');
+      const last = parseInt(parts[parts.length-1], 10);
+      if(!isNaN(last)) nextNum = last + 1;
+    }
+    const bill_no = prefix + String(nextNum).padStart(3, '0');
+    return res.json({ ok:true, bill_no });
+  }catch(e){ return res.status(500).json({ ok:false, error: String(e) }); }
+});
+
 // Payments: list payments
 app.get('/api/payments', async (req, res) => {
   try{
@@ -1294,7 +1539,8 @@ app.get('/api/payments', async (req, res) => {
       const stu = p && p.student_id ? studentMap[String(p.student_id)] : null;
       return Object.assign({}, p, {
         student_name: stu ? (stu.display_name || stu.full_name || stu.student_name) : p.student_name || null,
-        unique_id: stu ? (stu.uniq_id || stu.unique_id) : p.unique_id || null
+        unique_id: stu ? (stu.uniq_id || stu.unique_id) : p.unique_id || null,
+        community: stu ? (stu.community || p.community || null) : p.community || null
       });
     });
 
@@ -1400,26 +1646,49 @@ app.get('/api/payment_candidates', async (req, res) => {
 app.post('/api/payments', async (req, res) => {
   try{
     const body = req.body || {};
-    const app_id = body.app_id || body.appId;
+    const app_id = body.app_id || body.appId || null;
     const bill_no = body.bill_no || body.billNo || null;
     const mode_of_payment = body.mode_of_payment || body.mode || null;
     const amount = (body.amount !== undefined && body.amount !== null) ? Number(body.amount) : null;
-    const upi_id = body.upi_id || body.upiId || null;
+    // new fields
+    const payment_type = body.payment_type || null;
+    const reference_number = body.reference_number || body.upi_id || body.upiId || null;
+    const payment_date = body.payment_date || new Date().toISOString().slice(0,10);
+    const branch_name = body.branch_name || null;
+    // student identity
+    let student_id = body.student_id ? Number(body.student_id) : null;
 
-    if(!app_id) return res.status(400).json({ ok:false, error: 'app_id is required' });
     if(!bill_no) return res.status(400).json({ ok:false, error: 'bill_no is required' });
     if(!mode_of_payment) return res.status(400).json({ ok:false, error: 'mode_of_payment is required' });
     if(amount === null || isNaN(amount)) return res.status(400).json({ ok:false, error: 'amount is required and must be numeric' });
 
-    // find admission_applications to obtain student_id
-    const { data: appRow, error: appErr } = await supabase.from('admission_applications').select('app_id,student_id').eq('app_id', Number(app_id)).maybeSingle();
-    if(appErr) return res.status(500).json({ ok:false, error: appErr.message });
-    if(!appRow || !appRow.app_id) return res.status(404).json({ ok:false, error: `admission_applications not found for app_id ${app_id}` });
-    const student_id = appRow.student_id;
-    if(!student_id) return res.status(400).json({ ok:false, error: 'cannot determine student_id for this app_id' });
+    // Resolve student_id from app_id if provided and student_id missing
+    if(app_id && !student_id){
+      const { data: appRow, error: appErr } = await supabase.from('admission_applications').select('app_id,student_id').eq('app_id', Number(app_id)).maybeSingle();
+      if(appErr) return res.status(500).json({ ok:false, error: appErr.message });
+      if(appRow && appRow.student_id) student_id = Number(appRow.student_id);
+    }
 
-    const row = { app_id: Number(app_id), student_id: Number(student_id), bill_no: String(bill_no), mode_of_payment: String(mode_of_payment), amount: Number(amount) };
-    if(upi_id) row.upi_id = String(upi_id);
+    // Resolve student_id from unique_id if still missing
+    if(!student_id && body.unique_id){
+      const { data: stuRow, error: stuErr } = await supabase.from('students').select('id').eq('unique_id', String(body.unique_id)).maybeSingle();
+      if(stuErr) return res.status(500).json({ ok:false, error: stuErr.message });
+      if(stuRow && stuRow.id) student_id = Number(stuRow.id);
+    }
+
+    if(!student_id) return res.status(400).json({ ok:false, error: 'Cannot determine student_id. Provide student_id, unique_id, or app_id.' });
+
+    const row = {
+      student_id,
+      bill_no: String(bill_no),
+      mode_of_payment: String(mode_of_payment),
+      amount: Number(amount),
+      payment_date,
+    };
+    if(app_id) row.app_id = Number(app_id);
+    if(payment_type) row.payment_type = String(payment_type);
+    if(reference_number) row.reference_number = String(reference_number);
+    if(branch_name) row.branch_name = String(branch_name);
 
     const { data: inserted, error: insErr } = await supabase.from('payments').insert(row).select().maybeSingle();
     if(insErr) return res.status(500).json({ ok:false, error: insErr.message });

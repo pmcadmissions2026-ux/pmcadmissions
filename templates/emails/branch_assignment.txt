@@ -1,0 +1,18 @@
+Dear {{ full_name }},
+
+Your branch preferences have been successfully recorded in the PMC Admission Portal.
+
+--- Branch Preference Details ---
+Student ID      : {{ unique_id }}
+Preferred Dept  : {{ preferred_dept }}
+Optional Dept(s): {{ optional_depts or 'N/A' }}
+
+Please proceed to the document upload step.
+Our admissions team will guide you through the remaining steps.
+
+For any queries, please contact us:
+Phone  : +91 9894583832
+Office : 04344257242
+
+Best regards,
+{{ college_name or 'Admissions Office' }}

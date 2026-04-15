@@ -5,33 +5,47 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Enquiry Received</title>
     <style>
-      body { font-family: Arial, sans-serif; color:#111; }
+      body { font-family: Arial, sans-serif; color:#111; margin:0; padding:0; }
       .container { max-width:600px; margin:0 auto; padding:20px; }
-      .header { background:#004b87; color:#fff; padding:12px; text-align:center }
-      .content { background:#fff; padding:18px; border:1px solid #e5e5e5 }
-      .footer { font-size:12px; color:#666; padding-top:12px }
+      .header { background:#004b87; color:#fff; padding:14px 18px; text-align:center; }
+      .header h1 { margin:0; font-size:16px; }
+      .content { background:#fff; padding:18px; border:1px solid #e5e5e5; }
+      .section-title { background:#f0f5ff; border-left:4px solid #004b87; padding:6px 12px; font-weight:bold; font-size:13px; margin:14px 0 8px 0; color:#1e3a5f; }
+      .info-row { margin:7px 0; font-size:14px; }
+      .info-label { font-weight:bold; min-width:170px; display:inline-block; color:#374151; }
+      .uid-box { background:#e8f0fe; border:1px solid #bfdbfe; border-radius:4px; padding:10px 14px; margin:12px 0; text-align:center; font-size:20px; font-weight:bold; letter-spacing:2px; color:#1d4ed8; }
+      .footer { font-size:12px; color:#666; padding-top:12px; border-top:1px solid #e5e5e5; margin-top:14px; }
     </style>
   </head>
   <body>
     <div class="container">
       <div class="header">
-        <h1>{{ college_name or 'College' }} Admissions</h1>
+        <h1>{{ college_name or 'College' }} (An Autonomous Institution), Hosur.</h1>
       </div>
       <div class="content">
-        <p>Hello {{ full_name }},</p>
+        <p>Dear <strong>{{ full_name }}</strong>,</p>
+        <p>Thank you for enquiring at {{ college_name or 'our admissions office' }}. We have recorded your details and created a reference for you.</p>
 
-        <p>Thank you for contacting {{ college_name or 'our admissions office' }}. We have received your enquiry and created a reference for it.</p>
+        <div class="section-title">Your Unique Student ID</div>
+        <div class="uid-box">{{ unique_id }}</div>
 
-        <p><strong>Student Unique ID:</strong> {{ unique_id }}</p>
-        <p><strong>Subject:</strong> Mail regarding your enquiry</p>
+        <div class="section-title">Basic Details</div>
+        <div class="info-row"><span class="info-label">Full Name:</span> {{ full_name }}</div>
+        <div class="info-row"><span class="info-label">Father's Name:</span> {{ father_name or 'N/A' }}</div>
+        <div class="info-row"><span class="info-label">Community:</span> {{ community or 'N/A' }}</div>
+        <div class="info-row"><span class="info-label">Phone:</span> {{ phone or 'N/A' }}</div>
+        <div class="info-row"><span class="info-label">WhatsApp:</span> {{ whatsapp_number or phone or 'N/A' }}</div>
+        <div class="info-row"><span class="info-label">Date of Birth:</span> {{ dob or date_of_birth or 'N/A' }}</div>
 
-        <h3>For any quires Contact</h3>
-        <p style="white-space:pre-wrap;">+91 9894583832</p>
-        <p style="white-space:pre-wrap;">04344257242</p>
+        <div class="section-title">Academic Details</div>
+        <div class="info-row"><span class="info-label">HSC Percentage:</span> {{ plus2_percentage or 'N/A' }}%</div>
+        <div class="info-row"><span class="info-label">Cut-Off Score:</span> {{ cutoff or cutoff_score or 'N/A' }}</div>
+        <div class="info-row"><span class="info-label">Preferred Course:</span> {{ preferred_course or preferred_dept_name or 'N/A' }}</div>
 
-        <p>Our admissions team will review your query and get back to you shortly.</p>
+        <p style="margin-top:14px;">Our admissions team will review your enquiry and contact you shortly.</p>
+        <p><strong>Contact Us:</strong> +91 9894583832 &nbsp;|&nbsp; 04344257242</p>
 
-        <p class="footer">Best regards,<br>{{ college_name or 'Admissions Office' }}</p>
+        <p class="footer">Best regards,<br><strong>{{ college_name or 'Admissions Office' }}</strong></p>
       </div>
     </div>
   </body>

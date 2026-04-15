@@ -228,9 +228,9 @@
 					document.getElementById('uploaded-docs').innerHTML = `<div class="bg-white rounded-lg shadow-md p-6 mt-6 text-gray-600">No documents uploaded yet for App #: <span class="font-mono">${appId}</span>.</div>`;
 					return;
 				}
-			let html = `<div class="bg-white rounded-lg shadow-md p-6 mt-6"><h3 class="text-lg font-bold mb-3">Uploaded Documents for App #: <span class="font-mono font-bold text-blue-700">${appId}</span></h3><table class="w-full text-sm"><thead><tr class="text-left text-xs text-gray-500"><th class="py-2">Type</th><th class="py-2">Bill #</th><th class="py-2">URL</th><th class="py-2">Size</th><th class="py-2">Uploaded At</th></tr></thead><tbody>`;
+			let html = `<div class="bg-white rounded-lg shadow-md p-6 mt-6"><h3 class="text-lg font-bold mb-3">Uploaded Documents for App #: <span class="font-mono font-bold text-blue-700">${appId}</span></h3><table class="w-full text-sm"><thead><tr class="text-left text-xs text-gray-500"><th class="py-2">Type</th><th class="py-2">Bill #</th><th class="py-2">URL</th><th class="py-2">Size</th><th class="py-2">Uploaded At</th><th class="py-2">Mail</th></tr></thead><tbody>`;
 			docs.forEach(d => {
-				html += `<tr class="border-t"><td class="py-2">${d.document_type || '-'}</td><td class="py-2"><span class="font-mono font-semibold text-blue-600">${d.bill_number || '-'}</span></td><td class="py-2"><a class="text-blue-600 hover:underline" href="${d.document_url}" target="_blank">Open</a></td><td class="py-2">${d.file_size || '-'}</td><td class="py-2">${d.created_at ? new Date(d.created_at).toLocaleString() : '-'}</td></tr>`;
+				html += `<tr class="border-t"><td class="py-2">${d.document_type || '-'}</td><td class="py-2"><span class="font-mono font-semibold text-blue-600">${d.bill_number || '-'}</span></td><td class="py-2"><a class="text-blue-600 hover:underline" href="${d.document_url}" target="_blank">Open</a></td><td class="py-2">${d.file_size || '-'}</td><td class="py-2">${d.created_at ? new Date(d.created_at).toLocaleString() : '-'}</td><td class="py-2"><button class="send-doc-mail-btn bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs" data-unique-id="${uniqueId}" data-doc-type="${(d.document_type||'').replace(/"/g,'&quot;')}" data-doc-url="${(d.document_url||'').replace(/"/g,'&quot;')}">📧 Mail</button></td></tr>`;
 				});
 				html += `</tbody></table></div>`;
 				document.getElementById('uploaded-docs').innerHTML = html;
@@ -238,6 +238,40 @@
 				document.getElementById('uploaded-docs').innerHTML = `<div class="bg-white rounded-lg shadow-md p-6 mt-6 text-red-600">Error fetching documents: ${String(err)}</div>`;
 			}
 		});
+
+	// Handle Send Document Mail
+	document.addEventListener('click', async function(e){
+		const mailBtn = e.target.closest('.send-doc-mail-btn');
+		if(!mailBtn) return;
+		e.preventDefault();
+		const uniqueId = mailBtn.dataset.uniqueId;
+		const docType = mailBtn.dataset.docType;
+		const docUrl = mailBtn.dataset.docUrl;
+		if(!confirm(`Send "${docType || 'document'}" link via email to student ${uniqueId}?`)) return;
+		mailBtn.disabled = true;
+		mailBtn.textContent = 'Sending...';
+		try{
+			const res = await fetch('/api/send-document-email', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ unique_id: uniqueId, document_type: docType, document_url: docUrl })
+			});
+			const j = await res.json();
+			if(j && j.ok){
+				mailBtn.textContent = '✓ Sent';
+				mailBtn.classList.remove('bg-blue-500','hover:bg-blue-600');
+				mailBtn.classList.add('bg-green-500');
+			} else {
+				alert('Mail failed: ' + (j && j.error ? j.error : 'Unknown error'));
+				mailBtn.disabled = false;
+				mailBtn.textContent = '📧 Mail';
+			}
+		}catch(err){
+			alert('Error: ' + err.message);
+			mailBtn.disabled = false;
+			mailBtn.textContent = '📧 Mail';
+		}
+	});
 	</script>
 </body>
 </html>

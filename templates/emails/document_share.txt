@@ -1,0 +1,16 @@
+Dear {{ full_name }},
+
+A document has been shared with you from the PMC Admission Portal.
+
+Student ID    : {{ unique_id }}
+Document Type : {{ document_type or 'Document' }}
+
+View / Download your document here:
+{{ document_url }}
+
+For any queries, please contact us:
+Phone  : +91 9894583832
+Office : 04344257242
+
+Best regards,
+{{ college_name or 'Admissions Office' }}

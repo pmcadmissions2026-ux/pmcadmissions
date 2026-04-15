@@ -5,19 +5,13 @@
 -- ============================================================
 
 -- ============================================================
--- TABLE: enquiry
--- Missing: notes, status (may already exist), source, subject,
---          preferred_course, student_name, whatsapp_number, email
+-- TABLE: enquiries (actual table name — not 'enquiry')
+-- Base columns already exist; adding new tracking columns.
 -- ============================================================
-ALTER TABLE enquiry
-  ADD COLUMN IF NOT EXISTS status          TEXT DEFAULT 'open',
-  ADD COLUMN IF NOT EXISTS notes           TEXT,
-  ADD COLUMN IF NOT EXISTS source          TEXT,
-  ADD COLUMN IF NOT EXISTS subject         TEXT,
-  ADD COLUMN IF NOT EXISTS preferred_course TEXT,
-  ADD COLUMN IF NOT EXISTS student_name    TEXT,
-  ADD COLUMN IF NOT EXISTS whatsapp_number TEXT,
-  ADD COLUMN IF NOT EXISTS email           TEXT;
+ALTER TABLE enquiries
+  ADD COLUMN IF NOT EXISTS religion             TEXT,
+  ADD COLUMN IF NOT EXISTS reference_class      TEXT,
+  ADD COLUMN IF NOT EXISTS reference_dept_staff TEXT;
 
 -- ============================================================
 -- TABLE: students
@@ -140,8 +134,57 @@ ALTER TABLE documents
 -- ============================================================
 SELECT table_name, column_name, data_type
 FROM information_schema.columns
-WHERE table_name IN ('enquiry','students','academics','admissions',
+WHERE table_name IN ('enquiries','students','academics','admissions',
                      'admission_applications','counselling_records',
-                     'payments','documents')
+                     'payments','documents','fee_structure')
   AND table_schema = 'public'
 ORDER BY table_name, ordinal_position;
+
+-- ============================================================
+-- BATCH 2 — Additional columns added in later features
+-- Run these after the base migration above
+-- ============================================================
+
+-- TABLE: students — parent phone numbers
+ALTER TABLE students
+  ADD COLUMN IF NOT EXISTS father_phone  TEXT,
+  ADD COLUMN IF NOT EXISTS mother_phone  TEXT;
+
+-- TABLE: academics — school address
+ALTER TABLE academics
+  ADD COLUMN IF NOT EXISTS plus2_school_address TEXT;
+
+-- TABLE: counselling_records — FG / 7.5% flags
+ALTER TABLE counselling_records
+  ADD COLUMN IF NOT EXISTS is_first_generation  BOOLEAN DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS is_seven_point_five  BOOLEAN DEFAULT FALSE;
+
+-- TABLE: payments — new fields for payment receipts
+ALTER TABLE payments
+  ADD COLUMN IF NOT EXISTS payment_type     TEXT,
+  ADD COLUMN IF NOT EXISTS reference_number TEXT,
+  ADD COLUMN IF NOT EXISTS payment_date     DATE,
+  ADD COLUMN IF NOT EXISTS branch_name      TEXT,
+  ADD COLUMN IF NOT EXISTS upi_id           TEXT;
+
+-- TABLE: fee_structure — fee allotment per dept per year
+CREATE TABLE IF NOT EXISTS public.fee_structure (
+    id           BIGSERIAL PRIMARY KEY,
+    dept_id      INTEGER NOT NULL REFERENCES departments(id) ON DELETE CASCADE,
+    academic_year TEXT NOT NULL,
+    gq_fee       NUMERIC(12,2) DEFAULT 0,
+    gq_fg_fee    NUMERIC(12,2) DEFAULT 0,
+    mq_fee       NUMERIC(12,2) DEFAULT 0,
+    mq_fg_fee    NUMERIC(12,2) DEFAULT 0,
+    created_at   TIMESTAMPTZ DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(dept_id, academic_year)
+);
+
+-- Enable RLS on fee_structure (PostgreSQL-safe — no IF NOT EXISTS on CREATE POLICY)
+ALTER TABLE public.fee_structure ENABLE ROW LEVEL SECURITY;
+DO $$
+BEGIN
+  CREATE POLICY fee_structure_all ON public.fee_structure FOR ALL USING (true) WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;

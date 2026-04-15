@@ -1,0 +1,20 @@
+Dear {{ full_name }},
+
+Your counselling record has been updated. Please find your details below.
+
+--- Counselling Details ---
+Student ID         : {{ unique_id }}
+Allotted Department: {{ allotted_dept }}
+Quota Type         : {{ quota_type or 'N/A' }}
+
+{{ gq_details_text }}
+{{ mq_details_text }}
+
+Please report to the college with all original documents for verification.
+
+For any queries, please contact us:
+Phone  : +91 9894583832
+Office : 04344257242
+
+Best regards,
+{{ college_name or 'Admissions Office' }}

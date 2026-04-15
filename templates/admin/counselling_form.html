@@ -81,6 +81,21 @@
         </div>
     </div>
 
+    <!-- FG / 7.5% flags -->
+    <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-5">
+      <p class="text-sm font-bold text-blue-800 dark:text-blue-300 mb-3">Special Reservation Flags</p>
+      <div class="flex flex-wrap gap-6">
+        <label class="flex items-center gap-3 cursor-pointer">
+          <input type="checkbox" id="is_first_generation" name="is_first_generation" class="w-5 h-5 rounded accent-blue-600"/>
+          <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">First Generation Graduate (FG)</span>
+        </label>
+        <label class="flex items-center gap-3 cursor-pointer">
+          <input type="checkbox" id="is_seven_point_five" name="is_seven_point_five" class="w-5 h-5 rounded accent-green-600"/>
+          <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">7.5% Reservation (Govt. School)</span>
+        </label>
+      </div>
+    </div>
+
     <div class="flex items-center justify-end gap-3">
         <a href="counselling_list.html" class="bg-gray-400 hover:bg-gray-500 text-white px-6 py-3 rounded-lg font-semibold transition">Cancel</a>
         <button id="saveCounselling" type="button" class="bg-blue-600 hover:bg-blue-900 text-white px-6 py-3 rounded-lg font-semibold transition">Save Counselling</button>
@@ -128,6 +143,8 @@
       if (c.allotted_dept_id) document.getElementById('allotted_dept_id').value = c.allotted_dept_id;
       if (c.allotment_order_url) document.getElementById('allotment_link').innerHTML = `<a href="${c.allotment_order_url}" target="_blank" class="text-sm text-blue-600 underline">View Uploaded PDF</a>`;
       document.getElementById('consortium_number').value = c.consortium_number || '';
+      document.getElementById('is_first_generation').checked = c.is_first_generation === true || c.is_first_generation === 'true';
+      document.getElementById('is_seven_point_five').checked = c.is_seven_point_five === true || c.is_seven_point_five === 'true';
     }
 
     // toggle fields
@@ -152,6 +169,8 @@
       const file = document.getElementById('allotment_order_pdf').files[0];
       if (file) payload.append('allotment_order_pdf', file);
       payload.append('consortium_number', document.getElementById('consortium_number').value || '');
+      payload.append('is_first_generation', document.getElementById('is_first_generation').checked ? 'true' : 'false');
+      payload.append('is_seven_point_five', document.getElementById('is_seven_point_five').checked ? 'true' : 'false');
 
       try {
         const res = await fetch('/api/counselling_records', { method: 'POST', body: payload });

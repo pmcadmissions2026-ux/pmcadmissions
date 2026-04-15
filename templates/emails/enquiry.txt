@@ -1,13 +1,26 @@
-Hello {{ full_name }},
+Dear {{ full_name }},
 
-Thank you for contacting {{ college_name or 'our admissions office' }}. We have received your enquiry and created a reference for it.
+Thank you for enquiring at {{ college_name or 'our admissions office' }}. We have recorded your details.
 
-Student Unique ID: {{ unique_id }}
-Subject: {{ subject }}
+--- Your Unique Student ID ---
+{{ unique_id }}
 
-Contact No: +91 9894583832 , 04344257242
+--- Basic Details ---
+Full Name      : {{ full_name }}
+Father's Name  : {{ father_name or 'N/A' }}
+Community      : {{ community or 'N/A' }}
+Phone          : {{ phone or 'N/A' }}
+WhatsApp       : {{ whatsapp_number or phone or 'N/A' }}
+Date of Birth  : {{ dob or date_of_birth or 'N/A' }}
 
-Our admissions team will review your query and get back to you shortly.
+--- Academic Details ---
+HSC Percentage : {{ plus2_percentage or 'N/A' }}%
+Cut-Off Score  : {{ cutoff or cutoff_score or 'N/A' }}
+Preferred Course: {{ preferred_course or preferred_dept_name or 'N/A' }}
+
+Our admissions team will contact you shortly.
+
+Contact Us: +91 9894583832 | 04344257242
 
 Best regards,
 {{ college_name or 'Admissions Office' }}

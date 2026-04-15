@@ -248,6 +248,10 @@
 <p class="text-sm font-semibold mb-2">+2 School Name <span class="text-red-500">*</span></p>
 <input name="plus2_school_name" required class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="Enter +2 school name" type="text"/>
 </label>
+<label class="flex flex-col md:col-span-2">
+<p class="text-sm font-semibold mb-2">+2 School Address / Place</p>
+<input name="plus2_school_address" class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="Enter +2 school address or place" type="text"/>
+</label>
 <label class="flex flex-col">
 <p class="text-sm font-semibold mb-2">+2 Marks Secured</p>
 <div class="flex gap-2">
@@ -435,8 +439,31 @@
 </select>
 </label>
 <label class="flex flex-col">
-<p class="text-sm font-semibold mb-2">Reference Details (Optional)</p>
-<input name="reference_details" type="text" placeholder="Enter reference name or details" class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]"/>
+<p class="text-sm font-semibold mb-2">Reference Type (Optional)</p>
+<select name="reference_type" id="ref_type" onchange="onRefTypeChange()" class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]">
+<option value="">-- Select Reference --</option>
+<option value="Walk-in">Walk-in</option>
+<option value="Phone Call">Phone Call</option>
+<option value="Website">Website</option>
+<option value="Social Media">Social Media</option>
+<option value="Student">Student</option>
+<option value="Staff">Staff</option>
+<option value="Other">Other</option>
+</select>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2">Reference Name / Details (Optional)</p>
+<input name="reference_details" id="reference_details" type="text" placeholder="Enter reference name or details" class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]"/>
+</label>
+</div>
+<div id="student-ref-fields" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800" style="display:none">
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2 text-blue-800 dark:text-blue-200">Referred Student's Class / Year</p>
+<input name="reference_class" id="reference_class" type="text" placeholder="e.g. III Year, I Year" class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]"/>
+</label>
+<label class="flex flex-col">
+<p class="text-sm font-semibold mb-2 text-blue-800 dark:text-blue-200">Referred Student's Dept / Staff</p>
+<input name="reference_dept_staff" id="reference_dept_staff" type="text" placeholder="e.g. CSE, ECE, Staff Name" class="rounded-lg border-[#dbe0e6] h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]"/>
 </label>
 </div>
 <div class="mt-8 flex flex-wrap gap-10">
@@ -614,6 +641,13 @@
         calculateCutoff();
     }
 
+    function onRefTypeChange() {
+        const sel = document.getElementById('ref_type');
+        const extra = document.getElementById('student-ref-fields');
+        if (!extra) return;
+        extra.style.display = (sel && sel.value === 'Student') ? '' : 'none';
+    }
+
     function onGroupChange(){
         const group = (document.querySelector('select[name="group_studied"]') || {}).value || '';
         const voc = document.getElementById('vocational-section');
@@ -712,7 +746,12 @@
                     whatsapp_number: fd.get('whatsapp_number')||null,
                     father_name: fd.get('father_name')||null,
                     mother_name: fd.get('mother_name')||null,
+                    father_phone: fd.get('father_phone')||null,
+                    mother_phone: fd.get('mother_phone')||null,
                     community: fd.get('community_custom') && fd.get('community') === 'Other' ? fd.get('community_custom') : fd.get('community') || null,
+                    religion: fd.get('religion')||null,
+                    caste: fd.get('caste')||null,
+                    mother_tongue: fd.get('mother_tongue')||null,
                     date_of_birth: fd.get('date_of_birth')||null,
                     gender: fd.get('gender')||null,
                     aadhar_number: fd.get('aadhar_number')||null,
@@ -737,6 +776,7 @@
                 };
                 const academic = {
                     school_name: fd.get('plus2_school_name')||null,
+                    plus2_school_address: fd.get('plus2_school_address')||null,
                     board: fd.get('board')||null,
                     maths_marks: fd.get('maths_marks')? Number(fd.get('maths_marks')): null,
                     physics_marks: fd.get('physics_marks')? Number(fd.get('physics_marks')): null,
@@ -751,7 +791,9 @@
                 const enquiry = {
                     subject: fd.get('subject')||null,
                     preferred_course: fd.get('preferred_course')||null,
-                    source: fd.get('source')||null,
+                    source: fd.get('reference_type')||null,
+                    reference_class: fd.get('reference_class')||null,
+                    reference_dept_staff: fd.get('reference_dept_staff')||null,
                     status: 'open'
                 };
                 const flash = document.getElementById('flash-area'); if(flash) flash.innerHTML = '';

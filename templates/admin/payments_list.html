@@ -36,6 +36,14 @@
             background-color: #137fec;
             color: white !important;
         }
+        @media print {
+          body > *:not(#printBillModal) { display: none !important; }
+          #printBillModal { display: block !important; background: none !important; position: static !important; padding: 0 !important; }
+          #printBillModal > div { box-shadow: none !important; max-height: none !important; border-radius: 0 !important; }
+          #printBillModal .no-print { display: none !important; }
+          #printBillArea, #printBillArea * { visibility: visible !important; }
+          #printBillArea { position: static !important; width: 100%; background: white; padding: 0; }
+        }
     </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white min-h-screen flex flex-col">
@@ -70,8 +78,11 @@
 <div class="flex flex-wrap justify-between items-end gap-3">
 <div class="flex min-w-72 flex-col gap-1">
 <p class="text-[#111418] dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">Payments</p>
-<p class="text-[#617589] dark:text-[#a0aec0] text-base font-normal leading-normal">Manage initial payment collection for admitted students.</p>
+<p class="text-[#617589] dark:text-[#a0aec0] text-base font-normal leading-normal">Manage payment collection for students.</p>
 </div>
+<a href="payments_form.html" class="inline-flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-bold py-2.5 px-5 rounded-lg transition-colors">
+  <span class="material-symbols-outlined">add</span> Add Payment
+</a>
 </div>
 
 <div class="flex flex-col gap-8">
@@ -120,12 +131,14 @@
 <table id="completedTable" class="w-full text-left border-collapse">
 <thead>
 <tr class="bg-[#f8fafc] dark:bg-[#2d3748] border-b border-[#e5e7eb] dark:border-[#2d3748]">
-<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">App #</th>
-<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Student Name</th>
-<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Unique ID</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Student</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Date</th>
 <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Bill No</th>
-<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Mode of Payment</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Type</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Mode</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Reference</th>
 <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Amount</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Actions</th>
 </tr>
 </thead>
 <tbody id="completed-tbody" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"></tbody>
@@ -162,14 +175,32 @@ function buildPendingRow(s, deptMap){
 }
 function buildCompletedRow(p){
     const tr = document.createElement('tr'); tr.className='hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors';
-    const modeClass = (m)=>{ if(m==='Cash') return 'bg-green-100 text-green-800'; if(m==='Card') return 'bg-blue-100 text-blue-800'; if(m==='Cheque') return 'bg-orange-100 text-orange-800'; if(m==='Bank Transfer') return 'bg-purple-100 text-purple-800'; return 'bg-gray-100 text-gray-800'; };
+    const modeClass = (m)=>{ if(m==='Cash') return 'bg-green-100 text-green-800'; if(m==='Card') return 'bg-blue-100 text-blue-800'; if(m==='Cheque') return 'bg-orange-100 text-orange-800'; if(m==='Bank Transfer') return 'bg-purple-100 text-purple-800'; if(m==='UPI') return 'bg-indigo-100 text-indigo-800'; return 'bg-gray-100 text-gray-800'; };
+    const dateStr = p.payment_date ? new Date(p.payment_date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : (p.created_at ? new Date(p.created_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '—');
+    const ref = p.reference_number || p.upi_id || '—';
+    const sid = p.student_id ? String(p.student_id) : '';
+    const pJson = JSON.stringify(p).replace(/'/g,"&#39;");
     tr.innerHTML = `
-        <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">#${p.app_id}</span></td>
-        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-medium">${p.student_name || ''}</td>
-        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-mono">${p.unique_id || ''}</td>
-        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-bold">${p.bill_no}</td>
-        <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${modeClass(p.mode_of_payment)}">${p.mode_of_payment}</span>${p.mode_of_payment==='UPI' && p.upi_id?('<div class="text-xs text-slate-500 mt-1">'+p.upi_id+'</div>'):''}</td>
-        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white font-bold">\u20b9 ${Number(p.amount).toFixed(2)}</td>
+        <td class="px-6 py-4">
+          <div class="font-medium text-sm text-[#111418] dark:text-white">${p.student_name||'—'}</div>
+          <div class="text-xs font-mono text-[#617589] dark:text-[#a0aec0]">${p.unique_id||''}</div>
+        </td>
+        <td class="px-6 py-4 text-sm text-[#617589] dark:text-[#a0aec0] whitespace-nowrap">${dateStr}</td>
+        <td class="px-6 py-4 text-sm font-bold text-[#111418] dark:text-white">${p.bill_no||'—'}</td>
+        <td class="px-6 py-4 text-sm text-[#111418] dark:text-white">${p.payment_type||'—'}</td>
+        <td class="px-6 py-4"><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${modeClass(p.mode_of_payment)}">${p.mode_of_payment||'—'}</span></td>
+        <td class="px-6 py-4 text-xs font-mono text-[#617589] dark:text-[#a0aec0]">${ref}</td>
+        <td class="px-6 py-4 text-sm font-bold text-[#111418] dark:text-white">\u20b9 ${Number(p.amount).toFixed(2)}</td>
+        <td class="px-6 py-4">
+          <div class="flex items-center gap-2 flex-wrap">
+            <button data-pay='${pJson}' class="print-btn inline-flex items-center gap-1 bg-primary text-white text-xs font-bold py-1.5 px-3 rounded-lg hover:bg-primary/90">
+              <span class="material-symbols-outlined" style="font-size:14px">print</span> Print
+            </button>
+            ${sid ? `<button data-sid="${sid}" class="hist-btn inline-flex items-center gap-1 bg-gray-100 text-gray-700 hover:bg-gray-200 text-xs font-bold py-1.5 px-3 rounded-lg dark:bg-gray-700 dark:text-gray-200">
+              <span class="material-symbols-outlined" style="font-size:14px">history</span> History
+            </button>` : ''}
+          </div>
+        </td>
     `; return tr;
 }
 function renderPayPagination(divId, page, totalPages, total, fnName){
@@ -196,7 +227,7 @@ function renderCompletedPage(page){
     const total = filteredCompleted.length, totalPages = Math.ceil(total/PAY_PAGE_SIZE)||1;
     const start = (page-1)*PAY_PAGE_SIZE;
     const tbody = document.getElementById('completed-tbody'); tbody.innerHTML = '';
-    if(total===0){ tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-[#617589] dark:text-[#a0aec0] text-sm">No completed payments found</td></tr>'; }
+    if(total===0){ tbody.innerHTML = '<tr><td colspan="8" class="px-6 py-8 text-center text-[#617589] dark:text-[#a0aec0] text-sm">No completed payments found</td></tr>'; }
     else { filteredCompleted.slice(start,start+PAY_PAGE_SIZE).forEach(p=>tbody.appendChild(buildCompletedRow(p))); }
     renderPayPagination('completedPagination', page, totalPages, total, 'renderCompletedPage');
 }
@@ -229,8 +260,11 @@ async function loadPaymentsPage(){
     let payments = [];
     try{ payments = await fetchJson('/api/payments'); }catch(e){ console.warn('payments fetch failed', e); }
     payments.sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
+    // build history map by student_id
+    window._historyByStudent = {};
+    payments.forEach(p=>{ const sid=String(p.student_id||''); if(sid){ window._historyByStudent[sid]=window._historyByStudent[sid]||[]; window._historyByStudent[sid].push(p); } });
     allCompleted = payments; filteredCompleted = payments.slice();
-    if(completedCount) completedCount.textContent = payments.length + ' Student(s)';
+    if(completedCount) completedCount.textContent = payments.length + ' Payment(s)';
     renderCompletedPage(1);
 
     // wire search inputs
@@ -238,9 +272,164 @@ async function loadPaymentsPage(){
     const completedInput = document.getElementById('completedSearch');
     if(pendingInput) pendingInput.addEventListener('input', debounce(applyPendingSearch, 200));
     if(completedInput) completedInput.addEventListener('input', debounce(applyCompletedSearch, 200));
+
+    // persistent event delegation for Print/History buttons (survives re-renders)
+    const completedTbody = document.getElementById('completed-tbody');
+    if(completedTbody) completedTbody.addEventListener('click', function(e){
+      const printBtn = e.target.closest('.print-btn');
+      if(printBtn){ const pay=JSON.parse(printBtn.getAttribute('data-pay')); openPrintBill(pay); return; }
+      const histBtn = e.target.closest('.hist-btn');
+      if(histBtn){ showStudentHistory(histBtn.getAttribute('data-sid')); }
+    });
 }
 
 document.addEventListener('DOMContentLoaded', ()=>{ loadPaymentsPage().catch(e=>{ console.error(e); const fc=document.getElementById('flashContainer'); if(fc) fc.innerHTML='<div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">Failed to load payments</div>'; }); });
+
+/* ── Amount in Words ── */
+function amountInWords(n){
+  const ones=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+  const tens=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+  function h(n){ if(n===0)return''; if(n<20)return ones[n]+' '; if(n<100)return tens[Math.floor(n/10)]+' '+(n%10?ones[n%10]+' ':''); return ones[Math.floor(n/100)]+' Hundred '+(n%100?h(n%100):''); }
+  if(!n||n===0) return 'Zero Rupees';
+  const intPart=Math.floor(n); const dec=Math.round((n-intPart)*100); let s='';
+  if(intPart>=10000000) s+=h(Math.floor(intPart/10000000))+'Crore ';
+  if(intPart>=100000) s+=h(Math.floor((intPart%10000000)/100000))+'Lakh ';
+  if(intPart>=1000) s+=h(Math.floor((intPart%100000)/1000))+'Thousand ';
+  if(intPart>=100) s+=h(Math.floor((intPart%1000)/100));
+  s+=h(intPart%100); s=(s.trim()||'Zero')+' Rupees';
+  if(dec>0) s+=' and '+h(dec).trim()+' Paise';
+  return s.trim();
+}
+
+/* ── Print Bill ── */
+function openPrintBill(p){
+  const fmtDate=d=>{ try{ return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}); }catch(e){ return d||''; } };
+  const dateStr=p.payment_date||p.created_at||new Date().toISOString().slice(0,10);
+  const refNumber=p.reference_number||p.upi_id||'—';
+  const amtWords=amountInWords(Number(p.amount||0));
+  const branch=p.branch_name||'—'; const community=p.community||'—';
+  const hasRef=refNumber!=='—';
+  const refLabel=p.mode_of_payment==='Cheque'?'Cheque No.':p.mode_of_payment==='Bank Transfer'?'UTR No.':p.mode_of_payment==='UPI'?'UTR / Txn ID':'Reference No.';
+  document.getElementById('printBillArea').innerHTML=`
+  <div style="max-width:700px;margin:0 auto;font-family:'Lexend',sans-serif;border:2px solid #137fec;border-radius:12px;overflow:hidden;">
+    <div style="background:#137fec;padding:20px 28px;display:flex;align-items:center;gap:16px;">
+      <img src="/static/img/pmc-logo.jpeg" alt="PMC Logo" style="height:60px;width:auto;border-radius:6px;background:white;padding:3px;"/>
+      <div style="color:white;"><p style="margin:0;font-size:13px;font-weight:700;opacity:0.95;">Admission Office | Payment Receipt</p></div>
+      <div style="margin-left:auto;text-align:right;color:white;"><p style="font-size:11px;opacity:0.8;margin:0;">BILL NO</p><p style="font-size:20px;font-weight:900;margin:0;">${p.bill_no||'—'}</p><p style="font-size:11px;opacity:0.8;margin:2px 0 0;">${fmtDate(dateStr)}</p></div>
+    </div>
+    <div style="padding:24px 28px;background:white;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+        <div><p style="font-size:11px;color:#6b7280;font-weight:600;margin:0 0 3px;text-transform:uppercase;letter-spacing:.5px;">Student Name</p><p style="font-size:16px;font-weight:900;color:#111418;margin:0;">${p.student_name||'—'}</p></div>
+        <div><p style="font-size:11px;color:#6b7280;font-weight:600;margin:0 0 3px;text-transform:uppercase;letter-spacing:.5px;">Unique ID</p><p style="font-size:15px;font-weight:700;color:#137fec;margin:0;">${p.unique_id||'—'}</p></div>
+        <div><p style="font-size:11px;color:#6b7280;font-weight:600;margin:0 0 3px;text-transform:uppercase;letter-spacing:.5px;">Department / Branch</p><p style="font-size:14px;font-weight:700;color:#7c3aed;margin:0;">${branch}</p></div>
+        <div><p style="font-size:11px;color:#6b7280;font-weight:600;margin:0 0 3px;text-transform:uppercase;letter-spacing:.5px;">Community</p><p style="font-size:14px;font-weight:600;color:#374151;margin:0;">${community}</p></div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
+        <thead><tr style="background:#f1f5f9;">
+          <th style="padding:10px 14px;text-align:left;font-size:11px;color:#475569;font-weight:700;border:1px solid #e2e8f0;">Payment Type</th>
+          <th style="padding:10px 14px;text-align:left;font-size:11px;color:#475569;font-weight:700;border:1px solid #e2e8f0;">Mode</th>
+          ${hasRef?`<th style="padding:10px 14px;text-align:left;font-size:11px;color:#475569;font-weight:700;border:1px solid #e2e8f0;">${refLabel}</th>`:''}
+          <th style="padding:10px 14px;text-align:right;font-size:11px;color:#475569;font-weight:700;border:1px solid #e2e8f0;">Amount</th>
+        </tr></thead>
+        <tbody><tr>
+          <td style="padding:12px 14px;font-size:14px;font-weight:700;border:1px solid #e2e8f0;color:#1e293b;">${p.payment_type||'—'}</td>
+          <td style="padding:12px 14px;font-size:13px;border:1px solid #e2e8f0;color:#374151;">${p.mode_of_payment||'—'}</td>
+          ${hasRef?`<td style="padding:12px 14px;font-size:12px;font-family:monospace;border:1px solid #e2e8f0;color:#6b7280;">${refNumber}</td>`:''}
+          <td style="padding:12px 14px;font-size:18px;font-weight:900;text-align:right;border:1px solid #e2e8f0;color:#16a34a;">₹ ${Number(p.amount||0).toLocaleString('en-IN',{minimumFractionDigits:2})}</td>
+        </tr></tbody>
+        <tfoot><tr style="background:#f0fdf4;">
+          <td colspan="${hasRef?3:2}" style="padding:12px 14px;font-size:12px;font-weight:700;border:1px solid #d1fae5;color:#166534;text-align:right;">Total Amount</td>
+          <td style="padding:12px 14px;font-size:20px;font-weight:900;text-align:right;border:1px solid #d1fae5;color:#15803d;">₹ ${Number(p.amount||0).toLocaleString('en-IN',{minimumFractionDigits:2})}</td>
+        </tr></tfoot>
+      </table>
+      <div style="background:#fafafa;border:1px dashed #d1d5db;border-radius:8px;padding:10px 14px;margin-bottom:20px;">
+        <span style="font-size:11px;color:#9ca3af;font-weight:600;">AMOUNT IN WORDS: </span>
+        <span style="font-size:12px;color:#374151;font-weight:700;">${amtWords} Only</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid #e5e7eb;padding-top:16px;">
+        <div><p style="font-size:11px;color:#9ca3af;margin:0;">Generated on: ${fmtDate(new Date().toISOString().slice(0,10))}</p><p style="font-size:11px;color:#9ca3af;margin:2px 0;">This is a computer-generated receipt.</p></div>
+        <div style="text-align:right;"><div style="border-top:1.5px solid #374151;width:160px;margin-left:auto;padding-top:4px;"><p style="font-size:11px;color:#6b7280;font-weight:600;margin:0;text-align:center;">Authorized Signature</p></div></div>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('printBillModal').classList.remove('hidden');
+}
+
+/* ── Student Payment History ── */
+function showStudentHistory(sid){
+  const pays=(window._historyByStudent||{})[String(sid)]||[];
+  const first=pays[0]||{};
+  const name=first.student_name||'Student'; const uid=first.unique_id||'';
+  document.getElementById('histStudentLabel').textContent=uid?name+' — '+uid:name;
+  const body=document.getElementById('histBody');
+  if(!pays.length){ body.innerHTML='<p class="text-center text-gray-400 py-8">No payments found.</p>'; }
+  else {
+    const mColor=m=>m==='Cash'?'bg-green-100 text-green-700':m==='UPI'?'bg-purple-100 text-purple-700':m==='Card'?'bg-blue-100 text-blue-700':m==='Cheque'?'bg-yellow-100 text-yellow-700':'bg-gray-100 text-gray-700';
+    let total=0;
+    const rows=pays.map(p=>{
+      total+=Number(p.amount||0);
+      const d=p.payment_date?new Date(p.payment_date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):(p.created_at?new Date(p.created_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—');
+      const pJson=JSON.stringify(p).replace(/'/g,"&#39;");
+      return `<tr class="border-b border-gray-100 hover:bg-gray-50">
+        <td class="px-4 py-2.5 text-sm whitespace-nowrap">${d}</td>
+        <td class="px-4 py-2.5 text-sm font-bold">${p.bill_no||'—'}</td>
+        <td class="px-4 py-2.5 text-sm">${p.payment_type||'—'}</td>
+        <td class="px-4 py-2.5"><span class="inline-flex px-2 py-0.5 rounded-full text-xs font-bold ${mColor(p.mode_of_payment)}">${p.mode_of_payment||'—'}</span></td>
+        <td class="px-4 py-2.5 text-xs font-mono text-gray-500">${p.reference_number||p.upi_id||'—'}</td>
+        <td class="px-4 py-2.5 text-sm font-bold text-green-700 text-right">₹ ${Number(p.amount||0).toLocaleString('en-IN',{minimumFractionDigits:2})}</td>
+        <td class="px-4 py-2.5 text-center"><button data-pay='${pJson}' class="hist-print-btn inline-flex items-center gap-1 text-xs text-primary font-semibold hover:underline"><span class="material-symbols-outlined" style="font-size:13px">print</span>Print</button></td>
+      </tr>`;
+    }).join('');
+    body.innerHTML=`<table class="w-full text-left text-sm border-collapse"><thead><tr class="bg-slate-50 text-xs font-bold text-slate-600"><th class="px-4 py-2.5">Date</th><th class="px-4 py-2.5">Bill No</th><th class="px-4 py-2.5">Type</th><th class="px-4 py-2.5">Mode</th><th class="px-4 py-2.5">Reference</th><th class="px-4 py-2.5 text-right">Amount</th><th class="px-4 py-2.5 text-center">Print</th></tr></thead><tbody>${rows}</tbody><tfoot><tr class="bg-green-50 font-bold"><td colspan="5" class="px-4 py-2.5 text-right text-sm text-gray-700">Total</td><td class="px-4 py-2.5 text-right text-green-700">₹ ${total.toLocaleString('en-IN',{minimumFractionDigits:2})}</td><td></td></tr></tfoot></table>`;
+    body.querySelectorAll('.hist-print-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{ const pay=JSON.parse(btn.getAttribute('data-pay')); openPrintBill(pay); });
+    });
+  }
+  document.getElementById('histModal').classList.remove('hidden');
+}
+
 </script>
+<!-- Print Bill Modal -->
+<div id="printBillModal" class="hidden fixed inset-0 z-50 flex items-start justify-center p-4 pt-10" style="background:rgba(0,0,0,0.6)">
+  <div class="bg-white dark:bg-[#1a202c] rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 no-print">
+      <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+        <span class="material-symbols-outlined text-primary">receipt_long</span> Payment Receipt
+      </h3>
+      <div class="flex items-center gap-3">
+        <button onclick="window.print()" class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-bold py-2 px-5 rounded-lg">
+          <span class="material-symbols-outlined">print</span> Print
+        </button>
+        <button onclick="document.getElementById('printBillModal').classList.add('hidden')" class="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-5 rounded-lg">
+          <span class="material-symbols-outlined">close</span> Close
+        </button>
+      </div>
+    </div>
+    <div class="overflow-auto flex-1 p-6">
+      <div id="printBillArea"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Payment History Modal -->
+<div id="histModal" class="hidden fixed inset-0 z-50 flex items-start justify-center p-4 pt-10" style="background:rgba(0,0,0,0.6)">
+  <div class="bg-white dark:bg-[#1a202c] rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+      <div>
+        <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">history</span> Payment History
+        </h3>
+        <p id="histStudentLabel" class="text-sm text-gray-500 dark:text-gray-400 mt-0.5"></p>
+      </div>
+      <button onclick="document.getElementById('histModal').classList.add('hidden')" class="flex items-center gap-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">
+        <span class="material-symbols-outlined">close</span> Close
+      </button>
+    </div>
+    <div class="overflow-auto flex-1 p-4">
+      <div id="histBody"></div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

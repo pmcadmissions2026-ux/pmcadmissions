@@ -127,6 +127,7 @@
 <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Transfer Cert</th>
 <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">FG Certificate</th>
 <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Actions</th>
+<th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Send Mail</th>
 </tr>
 </thead>
 <tbody id="documents-tbody" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"></tbody>
@@ -597,7 +598,7 @@ function deleteDocument(docId, studentName) {
 // Load documents and render into table
 function loadDocuments() {
     const tbody = document.getElementById('documents-tbody');
-    tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-8 text-center text-slate-400">Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" class="px-6 py-8 text-center text-slate-400">Loading...</td></tr>';
     // Try diagnostic endpoint that lists documents when no app_id is provided
     fetch('/api/_documents')
         .then(r => r.json())
@@ -662,7 +663,7 @@ function loadDocuments() {
                 if (showing) showing.textContent = `Showing ${rows.length} documents`;
 
                 if (!rows.length) {
-                    tbody.innerHTML = '<tr><td colspan="9" class="px-6 py-12 text-center text-slate-500">\n            <span class="material-symbols-outlined text-4xl mb-2">folder_open</span>\n            <p class="text-sm font-medium">No documents found</p>\n            <p class="text-xs text-slate-400 mt-1">Students haven\'t uploaded any documents yet.</p>\n        </td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="10" class="px-6 py-12 text-center text-slate-500">\n            <span class="material-symbols-outlined text-4xl mb-2">folder_open</span>\n            <p class="text-sm font-medium">No documents found</p>\n            <p class="text-xs text-slate-400 mt-1">Students haven\'t uploaded any documents yet.</p>\n        </td></tr>';
                     return;
                 }
 
@@ -714,13 +715,69 @@ function loadDocuments() {
                     actionTd.appendChild(btn);
                     tr.appendChild(actionTd);
 
+                    // Send Mail button — sends all uploaded doc links to the student's email
+                    const mailTd = document.createElement('td'); mailTd.className='px-6 py-4';
+                    const mailBtn = document.createElement('button');
+                    mailBtn.className='inline-flex items-center gap-1 bg-green-600 text-white text-xs font-bold py-2 px-3 rounded hover:bg-green-700 transition-colors disabled:opacity-50';
+                    mailBtn.innerHTML = '<span class="material-symbols-outlined text-sm">mail</span> Send Mail';
+                    const studentUniqueId = (student && student.unique_id) || '';
+                    const appDocs = (docsByApp[appKey] && docsByApp[appKey].documents) || {};
+                    const docTypeLabels = {
+                        '10th_Mark_Sheet': '10th Mark Sheet',
+                        '12th_Mark_Sheet': '12th Mark Sheet',
+                        'Community_Certificate': 'Community Certificate',
+                        'Passport_Photo': 'Passport Photo',
+                        'Transfer_Certificate': 'Transfer Certificate',
+                        'FG_Certificate': 'FG Certificate'
+                    };
+                    if(!studentUniqueId){
+                        mailBtn.disabled = true;
+                        mailBtn.title = 'No student linked to this application';
+                    } else {
+                        mailBtn.onclick = async () => {
+                            const docs = Object.entries(appDocs)
+                                .filter(([, d]) => d && d.document_url)
+                                .map(([key, d]) => ({ document_type: docTypeLabels[key] || key, document_url: d.document_url }));
+                            if(docs.length === 0){ alert('No documents uploaded for this student.'); return; }
+                            mailBtn.disabled = true;
+                            mailBtn.innerHTML = '<span class="material-symbols-outlined text-sm">hourglass_top</span> Sending…';
+                            try{
+                                const resp = await fetch('/api/send-all-documents-email', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ unique_id: studentUniqueId, documents: docs })
+                                });
+                                const data = await resp.json();
+                                if(data && data.ok){
+                                    mailBtn.className = mailBtn.className.replace('bg-green-600 hover:bg-green-700','bg-gray-400');
+                                    mailBtn.innerHTML = '<span class="material-symbols-outlined text-sm">check_circle</span> Sent';
+                                    setTimeout(()=>{
+                                        mailBtn.className = mailBtn.className.replace('bg-gray-400','bg-green-600 hover:bg-green-700');
+                                        mailBtn.innerHTML = '<span class="material-symbols-outlined text-sm">mail</span> Send Mail';
+                                        mailBtn.disabled = false;
+                                    }, 3000);
+                                } else {
+                                    alert('Failed to send email: ' + (data.error || JSON.stringify(data)));
+                                    mailBtn.disabled = false;
+                                    mailBtn.innerHTML = '<span class="material-symbols-outlined text-sm">mail</span> Send Mail';
+                                }
+                            } catch(err){
+                                alert('Error sending email: ' + err.message);
+                                mailBtn.disabled = false;
+                                mailBtn.innerHTML = '<span class="material-symbols-outlined text-sm">mail</span> Send Mail';
+                            }
+                        };
+                    }
+                    mailTd.appendChild(mailBtn);
+                    tr.appendChild(mailTd);
+
                     tbody.appendChild(tr);
                 });
             }).catch(err => { console.error('Error fetching apps/students', err); });
         })
         .catch(err => {
             console.error('Error loading documents', err);
-            document.getElementById('documents-tbody').innerHTML = '<tr><td colspan="9" class="px-6 py-12 text-center text-red-500">Error loading documents</td></tr>';
+            document.getElementById('documents-tbody').innerHTML = '<tr><td colspan="10" class="px-6 py-12 text-center text-red-500">Error loading documents</td></tr>';
         });
 }
 

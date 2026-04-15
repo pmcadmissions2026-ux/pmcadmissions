@@ -224,7 +224,9 @@ function renderPersonal(st) {
     ['Date of Birth', st.dob || st.date_of_birth || st.birth_date || 'N/A'],
     ['Status', st.status || 'N/A'],
     ['Community', st.community || 'N/A'],
-    ['Religion', st.religion || 'N/A']
+    ['Religion', st.religion || 'N/A'],
+    ['Caste', st.caste || 'N/A'],
+    ['Mother Tongue', st.mother_tongue || 'N/A']
   ];
   fields.forEach(f => {
     const el = document.createElement('div');
@@ -425,7 +427,7 @@ function renderCounselling(counselling) {
   section.classList.remove('hidden');
   body.innerHTML = '';
   // build table
-  let table = `<table class="w-full text-left border-collapse"><thead><tr class="bg-slate-50 dark:bg-[#2d3748] border-b border-[#e5e7eb] dark:border-[#4a5568]"><th class="px-6 py-3 text-xs font-bold text-slate-600">App #</th><th class="px-6 py-3 text-xs font-bold text-slate-600">Quota</th><th class="px-6 py-3 text-xs font-bold text-slate-600">Allotted Dept</th><th class="px-6 py-3 text-xs font-bold text-slate-600">Order #</th><th class="px-6 py-3 text-xs font-bold text-slate-600">Consortium #</th><th class="px-6 py-3 text-xs font-bold text-slate-600">Status</th></tr></thead><tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">`;
+  let table = `<table class="w-full text-left border-collapse text-sm"><thead><tr class="bg-slate-50 dark:bg-[#2d3748] border-b border-[#e5e7eb] dark:border-[#4a5568]"><th class="px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300">App #</th><th class="px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300">Quota</th><th class="px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300">Flags</th><th class="px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300">Allotted Dept</th><th class="px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300">Order #</th><th class="px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300">Consortium #</th><th class="px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300">Status</th></tr></thead><tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">`;
   counselling.forEach(c => {
     // flexible department resolution: many possible field names or numeric ids
     const rawDept = c.dept_name || c.dept || c.deptName || c.allotted_dept_name || c.allotted_dept || c.allotted_dept_id || c.dept_id || c.department_id || c.department || c.allottedDept || null;
@@ -450,7 +452,15 @@ function renderCounselling(counselling) {
     const statusVal = c.status || ((c.allotment_order_number || c.allotment_order_url || c.consortium_number || rawDept) ? 'Completed' : 'N/A');
     const statusClass = statusVal==='Registered' ? 'bg-green-100 text-green-700' : (statusVal==='Allotted' || statusVal==='Completed' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700');
 
-    table += `<tr class="hover:bg-slate-50 dark:hover:bg-[#2d3748] transition-colors"><td class="px-6 py-3 text-sm font-semibold">${safeText(c.app_id||c.application_id)}</td><td class="px-6 py-3 text-sm">${safeText(c.quota_type)}</td><td class="px-6 py-3 text-sm font-bold text-green-600 dark:text-green-400">${safeText(deptName)}</td><td class="px-6 py-3 text-sm font-mono">${safeText(c.allotment_order_number)}</td><td class="px-6 py-3 text-sm font-mono">${safeText(c.consortium_number)}</td><td class="px-6 py-3 text-sm"><span class="inline-flex px-2 py-1 rounded-full text-xs font-bold ${statusClass}">${safeText(statusVal)}</span></td></tr>`;
+    // FG / 7.5% flags
+    const isFG = c.is_first_generation === true || c.is_first_generation === 'true';
+    const is75 = c.is_seven_point_five === true || c.is_seven_point_five === 'true';
+    const flagsHtml = [
+      isFG ? '<span class="inline-flex px-2 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-700">FG</span>' : '',
+      is75 ? '<span class="inline-flex px-2 py-0.5 rounded-full text-xs font-bold bg-teal-100 text-teal-700">7.5%</span>' : ''
+    ].filter(Boolean).join(' ') || '—';
+
+    table += `<tr class="hover:bg-slate-50 dark:hover:bg-[#2d3748] transition-colors"><td class="px-4 py-3 text-sm font-semibold">${safeText(c.app_id||c.application_id)}</td><td class="px-4 py-3 text-sm font-bold">${safeText(c.quota_type)}</td><td class="px-4 py-3">${flagsHtml}</td><td class="px-4 py-3 text-sm font-bold text-green-600 dark:text-green-400">${safeText(deptName)}</td><td class="px-4 py-3 text-sm font-mono">${safeText(c.allotment_order_number)}</td><td class="px-4 py-3 text-sm font-mono">${safeText(c.consortium_number)}</td><td class="px-4 py-3 text-sm"><span class="inline-flex px-2 py-1 rounded-full text-xs font-bold ${statusClass}">${safeText(statusVal)}</span></td></tr>`;
   });
   table += '</tbody></table>';
   body.innerHTML = table;
@@ -462,11 +472,35 @@ function renderPayments(payments) {
   if (!payments || !payments.length) { section.classList.add('hidden'); return; }
   section.classList.remove('hidden');
   body.innerHTML = '';
-  let table = `<table class="w-full text-left border-collapse"><thead><tr class="bg-slate-50 dark:bg-[#2d3748] border-b border-[#e5e7eb] dark:border-[#4a5568]"><th class="px-6 py-3 text-xs font-bold text-slate-600">App #</th><th class="px-6 py-3 text-xs font-bold text-slate-600">Bill No</th><th class="px-6 py-3 text-xs font-bold text-slate-600">Payment Mode</th><th class="px-6 py-3 text-xs font-bold text-slate-600">Amount</th></tr></thead><tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">`;
+  const modeColor = m => m==='Cash'?'bg-green-100 text-green-700':m==='Card'?'bg-blue-100 text-blue-700':m==='UPI'?'bg-purple-100 text-purple-700':m==='Cheque'?'bg-yellow-100 text-yellow-700':m==='DD'?'bg-orange-100 text-orange-700':'bg-gray-100 text-gray-700';
+  const typeColor = t => t==='Tuition Fee'?'bg-blue-50 text-blue-700':t==='Bus Fee'?'bg-teal-50 text-teal-700':t==='Application Form'?'bg-indigo-50 text-indigo-700':t==='Hostel Fee'?'bg-pink-50 text-pink-700':'bg-gray-50 text-gray-700';
+  let table = `<table class="w-full text-left border-collapse text-sm"><thead><tr class="bg-slate-50 dark:bg-[#2d3748] border-b border-[#e5e7eb] dark:border-[#4a5568]">
+    <th class="px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">Date</th>
+    <th class="px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">Bill No</th>
+    <th class="px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">Payment Type</th>
+    <th class="px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">Mode</th>
+    <th class="px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">Reference</th>
+    <th class="px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">Branch</th>
+    <th class="px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap text-right">Amount</th>
+  </tr></thead><tbody class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]">`;
+  let total = 0;
   payments.forEach(p => {
-    table += `<tr class="hover:bg-slate-50 dark:hover:bg-[#2d3748] transition-colors"><td class="px-6 py-3 text-sm font-semibold">${safeText(p.app_id)}</td><td class="px-6 py-3 text-sm font-bold">${safeText(p.bill_no)}</td><td class="px-6 py-3 text-sm"><span class="inline-flex px-2 py-1 rounded-full text-xs font-bold ${p.mode_of_payment==='Cash'?'bg-green-100 text-green-700':p.mode_of_payment==='Card'?'bg-blue-100 text-blue-700':'bg-gray-100 text-gray-700'}">${safeText(p.mode_of_payment)}</span></td><td class="px-6 py-3 text-sm font-bold text-lg text-green-600 dark:text-green-400">₹ ${Number(p.amount||0).toFixed(2)}</td></tr>`;
+    total += Number(p.amount||0);
+    const dateStr = p.payment_date ? new Date(p.payment_date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : (p.created_at ? new Date(p.created_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '—');
+    table += `<tr class="hover:bg-slate-50 dark:hover:bg-[#2d3748] transition-colors">
+      <td class="px-4 py-3 font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">${dateStr}</td>
+      <td class="px-4 py-3 font-bold text-gray-800 dark:text-white">${safeText(p.bill_no)}</td>
+      <td class="px-4 py-3"><span class="inline-flex px-2 py-1 rounded-full text-xs font-bold ${typeColor(p.payment_type)}">${safeText(p.payment_type||'—')}</span></td>
+      <td class="px-4 py-3"><span class="inline-flex px-2 py-1 rounded-full text-xs font-bold ${modeColor(p.mode_of_payment)}">${safeText(p.mode_of_payment)}</span></td>
+      <td class="px-4 py-3 text-gray-500 dark:text-gray-400 font-mono text-xs">${safeText(p.reference_number||p.upi_id||'—')}</td>
+      <td class="px-4 py-3 text-gray-600 dark:text-gray-300">${safeText(p.branch_name||'—')}</td>
+      <td class="px-4 py-3 font-bold text-green-600 dark:text-green-400 text-right whitespace-nowrap">₹ ${Number(p.amount||0).toLocaleString('en-IN',{minimumFractionDigits:2})}</td>
+    </tr>`;
   });
-  table += '</tbody></table>';
+  table += `</tbody><tfoot><tr class="bg-green-50 dark:bg-green-900/20 font-bold border-t-2 border-green-200 dark:border-green-700">
+    <td colspan="6" class="px-4 py-3 text-sm text-right text-gray-700 dark:text-gray-300">Total Paid</td>
+    <td class="px-4 py-3 text-right text-green-700 dark:text-green-400 text-base whitespace-nowrap">₹ ${total.toLocaleString('en-IN',{minimumFractionDigits:2})}</td>
+  </tr></tfoot></table>`;
   body.innerHTML = table;
 }
 

@@ -95,11 +95,42 @@
           <input id="date_of_birth" name="date_of_birth" type="date" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none"/>
         </label>
         <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Religion</span>
+          <select id="religion" name="religion" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+            <option value="">Select Religion</option>
+            <option>Hindu</option><option>Muslim</option><option>Christian</option><option>Others</option>
+          </select>
+        </label>
+        <label class="flex flex-col gap-1">
           <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Community</span>
           <select id="community" name="community" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
             <option value="">Select</option>
             <option>OC</option><option>BC</option><option>MBC</option><option>SC</option><option>ST</option><option>SCA</option><option>BCM</option><option>Other</option>
           </select>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Caste</span>
+          <input id="caste" name="caste" type="text" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="Enter caste"/>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Mother Tongue</span>
+          <input id="mother_tongue" name="mother_tongue" type="text" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="Enter mother tongue"/>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Father's Phone</span>
+          <input id="father_phone" name="father_phone" type="tel" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="+91 00000 00000"/>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Mother's Phone</span>
+          <input id="mother_phone" name="mother_phone" type="tel" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="+91 00000 00000"/>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Aadhar Number</span>
+          <input id="aadhar_number" name="aadhar_number" type="text" maxlength="12" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="0000 0000 0000"/>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">EMIS Number</span>
+          <input id="emis_number" name="emis_number" type="text" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="Enter EMIS number"/>
         </label>
         <label class="flex flex-col gap-1">
           <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">General Quota</span>
@@ -121,6 +152,10 @@
         <label class="flex flex-col gap-1">
           <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">+2 School Name</span>
           <input id="plus2_school_name" name="plus2_school_name" type="text" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="+2 school name"/>
+        </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">+2 School Address / Place</span>
+          <input id="plus2_school_address" name="plus2_school_address" type="text" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="+2 school address / place"/>
         </label>
         <label class="flex flex-col gap-1">
           <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Board of Examination</span>
@@ -234,13 +269,32 @@
           </select>
         </label>
         <label class="flex flex-col gap-1">
-          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Source</span>
-          <input id="source" name="source" type="text" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. Walk-in, Website"/>
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Reference Type</span>
+          <select id="source" name="source" onchange="onRefTypeChange()" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+            <option value="">-- Select Reference --</option>
+            <option value="Walk-in">Walk-in</option>
+            <option value="Phone Call">Phone Call</option>
+            <option value="Website">Website</option>
+            <option value="Social Media">Social Media</option>
+            <option value="Student">Student</option>
+            <option value="Staff">Staff</option>
+            <option value="Other">Other</option>
+          </select>
         </label>
         <label class="flex flex-col gap-1 sm:col-span-2">
           <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Notes</span>
           <textarea id="notes" name="notes" rows="3" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none resize-none" placeholder="Any notes…"></textarea>
         </label>
+        <div id="student-ref-fields" class="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800" style="display:none">
+          <label class="flex flex-col gap-1">
+            <span class="text-sm font-semibold text-blue-800 dark:text-blue-200">Referred Student's Class / Year</span>
+            <input id="reference_class" name="reference_class" type="text" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. III Year, I Year"/>
+          </label>
+          <label class="flex flex-col gap-1">
+            <span class="text-sm font-semibold text-blue-800 dark:text-blue-200">Referred Student's Dept / Staff</span>
+            <input id="reference_dept_staff" name="reference_dept_staff" type="text" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="e.g. CSE, ECE, Staff Name"/>
+          </label>
+        </div>
       </div>
     </div>
 
@@ -354,6 +408,9 @@
       setVal('status', enq.status || 'open');
       setVal('source', enq.source || '');
       setVal('notes', enq.notes || '');
+      setVal('reference_class', enq.reference_class || '');
+      setVal('reference_dept_staff', enq.reference_dept_staff || '');
+      onRefTypeChange();
       const studentId = enq.student_id;
       if (studentId) {
         document.getElementById('student-id').value = studentId;
@@ -369,7 +426,14 @@
             setVal('mother_name', s.mother_name || '');
             setVal('gender', s.gender || '');
             setVal('date_of_birth', s.date_of_birth ? String(s.date_of_birth).substring(0, 10) : '');
+            setVal('religion', s.religion || '');
             setVal('community', s.community || '');
+            setVal('caste', s.caste || '');
+            setVal('mother_tongue', s.mother_tongue || '');
+            setVal('father_phone', s.father_phone || '');
+            setVal('mother_phone', s.mother_phone || '');
+            setVal('aadhar_number', s.aadhar_number || '');
+            setVal('emis_number', s.emis_number || '');
             setVal('general_quota', s.general_quota || '');
             setVal('plus2_school_name', s.plus2_school_name || '');
             setVal('plus2_marks', s.plus2_marks != null ? s.plus2_marks : '');
@@ -392,6 +456,7 @@
             setVal('practical2', acad.practical2 != null ? acad.practical2 : '');
             setVal('theory', acad.theory != null ? acad.theory : '');
             setVal('maths_voc', acad.maths_voc != null ? acad.maths_voc : '');
+            setVal('plus2_school_address', acad.plus2_school_address || '');
           }
         }
       }
@@ -417,9 +482,17 @@
       mother_name: document.getElementById('mother_name')?.value || null,
       gender: document.getElementById('gender')?.value || null,
       date_of_birth: document.getElementById('date_of_birth')?.value || null,
+      religion: document.getElementById('religion')?.value || null,
       community: document.getElementById('community')?.value || null,
+      caste: document.getElementById('caste')?.value || null,
+      mother_tongue: document.getElementById('mother_tongue')?.value || null,
+      father_phone: document.getElementById('father_phone')?.value || null,
+      mother_phone: document.getElementById('mother_phone')?.value || null,
+      aadhar_number: document.getElementById('aadhar_number')?.value || null,
+      emis_number: document.getElementById('emis_number')?.value || null,
       general_quota: document.getElementById('general_quota')?.value || null,
       plus2_school_name: document.getElementById('plus2_school_name')?.value || null,
+      plus2_school_address: document.getElementById('plus2_school_address')?.value || null,
       plus2_marks: document.getElementById('plus2_marks')?.value ? Number(document.getElementById('plus2_marks').value) : null,
       plus2_percentage: document.getElementById('plus2_percentage')?.value ? Number(document.getElementById('plus2_percentage').value) : null,
       board: document.getElementById('board')?.value || null,
@@ -440,6 +513,8 @@
       status: document.getElementById('status')?.value || 'open',
       source: document.getElementById('source')?.value || null,
       notes: document.getElementById('notes')?.value || null,
+      reference_class: document.getElementById('reference_class')?.value || null,
+      reference_dept_staff: document.getElementById('reference_dept_staff')?.value || null,
     };
     const btn = document.getElementById('save-btn');
     if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
@@ -465,6 +540,13 @@
     if (!area) return;
     const c = type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800';
     area.innerHTML = `<div class="border ${c} px-4 py-3 rounded-lg text-sm">${String(msg).replace(/</g,'&lt;')}</div>`;
+  }
+
+  function onRefTypeChange() {
+    const sel = document.getElementById('source');
+    const extra = document.getElementById('student-ref-fields');
+    if (!extra) return;
+    extra.style.display = (sel && sel.value === 'Student') ? '' : 'none';
   }
 
   document.addEventListener('DOMContentLoaded', () => {
