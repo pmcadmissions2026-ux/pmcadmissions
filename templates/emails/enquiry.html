@@ -33,14 +33,13 @@
         <div class="info-row"><span class="info-label">Full Name:</span> {{ full_name }}</div>
         <div class="info-row"><span class="info-label">Father's Name:</span> {{ father_name or 'N/A' }}</div>
         <div class="info-row"><span class="info-label">Community:</span> {{ community or 'N/A' }}</div>
-        <div class="info-row"><span class="info-label">Phone:</span> {{ phone or 'N/A' }}</div>
-        <div class="info-row"><span class="info-label">WhatsApp:</span> {{ whatsapp_number or phone or 'N/A' }}</div>
-        <div class="info-row"><span class="info-label">Date of Birth:</span> {{ dob or date_of_birth or 'N/A' }}</div>
+        <div class="info-row"><span class="info-label">Phone / WhatsApp:</span> {{ whatsapp_number or 'N/A' }}</div>
+        <div class="info-row"><span class="info-label">Date of Birth:</span> {{ date_of_birth or 'N/A' }}</div>
 
         <div class="section-title">Academic Details</div>
         <div class="info-row"><span class="info-label">HSC Percentage:</span> {{ plus2_percentage or 'N/A' }}%</div>
-        <div class="info-row"><span class="info-label">Cut-Off Score:</span> {{ cutoff or cutoff_score or 'N/A' }}</div>
-        <div class="info-row"><span class="info-label">Preferred Course:</span> {{ preferred_course or preferred_dept_name or 'N/A' }}</div>
+        <div class="info-row"><span class="info-label">Cut-Off Score:</span> {{ cutoff or 'N/A' }}</div>
+        <div class="info-row"><span class="info-label">Preferred Course:</span> {{ preferred_course or 'N/A' }}</div>
 
         <p style="margin-top:14px;">Our admissions team will review your enquiry and contact you shortly.</p>
         <p><strong>Contact Us:</strong> +91 9894583832 &nbsp;|&nbsp; 04344257242</p>

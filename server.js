@@ -666,6 +666,17 @@ app.post('/api/enquiries', async (req, res) => {
         // Prepare template rendering data (prefer student/enquiry fields)
         const tplData = Object.assign({}, createdStudent || {}, createdAcademic || {}, createdEnquiry || {}, enquiryRow || {});
         tplData.college_name = tplData.college_name || process.env.COLLEGE_NAME || '';
+        // Normalize fields so the email template renders correct values
+        // phone is hardcoded null in the form; use whatsapp_number as the canonical contact number
+        if(!tplData.phone || typeof tplData.phone === 'boolean') tplData.phone = (typeof tplData.whatsapp_number === 'string' ? tplData.whatsapp_number : '') || '';
+        if(typeof tplData.whatsapp_number === 'boolean') tplData.whatsapp_number = tplData.phone || '';
+        if(typeof tplData.date_of_birth === 'boolean') tplData.date_of_birth = '';
+        if(typeof tplData.preferred_course === 'boolean') tplData.preferred_course = '';
+        // cutoff: convert numeric 0 to empty string so template shows 'N/A'; stringify cleanly
+        if(tplData.cutoff !== undefined && tplData.cutoff !== null && tplData.cutoff !== '') {
+          const nc = Number(tplData.cutoff);
+          tplData.cutoff = (!isNaN(nc) && nc > 0) ? nc.toFixed(2) : (typeof tplData.cutoff === 'boolean' ? '' : String(tplData.cutoff));
+        }
 
         // helper to render simple Jinja-like {{ key }} and "{{ key or 'fallback' }}"
         function renderTemplate(tpl, data){
@@ -1013,6 +1024,15 @@ app.post('/api/_debug/resend_enquiry_email', async (req, res) => {
     // build tplData
     const tplData = Object.assign({}, student || {}, academic || {}, enqRow || {});
     tplData.college_name = tplData.college_name || process.env.COLLEGE_NAME || '';
+    // Normalize fields so the email template renders correct values
+    if(!tplData.phone || typeof tplData.phone === 'boolean') tplData.phone = (typeof tplData.whatsapp_number === 'string' ? tplData.whatsapp_number : '') || '';
+    if(typeof tplData.whatsapp_number === 'boolean') tplData.whatsapp_number = tplData.phone || '';
+    if(typeof tplData.date_of_birth === 'boolean') tplData.date_of_birth = '';
+    if(typeof tplData.preferred_course === 'boolean') tplData.preferred_course = '';
+    if(tplData.cutoff !== undefined && tplData.cutoff !== null && tplData.cutoff !== '') {
+      const nc = Number(tplData.cutoff);
+      tplData.cutoff = (!isNaN(nc) && nc > 0) ? nc.toFixed(2) : (typeof tplData.cutoff === 'boolean' ? '' : String(tplData.cutoff));
+    }
 
     function renderTemplate(tpl, data){
       if(!tpl || typeof tpl !== 'string') return '';
