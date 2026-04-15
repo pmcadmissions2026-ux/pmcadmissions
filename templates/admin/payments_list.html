@@ -318,11 +318,10 @@ function openPrintBill(p){
       <div style="margin-left:auto;text-align:right;color:white;"><p style="font-size:11px;opacity:0.8;margin:0;">BILL NO</p><p style="font-size:20px;font-weight:900;margin:0;">${p.bill_no||'—'}</p><p style="font-size:11px;opacity:0.8;margin:2px 0 0;">${fmtDate(dateStr)}</p></div>
     </div>
     <div style="padding:24px 28px;background:white;">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px;">
         <div><p style="font-size:11px;color:#6b7280;font-weight:600;margin:0 0 3px;text-transform:uppercase;letter-spacing:.5px;">Student Name</p><p style="font-size:16px;font-weight:900;color:#111418;margin:0;">${p.student_name||'—'}</p></div>
         <div><p style="font-size:11px;color:#6b7280;font-weight:600;margin:0 0 3px;text-transform:uppercase;letter-spacing:.5px;">Unique ID</p><p style="font-size:15px;font-weight:700;color:#137fec;margin:0;">${p.unique_id||'—'}</p></div>
         <div><p style="font-size:11px;color:#6b7280;font-weight:600;margin:0 0 3px;text-transform:uppercase;letter-spacing:.5px;">Department / Branch</p><p style="font-size:14px;font-weight:700;color:#7c3aed;margin:0;">${branch}</p></div>
-        <div><p style="font-size:11px;color:#6b7280;font-weight:600;margin:0 0 3px;text-transform:uppercase;letter-spacing:.5px;">Community</p><p style="font-size:14px;font-weight:600;color:#374151;margin:0;">${community}</p></div>
       </div>
       <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
         <thead><tr style="background:#f1f5f9;">
