@@ -198,10 +198,28 @@ async function generateUniqueStudentId(){
   try{
     // Determine academic year start/end two-digit values. Prefer ACADEMIC_YEAR env like "2025-2026".
     let yyStart, yyEnd;
+    // If ACADEMIC_YEAR is provided and appears reasonable (start year not in the past), use it.
+    // Otherwise default to the next academic year. This prevents stale env values
+    // (e.g. "2025-2026") from forcing IDs for older intakes.
     if(process.env.ACADEMIC_YEAR && process.env.ACADEMIC_YEAR.match(/^(\d{4})-(\d{4})$/)){
       const m = process.env.ACADEMIC_YEAR.match(/^(\d{4})-(\d{4})$/);
-      yyStart = String(m[1]).slice(-2);
-      yyEnd = String(m[2]).slice(-2);
+      const parsedStart = Number(m[1]);
+      const parsedEnd = Number(m[2]);
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      // Accept the env value only if the start year is >= currentYear, otherwise
+      // ignore it and fall back to the next academic year.
+      if(!isNaN(parsedStart) && parsedStart >= currentYear){
+        yyStart = String(parsedStart).slice(-2);
+        yyEnd = String(parsedEnd).slice(-2);
+      } else {
+        // Fall back to the current calendar year as the academic start
+        // (so 2026 -> 26-27), rather than using the following year.
+        const startYear = currentYear;
+        const endYear = startYear + 1;
+        yyStart = String(startYear).slice(-2);
+        yyEnd = String(endYear).slice(-2);
+      }
     } else {
       const now = new Date();
       const startYear = now.getFullYear();
