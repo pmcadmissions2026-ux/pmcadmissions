@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Direct Entry - PMC Admissions</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "primary": "#137fec",
+          "background-light": "#f6f7f8",
+          "background-dark": "#101922"
+        },
+        fontFamily: { "display": ["Lexend", "sans-serif"] },
+        borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" }
+      }
+    }
+  }
+</script>
+<style>
+  body { font-family: 'Lexend', sans-serif; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  .active-nav { background-color: #137fec; color: white !important; }
+  .section-card { background: white; border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1.5rem; }
+  .dark .section-card { background: #1a202c; border-color: #2d3748; }
+  .section-title { font-size: 1rem; font-weight: 700; color: #111418; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+  .dark .section-title { color: #fff; }
+  input[type=text], input[type=number], input[type=email], input[type=tel], input[type=date], select, textarea {
+    width: 100%; border: 1px solid #dbe0e6; border-radius: 0.5rem; padding: 0.5rem 1rem; height: 3rem;
+    background: #fff; color: #111418; font-size: 0.875rem;
+  }
+  .dark input[type=text], .dark input[type=number], .dark input[type=email], .dark input[type=tel], .dark input[type=date], .dark select, .dark textarea {
+    background: #101922; border-color: #2d3748; color: #fff;
+  }
+  select { height: 3rem; }
+  textarea { height: auto; min-height: 5rem; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: #137fec; box-shadow: 0 0 0 2px rgba(19,127,236,0.2); }
+  label { display: block; font-size: 0.8125rem; font-weight: 600; color: #617589; margin-bottom: 0.35rem; }
+  .dark label { color: #a0aec0; }
+  .field-group { display: grid; gap: 1rem; }
+  .col-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .col-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .col-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  @media (max-width: 768px) { .col-2, .col-3, .col-4 { grid-template-columns: 1fr; } }
+  @media (min-width: 768px) and (max-width: 1024px) { .col-3, .col-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .cutoff-display { background: rgba(19,127,236,0.08); border: 1px solid rgba(19,127,236,0.3); color: #137fec; font-weight: 700; }
+  .readonly-input { background: #f6f7f8 !important; cursor: not-allowed; }
+  .dark .readonly-input { background: #1a202c !important; }
+  input[type=file] { height: auto; padding: 0.4rem 0.75rem; cursor: pointer; }
+  .badge { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 9999px; }
+  .badge-blue { background: rgba(19,127,236,0.12); color: #137fec; }
+  #successPanel { display: none; }
+  .step-num { display: inline-flex; align-items: center; justify-content: center; width: 1.5rem; height: 1.5rem; background: #137fec; color: #fff; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; flex-shrink: 0; }
+</style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white min-h-screen flex flex-col">
+
+<!-- HEADER -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] px-6 py-3 sticky top-0 z-50">
+  <div class="flex items-center gap-4">
+    <img src="/static/img/pmc-logo.jpeg" alt="PMC Engineering" class="h-10 w-auto object-contain rounded"/>
+  </div>
+  <div class="flex items-center gap-4">
+    <a href="/templates/admin/counselling_list.html" class="flex items-center gap-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg text-sm font-medium">
+      <span class="material-symbols-outlined text-sm">arrow_back</span> Counselling
+    </a>
+    <a href="{{ url_for('auth.logout') }}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm">Logout</a>
+  </div>
+</header>
+
+<div class="flex flex-1">
+  <!-- SIDEBAR -->
+  <aside class="w-56 border-r border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#111827] hidden md:flex flex-col">
+    <nav class="flex-1 overflow-y-auto px-2 py-6 flex flex-col gap-2">
+      <a href="/templates/admin/counselling_list.html" class="flex items-center gap-3 px-4 py-2 text-[#617589] dark:text-[#a0aec0] hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+        <span class="material-symbols-outlined text-xl">how_to_vote</span>
+        <span class="text-sm font-medium">Counselling</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-4 py-2 text-white bg-primary rounded-lg transition-colors active-nav">
+        <span class="material-symbols-outlined text-xl">add_circle</span>
+        <span class="text-sm font-medium">Direct Entry</span>
+      </a>
+    </nav>
+    <div class="border-t border-[#e5e7eb] dark:border-[#2d3748] px-4 py-4">
+      <p class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3" id="staff-name">Staff</p>
+    </div>
+  </aside>
+
+  <main class="flex-1 overflow-y-auto">
+    <div class="max-w-[1100px] mx-auto p-6 flex flex-col gap-6">
+
+      <!-- PAGE HEADER -->
+      <div class="flex flex-wrap justify-between items-start gap-3">
+        <div>
+          <p class="text-[#111418] dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">Direct Entry</p>
+          <p class="text-[#617589] dark:text-[#a0aec0] text-sm font-normal mt-1">Register a new student directly with enquiry, counselling details, and documents in one step.</p>
+        </div>
+        <span class="badge badge-blue mt-1"><span class="material-symbols-outlined text-xs">bolt</span> All-in-one form</span>
+      </div>
+
+      <!-- FLASH -->
+      <div id="flash-area"></div>
+
+      <!-- SUCCESS PANEL -->
+      <div id="successPanel" class="section-card border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800 flex flex-col gap-4">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined text-green-600 text-4xl">check_circle</span>
+          <div>
+            <p class="text-lg font-bold text-green-800 dark:text-green-300">Student Registered Successfully!</p>
+            <p class="text-sm text-green-700 dark:text-green-400">All records have been created. Confirmation emails have been sent.</p>
+          </div>
+        </div>
+        <div class="bg-white dark:bg-background-dark border border-green-200 dark:border-green-800 rounded-lg p-4 flex flex-wrap gap-6">
+          <div><p class="text-xs text-[#617589] font-semibold uppercase tracking-wider">Student Name</p><p id="res-name" class="text-lg font-bold text-[#111418] dark:text-white mt-0.5">—</p></div>
+          <div><p class="text-xs text-[#617589] font-semibold uppercase tracking-wider">Unique ID</p><p id="res-uid" class="text-lg font-bold text-primary mt-0.5">—</p></div>
+          <div><p class="text-xs text-[#617589] font-semibold uppercase tracking-wider">App ID</p><p id="res-appid" class="text-lg font-bold text-[#111418] dark:text-white mt-0.5">—</p></div>
+        </div>
+        <div class="flex gap-3 flex-wrap">
+          <a href="/templates/admin/counselling_list.html" class="px-5 py-2.5 bg-primary text-white rounded-lg font-semibold hover:bg-blue-700 text-sm">Go to Counselling List</a>
+          <button type="button" onclick="resetForm()" class="px-5 py-2.5 border border-[#e5e7eb] text-[#617589] rounded-lg font-semibold hover:bg-gray-100 text-sm">Add Another Student</button>
+        </div>
+      </div>
+
+      <!-- THE FORM -->
+      <form id="directEntryForm" autocomplete="off" class="flex flex-col gap-5">
+
+        <!-- SECTION 1: PERSONAL DETAILS -->
+        <div class="section-card">
+          <div class="section-title"><span class="step-num">1</span> Personal Details</div>
+          <div class="field-group col-3">
+            <div>
+              <label>Full Name <span class="text-red-500">*</span></label>
+              <input type="text" name="full_name" id="full_name" placeholder="As in certificate" required/>
+            </div>
+            <div>
+              <label>+2 Register Number</label>
+              <input type="text" name="plus2_register_number" placeholder="e.g. 1234567"/>
+            </div>
+            <div>
+              <label>WhatsApp / Mobile <span class="text-red-500">*</span></label>
+              <input type="tel" name="whatsapp_number" placeholder="10-digit number" required/>
+            </div>
+            <div>
+              <label>Email Address</label>
+              <input type="email" name="email" placeholder="student@email.com"/>
+            </div>
+            <div>
+              <label>EMIS Number</label>
+              <input type="text" name="emis_number" placeholder="EMIS no."/>
+            </div>
+            <div>
+              <label>Date of Birth</label>
+              <input type="date" name="date_of_birth"/>
+            </div>
+            <div>
+              <label>Gender</label>
+              <select name="gender">
+                <option value="">Select</option>
+                <option>Male</option>
+                <option>Female</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div>
+              <label>Aadhar Number</label>
+              <input type="text" name="aadhar_number" placeholder="12 digits" maxlength="12"/>
+            </div>
+            <div>
+              <label>Father Name</label>
+              <input type="text" name="father_name"/>
+            </div>
+            <div>
+              <label>Father Phone</label>
+              <input type="tel" name="father_phone"/>
+            </div>
+            <div>
+              <label>Mother Name</label>
+              <input type="text" name="mother_name"/>
+            </div>
+            <div>
+              <label>Mother Phone</label>
+              <input type="tel" name="mother_phone"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: 10TH DETAILS -->
+        <div class="section-card">
+          <div class="section-title"><span class="step-num">2</span> 10th Standard Details</div>
+          <div class="field-group col-3">
+            <div class="col-span-2" style="grid-column: span 2 / span 2;">
+              <label>School Name</label>
+              <input type="text" name="tenth_school_name" placeholder="High school name"/>
+            </div>
+            <div>
+              <label>Year of Passing</label>
+              <input type="number" name="tenth_year" id="tenth_year" placeholder="e.g. 2022" min="1990" max="2099"/>
+            </div>
+            <div>
+              <label>Marks Obtained</label>
+              <input type="number" id="tenth_marks" name="tenth_marks" placeholder="e.g. 450" step="0.01" oninput="calcPct('tenth')"/>
+            </div>
+            <div>
+              <label>Total Marks</label>
+              <input type="number" id="tenth_total" name="tenth_total_marks" placeholder="500" step="1" value="500" oninput="calcPct('tenth')"/>
+            </div>
+            <div>
+              <label>Percentage (%)</label>
+              <input type="number" id="tenth_percentage" name="tenth_percentage" placeholder="Auto" step="0.01" class="readonly-input" readonly/>
+            </div>
+            <div>
+              <label>Board</label>
+              <select name="tenth_board">
+                <option value="">Select</option>
+                <option>State Board</option>
+                <option>CBSE</option>
+                <option>ICSE</option>
+                <option>Others</option>
+              </select>
+            </div>
+            <div>
+              <label>State of Study</label>
+              <select name="tenth_study_state">
+                <option value="">Select</option>
+                <option>Tamil Nadu</option>
+                <option>Other State</option>
+              </select>
+            </div>
+            <div>
+              <label>Medium of Study</label>
+              <select name="tenth_medium_of_study">
+                <option value="">Select</option>
+                <option>Tamil</option>
+                <option>English</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3: +2 DETAILS -->
+        <div class="section-card">
+          <div class="section-title"><span class="step-num">3</span> +2 / HSC Details</div>
+          <div class="field-group col-3">
+            <div style="grid-column: span 2 / span 2;">
+              <label>School Name</label>
+              <input type="text" name="plus2_school_name" placeholder="+2 school name"/>
+            </div>
+            <div>
+              <label>Year of Passing</label>
+              <input type="number" name="plus2_year" placeholder="e.g. 2024" min="1990" max="2099"/>
+            </div>
+            <div style="grid-column: span 3 / span 3;">
+              <label>School Address</label>
+              <input type="text" name="plus2_school_address" placeholder="Full address"/>
+            </div>
+            <div>
+              <label>Marks Obtained</label>
+              <input type="number" id="plus2_marks" name="plus2_marks" placeholder="e.g. 900" step="0.01" oninput="calcPct('plus2')"/>
+            </div>
+            <div>
+              <label>Total Marks</label>
+              <input type="number" id="plus2_total" name="plus2_total_marks" placeholder="1000" step="1" value="1000" oninput="calcPct('plus2')"/>
+            </div>
+            <div>
+              <label>Percentage (%)</label>
+              <input type="number" id="plus2_percentage" name="plus2_percentage" placeholder="Auto" step="0.01" class="readonly-input" readonly/>
+            </div>
+            <div>
+              <label>Board</label>
+              <select name="board">
+                <option value="">Select</option>
+                <option>State Board</option>
+                <option>CBSE</option>
+                <option>ICSE</option>
+                <option>Others</option>
+              </select>
+            </div>
+            <div>
+              <label>State of Study</label>
+              <select name="study_state">
+                <option value="">Select</option>
+                <option>Tamil Nadu</option>
+                <option>Other State</option>
+              </select>
+            </div>
+            <div>
+              <label>Medium of Study</label>
+              <select name="medium_of_study">
+                <option value="">Select</option>
+                <option>Tamil</option>
+                <option>English</option>
+              </select>
+            </div>
+            <div>
+              <label>Group Studied</label>
+              <select name="group_studied" id="group_studied" onchange="onGroupChange()">
+                <option>MPCB (Maths, Physics, Chemistry, Biology)</option>
+                <option>MPCC (Maths, Physics, Chemistry, Computer Science)</option>
+                <option>Vocational</option>
+                <option>Others</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 4: SUBJECT MARKS -->
+        <div class="section-card" id="subject-marks-section">
+          <div class="section-title"><span class="step-num">4</span> Subject Marks <span class="text-xs font-normal text-[#617589] ml-1">(for cutoff)</span></div>
+          <div class="field-group col-4">
+            <div>
+              <label>Maths</label>
+              <input type="number" id="maths" name="maths_marks" placeholder="0-100" step="0.01" oninput="calculateCutoff()"/>
+            </div>
+            <div>
+              <label>Physics</label>
+              <input type="number" id="physics" name="physics_marks" placeholder="0-100" step="0.01" oninput="calculateCutoff()"/>
+            </div>
+            <div>
+              <label>Chemistry</label>
+              <input type="number" id="chemistry" name="chemistry_marks" placeholder="0-100" step="0.01" oninput="calculateCutoff()"/>
+            </div>
+            <div>
+              <label>Cutoff (Auto)</label>
+              <input type="text" id="cutoff" class="cutoff-display readonly-input" readonly value="0.00"/>
+            </div>
+          </div>
+          <div class="field-group col-4 mt-4">
+            <div>
+              <label>Language Subject</label>
+              <input type="text" name="language_subject_name" placeholder="e.g. Tamil"/>
+            </div>
+            <div>
+              <label>Language Marks</label>
+              <input type="number" name="language_subject_marks" placeholder="0-100" step="0.01"/>
+            </div>
+            <div>
+              <label>TNEA Average (Auto)</label>
+              <input type="number" id="tnea_average" name="tnea_average" class="readonly-input" readonly step="0.01"/>
+            </div>
+            <div class="flex flex-col justify-center gap-1 pt-2">
+              <label class="mb-0">TNEA Eligibility</label>
+              <span id="tnea_eligibility" class="text-sm font-bold text-gray-700 dark:text-white">Not calculated</span>
+            </div>
+          </div>
+          <!-- Other subjects -->
+          <div class="mt-4">
+            <label class="mb-2">Other Subjects (optional)</label>
+            <table class="w-full text-sm mb-2">
+              <thead><tr class="bg-gray-50 dark:bg-gray-800">
+                <th class="px-3 py-2 text-left font-semibold text-[#617589]">Subject Name</th>
+                <th class="px-3 py-2 text-left font-semibold text-[#617589]">Marks</th>
+                <th class="px-3 py-2"></th>
+              </tr></thead>
+              <tbody id="other-subjects-rows"></tbody>
+            </table>
+            <button type="button" id="add-subject-row" class="text-sm text-primary font-semibold hover:underline">+ Add Subject</button>
+          </div>
+        </div>
+
+        <!-- VOCATIONAL SECTION (hidden by default) -->
+        <div class="section-card" id="vocational-section" style="display:none;">
+          <div class="section-title"><span class="step-num">4</span> Vocational Subject Marks</div>
+          <div class="field-group col-4">
+            <div>
+              <label>Practical 1</label>
+              <input type="number" id="practical1" name="practical1" placeholder="0-100" step="0.01" oninput="calculateCutoff()"/>
+            </div>
+            <div>
+              <label>Practical 2</label>
+              <input type="number" id="practical2" name="practical2" placeholder="0-100" step="0.01" oninput="calculateCutoff()"/>
+            </div>
+            <div>
+              <label>Theory</label>
+              <input type="number" id="theory" name="theory" placeholder="0-100" step="0.01" oninput="calculateCutoff()"/>
+            </div>
+            <div>
+              <label>Maths (Vocational)</label>
+              <input type="number" id="maths_voc" name="maths_voc" placeholder="0-100" step="0.01" oninput="calculateCutoff()"/>
+            </div>
+          </div>
+          <div class="mt-4">
+            <label>Vocational Cutoff (Auto)</label>
+            <input type="text" id="cutoff_voc_display" class="cutoff-display readonly-input w-32" readonly/>
+            <input type="hidden" id="cutoff_voc" name="cutoff_voc"/>
+          </div>
+        </div>
+
+        <!-- SECTION 5: SOCIAL / CATEGORY -->
+        <div class="section-card">
+          <div class="section-title"><span class="step-num">5</span> Social &amp; Category</div>
+          <div class="field-group col-3">
+            <div>
+              <label>Religion</label>
+              <input type="text" name="religion" placeholder="e.g. Hindu"/>
+            </div>
+            <div>
+              <label>Community</label>
+              <select name="community" id="community" onchange="onCommunityChange()">
+                <option value="">Select</option>
+                <option>OC</option>
+                <option>BC</option>
+                <option>BC(M)</option>
+                <option>MBC</option>
+                <option>MBC(V)</option>
+                <option>SC</option>
+                <option>SC(A)</option>
+                <option>ST</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div>
+              <label>Caste</label>
+              <input type="text" name="caste" placeholder="Caste name"/>
+            </div>
+            <div id="community_custom_wrap" style="display:none;">
+              <label>Custom Community</label>
+              <input type="text" id="community_custom" name="community_custom" placeholder="Specify community"/>
+            </div>
+            <div>
+              <label>Mother Tongue</label>
+              <input type="text" name="mother_tongue" placeholder="e.g. Tamil"/>
+            </div>
+            <div>
+              <label>Preferred Course / Branch</label>
+              <input type="text" name="preferred_course" placeholder="e.g. Computer Science"/>
+            </div>
+            <div>
+              <label>Reference Type</label>
+              <select name="reference_type" id="ref_type" onchange="onRefTypeChange()">
+                <option value="">Select</option>
+                <option>Walk-in</option>
+                <option>Student</option>
+                <option>Staff</option>
+                <option>Parent</option>
+                <option>Online</option>
+                <option>Advertisement</option>
+                <option>School Visit</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div>
+              <label>Reference Details</label>
+              <input type="text" name="reference_details" placeholder="Details"/>
+            </div>
+            <div id="student-ref-fields" style="display:none; grid-column: span 3 / span 3;">
+              <div class="field-group col-2">
+                <div>
+                  <label>Reference Class</label>
+                  <input type="text" name="reference_class" placeholder="e.g. III Year ECE"/>
+                </div>
+                <div>
+                  <label>Ref. Dept / Staff</label>
+                  <input type="text" name="reference_dept_staff" placeholder="Dept or staff name"/>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-6 mt-4">
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" name="category_7_5" class="rounded" onchange="sync7_5AndFG()"/>
+              <span class="text-sm font-semibold">7.5% Category</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" name="first_graduate" class="rounded"/>
+              <span class="text-sm font-semibold">First Graduate</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" name="general_quota" class="rounded"/>
+              <span class="text-sm font-semibold">General Quota</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- SECTION 6: COUNSELLING DETAILS -->
+        <div class="section-card">
+          <div class="section-title"><span class="step-num">6</span> Counselling Details</div>
+          <div class="field-group col-3">
+            <div>
+              <label>Quota Type <span class="text-red-500">*</span></label>
+              <select name="quota_type" id="quota_type" onchange="onQuotaChange()" required>
+                <option value="">Select</option>
+                <option value="GQ">Government Quota (GQ)</option>
+                <option value="MQ">Management Quota (MQ)</option>
+              </select>
+            </div>
+            <div>
+              <label>Allotted Department <span class="text-red-500">*</span></label>
+              <select name="allotted_dept_id" id="allotted_dept_id" required>
+                <option value="">Loading departments…</option>
+              </select>
+            </div>
+            <div id="gq-fields-wrap">
+              <label>Allotment Order Number</label>
+              <input type="text" name="allotment_order_number" id="allotment_order_number" placeholder="GQ order no."/>
+            </div>
+            <div id="mq-fields-wrap" style="display:none;">
+              <label>Consortium Number (MQ)</label>
+              <input type="text" name="consortium_number" id="consortium_number" placeholder="MQ consortium no."/>
+            </div>
+          </div>
+
+          <!-- GQ file upload -->
+          <div id="gq-pdf-wrap" class="mt-4">
+            <label>Allotment Order PDF (GQ)</label>
+            <input type="file" name="allotment_order_pdf" id="allotment_order_pdf" accept="application/pdf"/>
+          </div>
+
+          <!-- Applied flags -->
+          <div class="mt-5 flex flex-wrap gap-6">
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" name="applied_gq" id="applied_gq" class="rounded" onchange="onAppliedGqChange()"/>
+              <span class="text-sm font-semibold">Applied via GQ</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" name="applied_mq" id="applied_mq" class="rounded" onchange="onAppliedMqChange()"/>
+              <span class="text-sm font-semibold">Applied via MQ</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" name="is_first_generation" class="rounded"/>
+              <span class="text-sm font-semibold">First Generation</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input type="checkbox" name="is_seven_point_five" class="rounded"/>
+              <span class="text-sm font-semibold">7.5% Category</span>
+            </label>
+          </div>
+
+          <!-- GQ application details (shown when applied_gq checked) -->
+          <div id="gq-app-details" class="mt-5 p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-xl field-group col-3" style="display:none;">
+            <div style="grid-column: span 3"><p class="text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider mb-2">GQ Application Details</p></div>
+            <div>
+              <label>GQ Application Number</label>
+              <input type="text" name="gq_application_number" placeholder="Application no."/>
+            </div>
+            <div>
+              <label>Applied At (Date)</label>
+              <input type="date" name="gq_applied_at"/>
+            </div>
+            <div>
+              <label>Round</label>
+              <select name="gq_round">
+                <option value="">Select</option>
+                <option value="1">Round 1</option>
+                <option value="2">Round 2</option>
+                <option value="3">Round 3</option>
+                <option value="Special">Special Round</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- MQ application details (shown when applied_mq checked) -->
+          <div id="mq-app-details" class="mt-5 p-4 bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-800 rounded-xl field-group col-2" style="display:none;">
+            <div style="grid-column: span 2"><p class="text-xs font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wider mb-2">MQ Application Details</p></div>
+            <div>
+              <label>MQ Consortium Number</label>
+              <input type="text" name="mq_consortium_number" placeholder="Consortium no."/>
+            </div>
+            <div>
+              <label>MQ Applied At (Date)</label>
+              <input type="date" name="mq_applied_at"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 7: DOCUMENT UPLOADS -->
+        <div class="section-card">
+          <div class="section-title"><span class="step-num">7</span> Document Uploads <span class="text-xs font-normal text-[#617589] ml-1">(all optional)</span></div>
+          <div class="field-group col-3">
+            <div>
+              <label>10th Mark Sheet</label>
+              <input type="file" name="file_10th_mark" accept="image/*,application/pdf"/>
+            </div>
+            <div>
+              <label>12th / HSC Mark Sheet</label>
+              <input type="file" name="file_12th_mark" accept="image/*,application/pdf"/>
+            </div>
+            <div>
+              <label>Community Certificate</label>
+              <input type="file" name="file_community" accept="image/*,application/pdf"/>
+            </div>
+            <div>
+              <label>Passport Photo</label>
+              <input type="file" name="file_photo" accept="image/*"/>
+            </div>
+            <div>
+              <label>Transfer Certificate (TC)</label>
+              <input type="file" name="file_tc" accept="image/*,application/pdf"/>
+            </div>
+            <div>
+              <label>First Graduate Certificate</label>
+              <input type="file" name="file_fg" accept="image/*,application/pdf"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUBMIT -->
+        <div class="flex items-center justify-between gap-4 pb-2">
+          <a href="/templates/admin/counselling_list.html" class="px-5 py-2.5 border border-[#e5e7eb] text-[#617589] rounded-lg font-semibold hover:bg-gray-100 text-sm">Cancel</a>
+          <button type="submit" id="submitBtn" class="inline-flex items-center gap-2 px-8 py-3 bg-primary text-white rounded-xl font-bold text-base hover:bg-blue-700 transition-colors shadow-md">
+            <span class="material-symbols-outlined text-xl">save</span>
+            <span>Register Student</span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ─── Helpers ─────────────────────────────────────────── */
+function calcPct(prefix) {
+  const marks = parseFloat(document.getElementById(prefix + '_marks')?.value) || 0;
+  const total = parseFloat(document.getElementById(prefix + '_total')?.value) || 0;
+  const percEl = document.getElementById(prefix + '_percentage');
+  if (percEl) percEl.value = total > 0 ? ((marks / total) * 100).toFixed(2) : '';
+}
+
+function calculateCutoff() {
+  const group = (document.querySelector('select[name="group_studied"]')?.value || '').toLowerCase();
+  if (group.includes('vocational')) {
+    const m = parseFloat(document.getElementById('maths_voc')?.value || 0);
+    const p1 = parseFloat(document.getElementById('practical1')?.value || 0);
+    const p2 = parseFloat(document.getElementById('practical2')?.value || 0);
+    const th = parseFloat(document.getElementById('theory')?.value || 0);
+    const val = m + (p1 + p2 + th) / 3;
+    const hidden = document.getElementById('cutoff_voc'); if (hidden) hidden.value = isFinite(val) ? val.toFixed(2) : '';
+    const disp = document.getElementById('cutoff_voc_display'); if (disp) disp.value = isFinite(val) ? val.toFixed(2) : '0.00';
+    const tneaEl = document.getElementById('tnea_average'); if (tneaEl) tneaEl.value = isFinite(val) ? val.toFixed(2) : '';
+    updateTneaEligibility(val, true);
+    return;
+  }
+  const maths = parseFloat(document.getElementById('maths')?.value || 0);
+  const physics = parseFloat(document.getElementById('physics')?.value || 0);
+  const chemistry = parseFloat(document.getElementById('chemistry')?.value || 0);
+  const val = maths + (physics + chemistry) / 2;
+  const cutoffEl = document.getElementById('cutoff'); if (cutoffEl) cutoffEl.value = isFinite(val) ? val.toFixed(2) : '';
+  const avg = (maths + physics + chemistry) / 3;
+  const tneaEl = document.getElementById('tnea_average'); if (tneaEl) tneaEl.value = isFinite(avg) ? avg.toFixed(2) : '';
+  updateTneaEligibility(avg, false);
+}
+
+function updateTneaEligibility(score, isVocational) {
+  const el = document.getElementById('tnea_eligibility');
+  if (!el) return;
+  if (isVocational) {
+    if (!isFinite(score) || score <= 0) { el.textContent = 'Not calculated'; el.className = 'text-sm font-bold text-gray-700 dark:text-white'; }
+    else { el.textContent = 'Eligible (Vocational)'; el.className = 'text-sm font-bold text-green-600 dark:text-green-400'; }
+    return;
+  }
+  const community = (document.getElementById('community')?.value || '').trim().toUpperCase();
+  const threshold = community === 'OC' ? 45.0 : 40.0;
+  const m = parseFloat(document.getElementById('maths')?.value || 0);
+  const p = parseFloat(document.getElementById('physics')?.value || 0);
+  const c = parseFloat(document.getElementById('chemistry')?.value || 0);
+  if (!isFinite(score) || (m === 0 && p === 0 && c === 0)) { el.textContent = 'Not calculated'; el.className = 'text-sm font-bold text-gray-700 dark:text-white'; return; }
+  if (score >= threshold) { el.textContent = 'Eligible'; el.className = 'text-sm font-bold text-green-600 dark:text-green-400'; }
+  else { el.textContent = 'Not Eligible'; el.className = 'text-sm font-bold text-red-600 dark:text-red-400'; }
+}
+
+function sync7_5AndFG() {
+  const box7 = document.querySelector('input[name="category_7_5"]');
+  const fg = document.querySelector('input[name="first_graduate"]');
+  if (!box7 || !fg) return;
+  if (box7.checked) { fg.checked = false; fg.disabled = true; } else { fg.disabled = false; }
+}
+
+function onCommunityChange() {
+  const sel = document.getElementById('community');
+  const wrap = document.getElementById('community_custom_wrap');
+  if (!sel || !wrap) return;
+  wrap.style.display = sel.value === 'Other' ? '' : 'none';
+  if (sel.value !== 'Other') { const c = document.getElementById('community_custom'); if (c) c.value = ''; }
+  calculateCutoff();
+}
+
+function onGroupChange() {
+  const group = (document.querySelector('select[name="group_studied"]')?.value || '').toLowerCase();
+  const voc = document.getElementById('vocational-section');
+  const subj = document.getElementById('subject-marks-section');
+  if (group.includes('vocational')) { if (voc) voc.style.display = ''; if (subj) subj.style.display = 'none'; }
+  else { if (voc) voc.style.display = 'none'; if (subj) subj.style.display = ''; }
+  calculateCutoff();
+}
+
+function onRefTypeChange() {
+  const sel = document.getElementById('ref_type');
+  const extra = document.getElementById('student-ref-fields');
+  if (!extra) return;
+  extra.style.display = (sel && sel.value === 'Student') ? '' : 'none';
+}
+
+function onQuotaChange() {
+  const val = document.getElementById('quota_type')?.value || '';
+  const gqWrap = document.getElementById('gq-fields-wrap');
+  const mqWrap = document.getElementById('mq-fields-wrap');
+  const gqPdf = document.getElementById('gq-pdf-wrap');
+  if (val === 'MQ') {
+    if (gqWrap) gqWrap.style.display = 'none';
+    if (mqWrap) mqWrap.style.display = '';
+    if (gqPdf) gqPdf.style.display = 'none';
+  } else {
+    if (gqWrap) gqWrap.style.display = '';
+    if (mqWrap) mqWrap.style.display = 'none';
+    if (gqPdf) gqPdf.style.display = '';
+  }
+}
+
+function onAppliedGqChange() {
+  const checked = document.getElementById('applied_gq')?.checked;
+  const details = document.getElementById('gq-app-details');
+  if (details) details.style.display = checked ? '' : 'none';
+}
+
+function onAppliedMqChange() {
+  const checked = document.getElementById('applied_mq')?.checked;
+  const details = document.getElementById('mq-app-details');
+  if (details) details.style.display = checked ? '' : 'none';
+}
+
+function addOtherSubjectRow(name = '', marks = '') {
+  const tbody = document.getElementById('other-subjects-rows');
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  tr.className = 'other-subject-row border-t border-[#eef2f7] dark:border-[#2d3748]';
+  tr.innerHTML = `
+    <td class="px-3 py-2"><input type="text" class="other-subject-name rounded-lg border border-[#dbe0e6] h-10 px-3 w-full" placeholder="e.g. Biology" value="${String(name).replace(/"/g,'&quot;')}"></td>
+    <td class="px-3 py-2"><input type="number" step="0.01" class="other-subject-marks rounded-lg border border-[#dbe0e6] h-10 px-3 w-full" placeholder="0-100" value="${marks}"></td>
+    <td class="px-3 py-2"><button type="button" class="remove-subject-row px-2 py-1 rounded border border-red-200 text-red-600 hover:bg-red-50 text-xs">Remove</button></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function setFlash(msg, type = 'error') {
+  const el = document.getElementById('flash-area');
+  if (!el) return;
+  const colors = type === 'error'
+    ? 'bg-red-50 border border-red-200 text-red-800 dark:bg-red-950 dark:border-red-800 dark:text-red-300'
+    : 'bg-blue-50 border border-blue-200 text-blue-800 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-300';
+  el.innerHTML = `<div class="${colors} px-4 py-3 rounded-lg text-sm">${msg}</div>`;
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function resetForm() {
+  document.getElementById('directEntryForm').reset();
+  document.getElementById('successPanel').style.display = 'none';
+  document.getElementById('directEntryForm').style.display = '';
+  document.getElementById('flash-area').innerHTML = '';
+  document.getElementById('other-subjects-rows').innerHTML = '';
+  addOtherSubjectRow();
+  onGroupChange();
+}
+
+/* ─── Load Departments ─────────────────────────────────── */
+async function loadDepartments() {
+  try {
+    const resp = await fetch('/api/departments');
+    if (!resp.ok) throw new Error('Failed to load departments');
+    const depts = await resp.json();
+    const sel = document.getElementById('allotted_dept_id');
+    sel.innerHTML = '<option value="">Select department</option>';
+    (Array.isArray(depts) ? depts : []).forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d.id;
+      opt.textContent = `${d.dept_name || d.dept_code} (${d.dept_code || ''})`;
+      sel.appendChild(opt);
+    });
+  } catch (e) {
+    console.warn('loadDepartments error', e);
+    document.getElementById('allotted_dept_id').innerHTML = '<option value="">No departments loaded</option>';
+  }
+}
+
+/* ─── MAIN SUBMIT ─────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', function () {
+  // staff name
+  try { const u = JSON.parse(sessionStorage.getItem('pmc_user') || 'null'); if (u && u.first_name) document.getElementById('staff-name').textContent = u.first_name || u.email || 'Staff'; } catch (e) {}
+
+  loadDepartments();
+  onGroupChange();
+
+  // other subjects table
+  const addBtn = document.getElementById('add-subject-row');
+  if (addBtn) addBtn.addEventListener('click', () => addOtherSubjectRow());
+  const rowsRoot = document.getElementById('other-subjects-rows');
+  if (rowsRoot) rowsRoot.addEventListener('click', ev => { const btn = ev.target.closest('.remove-subject-row'); if (btn) btn.closest('.other-subject-row')?.remove(); });
+  addOtherSubjectRow();
+
+  /* ─── Form submit ─── */
+  document.getElementById('directEntryForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    calculateCutoff();
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-xl">sync</span> Registering…';
+    setFlash('', 'info');
+
+    const fd = new FormData(this);
+
+    /* ── build other_subjects_json ── */
+    let otherSubjectsJson = null;
+    const rows = Array.from(document.querySelectorAll('.other-subject-row'));
+    const tempObj = {};
+    for (const row of rows) {
+      const name = (row.querySelector('.other-subject-name')?.value || '').trim();
+      const marksRaw = row.querySelector('.other-subject-marks')?.value;
+      if (!name && !marksRaw) continue;
+      if (!name) { setFlash('Please enter subject name for all added rows.'); btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined text-xl">save</span> Register Student'; return; }
+      const marks = Number(marksRaw);
+      if (isNaN(marks)) { setFlash('Please enter valid marks for all added rows.'); btn.disabled = false; btn.innerHTML = '<span class="material-symbols-outlined text-xl">save</span> Register Student'; return; }
+      tempObj[name] = marks;
+    }
+    if (Object.keys(tempObj).length > 0) otherSubjectsJson = tempObj;
+
+    /* ── STEP 1: POST /api/enquiries ── */
+    const group = (document.querySelector('select[name="group_studied"]')?.value || '').toLowerCase();
+    const isVocational = group.includes('vocational');
+    const cutoffVal = isVocational
+      ? (Number(document.getElementById('cutoff_voc')?.value || 0))
+      : (Number(document.getElementById('cutoff')?.value || 0));
+
+    const student = {
+      full_name: fd.get('full_name') || '',
+      email: fd.get('email') || null,
+      phone: fd.get('whatsapp_number') || null,
+      whatsapp_number: fd.get('whatsapp_number') || null,
+      father_name: fd.get('father_name') || null,
+      mother_name: fd.get('mother_name') || null,
+      father_phone: fd.get('father_phone') || null,
+      mother_phone: fd.get('mother_phone') || null,
+      community: (fd.get('community') === 'Other' && fd.get('community_custom')) ? fd.get('community_custom') : (fd.get('community') || null),
+      religion: fd.get('religion') || null,
+      caste: fd.get('caste') || null,
+      mother_tongue: fd.get('mother_tongue') || null,
+      date_of_birth: fd.get('date_of_birth') || null,
+      gender: fd.get('gender') || null,
+      aadhar_number: fd.get('aadhar_number') || null,
+      emis_number: fd.get('emis_number') || null,
+      plus2_register_number: fd.get('plus2_register_number') || null,
+      tenth_school_name: fd.get('tenth_school_name') || null,
+      tenth_marks: fd.get('tenth_marks') ? Number(fd.get('tenth_marks')) : null,
+      tenth_percentage: fd.get('tenth_percentage') ? Number(fd.get('tenth_percentage')) : null,
+      tenth_year: fd.get('tenth_year') ? Number(fd.get('tenth_year')) : null,
+      plus2_school_name: fd.get('plus2_school_name') || null,
+      plus2_marks: fd.get('plus2_marks') ? Number(fd.get('plus2_marks')) : null,
+      plus2_percentage: fd.get('plus2_percentage') ? Number(fd.get('plus2_percentage')) : null,
+      plus2_year: fd.get('plus2_year') ? Number(fd.get('plus2_year')) : null,
+      board: fd.get('board') || null,
+      study_state: fd.get('study_state') || null,
+      group_studied: fd.get('group_studied') || null,
+      medium_of_study: fd.get('medium_of_study') || null,
+      category_7_5: !!fd.get('category_7_5'),
+      first_graduate: !!fd.get('first_graduate'),
+      general_quota: !!fd.get('general_quota'),
+      reference_details: fd.get('reference_details') || null
+    };
+    const academic = {
+      school_name: fd.get('plus2_school_name') || null,
+      plus2_school_address: fd.get('plus2_school_address') || null,
+      board: fd.get('board') || null,
+      maths_marks: fd.get('maths_marks') ? Number(fd.get('maths_marks')) : null,
+      physics_marks: fd.get('physics_marks') ? Number(fd.get('physics_marks')) : null,
+      chemistry_marks: fd.get('chemistry_marks') ? Number(fd.get('chemistry_marks')) : null,
+      language_subject_name: fd.get('language_subject_name') || null,
+      language_subject_marks: fd.get('language_subject_marks') ? Number(fd.get('language_subject_marks')) : null,
+      other_subjects_json: otherSubjectsJson,
+      cutoff: cutoffVal || null,
+      tnea_average: fd.get('tnea_average') ? Number(fd.get('tnea_average')) : null,
+      tnea_eligible: (function () {
+        const el = document.getElementById('tnea_eligibility');
+        if (!el) return null;
+        return el.className.includes('green') ? true : (el.className.includes('red') ? false : null);
+      })()
+    };
+    const enquiry = {
+      preferred_course: fd.get('preferred_course') || null,
+      source: fd.get('reference_type') || null,
+      reference_class: fd.get('reference_class') || null,
+      reference_dept_staff: fd.get('reference_dept_staff') || null,
+      status: 'open'
+    };
+
+    try {
+      setFlash('<span class="font-semibold">Step 1/4:</span> Creating student record…', 'info');
+      const r1 = await fetch('/api/enquiries', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student, academic, enquiry }) });
+      const d1 = await r1.json();
+      if (!r1.ok || !d1.ok) throw new Error('Step 1 failed: ' + (d1.error || d1.message || r1.statusText));
+      const studentId = d1.student?.id;
+      const uniqueId = d1.student?.unique_id;
+
+      /* ── STEP 2: POST /api/admission_applications ── */
+      setFlash('<span class="font-semibold">Step 2/4:</span> Creating admission application…', 'info');
+      const r2 = await fetch('/api/admission_applications', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student_id: studentId }) });
+      const d2 = await r2.json();
+      if (!r2.ok || !d2.ok) throw new Error('Step 2 failed: ' + (d2.error || r2.statusText));
+      const appId = d2.item?.app_id;
+
+      /* ── STEP 3: POST /api/counselling_records ── */
+      setFlash('<span class="font-semibold">Step 3/4:</span> Saving counselling record…', 'info');
+      const cfd = new FormData();
+      cfd.append('app_id', appId);
+      cfd.append('quota_type', fd.get('quota_type') || '');
+      cfd.append('allotted_dept_id', fd.get('allotted_dept_id') || '');
+      cfd.append('allotment_order_number', fd.get('allotment_order_number') || '');
+      cfd.append('consortium_number', fd.get('consortium_number') || '');
+      cfd.append('applied_gq', document.getElementById('applied_gq')?.checked ? 'true' : 'false');
+      cfd.append('gq_application_number', fd.get('gq_application_number') || '');
+      cfd.append('gq_applied_at', fd.get('gq_applied_at') || '');
+      cfd.append('gq_round', fd.get('gq_round') || '');
+      cfd.append('applied_mq', document.getElementById('applied_mq')?.checked ? 'true' : 'false');
+      cfd.append('mq_consortium_number', fd.get('mq_consortium_number') || '');
+      cfd.append('mq_applied_at', fd.get('mq_applied_at') || '');
+      cfd.append('is_first_generation', document.querySelector('input[name="is_first_generation"]')?.checked ? 'true' : 'false');
+      cfd.append('is_seven_point_five', document.querySelector('input[name="is_seven_point_five"]')?.checked ? 'true' : 'false');
+      const pdfFile = document.getElementById('allotment_order_pdf')?.files?.[0];
+      if (pdfFile) cfd.append('allotment_order_pdf', pdfFile, pdfFile.name);
+
+      const r3 = await fetch('/api/counselling_records', { method: 'POST', body: cfd });
+      const d3 = await r3.json();
+      if (!r3.ok || !d3.ok) throw new Error('Step 3 failed: ' + (d3.error || r3.statusText));
+
+      /* ── STEP 4: POST /api/upload-file (documents) ── */
+      const docFields = ['file_10th_mark', 'file_12th_mark', 'file_community', 'file_photo', 'file_tc', 'file_fg'];
+      const hasFiles = docFields.some(f => {
+        const el = document.querySelector(`input[name="${f}"]`);
+        return el && el.files && el.files.length > 0;
+      });
+      if (hasFiles) {
+        setFlash('<span class="font-semibold">Step 4/4:</span> Uploading documents…', 'info');
+        const dfd = new FormData();
+        dfd.append('app_id', appId);
+        dfd.append('unique_id', uniqueId);
+        for (const field of docFields) {
+          const el = document.querySelector(`input[name="${field}"]`);
+          if (el && el.files && el.files.length > 0) dfd.append(field, el.files[0], el.files[0].name);
+        }
+        const r4 = await fetch('/api/upload-file', { method: 'POST', body: dfd });
+        const d4 = await r4.json();
+        if (!r4.ok || !d4.ok) { console.warn('Document upload partial error:', d4); }
+      }
+
+      /* ── SUCCESS ── */
+      document.getElementById('flash-area').innerHTML = '';
+      document.getElementById('directEntryForm').style.display = 'none';
+      document.getElementById('res-name').textContent = student.full_name || '—';
+      document.getElementById('res-uid').textContent = uniqueId || '—';
+      document.getElementById('res-appid').textContent = appId || '—';
+      document.getElementById('successPanel').style.display = '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    } catch (err) {
+      setFlash((err && err.message) ? err.message : String(err), 'error');
+      console.error('[Direct Entry]', err);
+      btn.disabled = false;
+      btn.innerHTML = '<span class="material-symbols-outlined text-xl">save</span> Register Student';
+    }
+  });
+});
+</script>
+</body>
+</html>

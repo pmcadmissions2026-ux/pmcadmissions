@@ -1448,6 +1448,18 @@ app.get('/api/admission_applications', async (req, res) => {
   }catch(e){ return res.status(500).json({ ok:false, error: String(e) }); }
 });
 
+// Create admission_application for a student (used by direct entry flow)
+app.post('/api/admission_applications', async (req, res) => {
+  try{
+    const { student_id } = req.body || {};
+    if(!student_id) return res.status(400).json({ ok:false, error: 'student_id is required' });
+    const row = { student_id: Number(student_id), status: 'created' };
+    const { data, error } = await supabase.from('admission_applications').insert(row).select().maybeSingle();
+    if(error) return res.status(500).json({ ok:false, error: error.message });
+    return res.json({ ok:true, item: data });
+  }catch(e){ return res.status(500).json({ ok:false, error: String(e) }); }
+});
+
 // Users: list users
 app.get('/api/users', async (req, res) => {
   try{
