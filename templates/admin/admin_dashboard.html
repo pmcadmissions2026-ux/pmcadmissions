@@ -52,7 +52,7 @@
       <!-- debug banner removed -->
 
       <!-- Assigned modules wrapper (client will populate) -->
-      <div id="assigned-modules-wrapper" data-user-email="" class="bg-white dark:bg-[#1a202c] rounded-lg border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden p-6">
+      <div id="assigned-modules-wrapper" data-user-email="" class="bg-white dark:bg-[#1a202c] rounded-lg border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden p-6 hidden">
         <div class="flex items-center gap-3 mb-4"><div class="bg-blue-100 dark:bg-blue-900 p-3 rounded-lg"><span class="material-symbols-outlined text-blue-600 dark:text-blue-400">dashboard</span></div><div><h2 class="text-2xl font-bold text-[#111418] dark:text-white">Your Assigned Modules</h2><p class="text-sm text-[#617589] dark:text-[#a0aec0]">Access only the modules assigned to you</p></div></div>
         <div id="no-modules-placeholder" class="text-center py-12"><span class="material-symbols-outlined text-6xl text-[#e5e7eb] dark:text-[#2d3748] mx-auto block mb-4">lock</span><h3 class="text-lg font-bold text-[#111418] dark:text-white mb-2">No Modules Assigned</h3><p class="text-[#617589] dark:text-[#a0aec0]">You do not have any modules assigned yet.</p></div>
       </div>
@@ -64,27 +64,7 @@
         </div>
       </div>
       <!-- Accepted table (new) -->
-      <div id="accepted-section" class="flex flex-col bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden mt-6">
-        <div class="flex items-center justify-between px-6 py-5 border-b border-[#e5e7eb] dark:border-[#2d3748]">
-          <h2 class="text-[#111418] dark:text-white text-xl font-bold leading-tight">Accepted Students</h2>
-          <button class="text-primary text-sm font-bold flex items-center gap-1 hover:underline"><span class="material-symbols-outlined text-sm">download</span> Export List</button>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="bg-[#f8fafc] dark:bg-[#2d3748] border-b border-[#e5e7eb] dark:border-[#2d3748]">
-                <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Student Name</th>
-                <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Unique ID</th>
-                <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Cut-off</th>
-                <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Community</th>
-                <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="accepted-tbody" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"><tr><td colspan="5" class="px-6 py-12 text-center text-slate-500"><span class="material-symbols-outlined text-4xl mb-2">check_circle</span><p class="text-sm font-medium">No accepted students loaded</p></td></tr></tbody>
-          </table>
-        </div>
-        <div class="px-6 py-4 flex items-center justify-between border-t border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c]"><p class="text-sm text-[#617589]" id="accepted-count">Showing 0 records</p><div class="flex gap-2" id="accepted-pager"></div></div>
-      </div>
+      
 
       <!-- Tables (empty tbody; client injector will fill) -->
       <div id="pending-section" class="flex flex-col bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden">
@@ -109,6 +89,27 @@
         <div class="px-6 py-4 flex items-center justify-between border-t border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c]"><p class="text-sm text-[#617589]" id="pending-count">Showing 0 records</p><div class="flex gap-2" id="pending-pager"></div></div>
       </div>
 
+      <div id="accepted-section" class="flex flex-col bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden mt-6">
+        <div class="flex items-center justify-between px-6 py-5 border-b border-[#e5e7eb] dark:border-[#2d3748]">
+          <h2 class="text-[#111418] dark:text-white text-xl font-bold leading-tight">Accepted Students</h2>
+          <button class="text-primary text-sm font-bold flex items-center gap-1 hover:underline"><span class="material-symbols-outlined text-sm">download</span> Export List</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-[#f8fafc] dark:bg-[#2d3748] border-b border-[#e5e7eb] dark:border-[#2d3748]">
+                <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Student Name</th>
+                <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Unique ID</th>
+                <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Cut-off</th>
+                <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider">Community</th>
+                <th class="px-6 py-4 text-sm font-bold text-[#617589] dark:text-[#a0aec0] uppercase tracking-wider text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="accepted-tbody" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"><tr><td colspan="5" class="px-6 py-12 text-center text-slate-500"><span class="material-symbols-outlined text-4xl mb-2">check_circle</span><p class="text-sm font-medium">No accepted students loaded</p></td></tr></tbody>
+          </table>
+        </div>
+        <div class="px-6 py-4 flex items-center justify-between border-t border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c]"><p class="text-sm text-[#617589]" id="accepted-count">Showing 0 records</p><div class="flex gap-2" id="accepted-pager"></div></div>
+      </div>
       <!-- Assigned / Accepted placeholders -->
       <div id="assigned-section" class="mt-8 space-y-6">
         <div id="accepted-by-you" class="hidden"></div>
