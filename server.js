@@ -661,7 +661,9 @@ app.post('/api/enquiries', async (req, res) => {
     }
 
     // Insert enquiry (include student email so enquiries table has a recipient)
-    const enquiryRow = Object.assign({}, enquiry || {}, { student_id: studentId, student_name: student.full_name, whatsapp_number: student.whatsapp_number || student.phone || null, email: (student && student.email) ? student.email : (enquiry && enquiry.email ? enquiry.email : null), religion: (student && student.religion) || null });
+    // reference_name: prefer explicitly passed enquiry.reference_name, fall back to student.reference_details
+    const resolvedRefName = (enquiry && enquiry.reference_name) || (student && student.reference_details) || null;
+    const enquiryRow = Object.assign({}, enquiry || {}, { student_id: studentId, student_name: student.full_name, whatsapp_number: student.whatsapp_number || student.phone || null, email: (student && student.email) ? student.email : (enquiry && enquiry.email ? enquiry.email : null), religion: (student && student.religion) || null, reference_name: resolvedRefName });
     const { data: createdEnquiry, error: enquiryErr } = await supabase.from('enquiries').insert(enquiryRow).select().maybeSingle();
     if(enquiryErr) return res.status(500).json({ error: enquiryErr.message });
 
@@ -1477,6 +1479,86 @@ app.post('/api/admission_applications', async (req, res) => {
     return res.json({ ok:true, item: data });
   }catch(e){ return res.status(500).json({ ok:false, error: String(e) }); }
 });
+
+// ── Basic Enquiry endpoints ──────────────────────────────────────────────────
+
+// List — by default only returns records not yet added to a full enquiry.
+// Pass ?all=1 to include already-added ones (used by the Fetch modal).
+app.get('/api/basic_enquiry', async (req, res) => {
+  try{
+    const showAll = req.query.all === '1';
+    let q = supabase.from('basic_enquiry').select('*').order('created_at', { ascending: false });
+    if(!showAll) q = q.eq('added_to_enquiry', false);
+    const { data, error } = await q.limit(2000);
+    if(error) return res.status(500).json({ error: error.message });
+    res.json(data || []);
+  }catch(e){ res.status(500).json({ error: String(e) }); }
+});
+
+// Get single record by id
+app.get('/api/basic_enquiry/:id', async (req, res) => {
+  try{
+    const { data, error } = await supabase.from('basic_enquiry').select('*').eq('id', req.params.id).maybeSingle();
+    if(error) return res.status(500).json({ error: error.message });
+    if(!data) return res.status(404).json({ error: 'Not found' });
+    res.json(data);
+  }catch(e){ res.status(500).json({ error: String(e) }); }
+});
+
+// Create new basic enquiry record
+app.post('/api/basic_enquiry', async (req, res) => {
+  try{
+    const { full_name, gender, whatsapp_number, date_of_birth, mother_tongue,
+            father_name, father_phone, mother_name, mother_phone,
+            school_10_name, school_10_place, school_12_name, school_12_place,
+            reference_type, reference_name, date } = req.body || {};
+    if(!full_name) return res.status(400).json({ error: 'full_name is required' });
+    const row = {
+      full_name,
+      gender: gender || null,
+      whatsapp_number: whatsapp_number || null,
+      date_of_birth: date_of_birth || null,
+      mother_tongue: mother_tongue || null,
+      father_name: father_name || null,
+      father_phone: father_phone || null,
+      mother_name: mother_name || null,
+      mother_phone: mother_phone || null,
+      school_10_name: school_10_name || null,
+      school_10_place: school_10_place || null,
+      school_12_name: school_12_name || null,
+      school_12_place: school_12_place || null,
+      reference_type: reference_type || null,
+      reference_name: reference_name || null,
+    };
+    if(date) row.date = date;
+    const { data, error } = await supabase.from('basic_enquiry').insert(row).select().maybeSingle();
+    if(error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true, item: data });
+  }catch(e){ res.status(500).json({ error: String(e) }); }
+});
+
+// Mark a basic enquiry record as added to full enquiry
+app.put('/api/basic_enquiry/:id/mark_added', async (req, res) => {
+  try{
+    const { data, error } = await supabase.from('basic_enquiry')
+      .update({ added_to_enquiry: true })
+      .eq('id', req.params.id)
+      .select().maybeSingle();
+    if(error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true, item: data });
+  }catch(e){ res.status(500).json({ error: String(e) }); }
+});
+
+// Delete a basic enquiry record
+app.delete('/api/basic_enquiry/:id', async (req, res) => {
+  try{
+    const { error } = await supabase.from('basic_enquiry').delete().eq('id', req.params.id);
+    if(error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true });
+  }catch(e){ res.status(500).json({ error: String(e) }); }
+});
+
+// ── End Basic Enquiry endpoints ──────────────────────────────────────────────
 
 // Users: list users
 app.get('/api/users', async (req, res) => {

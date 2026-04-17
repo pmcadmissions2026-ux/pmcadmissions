@@ -76,6 +76,10 @@
 <span class="material-symbols-outlined text-xl">dashboard</span>
 <span>Dashboard</span>
 </a>
+<a href="/templates/admin/basic_entry.html" class="flex items-center justify-center gap-2 h-10 px-5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors">
+<span class="material-symbols-outlined text-xl">person_add</span>
+<span>Basic Entry</span>
+</a>
 <a href="/templates/admin/new_enquiry.html" class="flex items-center justify-center gap-2 h-10 px-6 bg-primary hover:bg-blue-600 text-white rounded-lg font-semibold transition-colors">
 <span class="material-symbols-outlined text-xl">add</span>
 <span>New Enquiry</span>
@@ -131,6 +135,58 @@
 </div>
 <!-- Pagination -->
 <div id="enqPagination" class="flex flex-wrap items-center justify-center gap-2 mt-2 pb-2"></div>
+
+<!-- ===== Basic Entry Records Section ===== -->
+<div class="flex flex-col gap-4 mt-4">
+  <!-- Section Header -->
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex flex-col gap-1">
+      <p class="text-[#111418] dark:text-white text-xl font-bold">Basic Entry Records</p>
+      <p class="text-[#617589] dark:text-[#a0aec0] text-sm">Students captured via quick entry, not yet added to a full enquiry.</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button onclick="exportBasicEntryExcel()"
+        class="flex items-center gap-2 h-9 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors">
+        <span class="material-symbols-outlined text-[18px]">description</span>
+        <span>Export to Excel</span>
+      </button>
+    </div>
+  </div>
+  <!-- Search bar -->
+  <div class="bg-white dark:bg-[#1a202c] rounded-lg border border-[#e5e7eb] dark:border-[#2d3748] p-3">
+    <div class="flex flex-wrap gap-3 items-center">
+      <div class="flex-1 min-w-[200px]">
+        <input id="beSearch" type="text" placeholder="Search by name or phone…" oninput="applyBeFilters()"
+          class="w-full px-4 py-2 border border-[#e5e7eb] dark:border-[#2d3748] rounded-lg bg-white dark:bg-[#111827] text-sm focus:outline-none focus:ring-2 focus:ring-primary"/>
+      </div>
+      <span class="text-xs text-[#617589] dark:text-[#a0aec0]">Showing <span id="beShowing">0</span> of <span id="beTotal">0</span></span>
+    </div>
+  </div>
+  <!-- Table -->
+  <div class="bg-white dark:bg-[#1a202c] rounded-lg border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-[#f0f2f4] dark:bg-[#111827] border-b border-[#e5e7eb] dark:border-[#2d3748]">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-[#617589] dark:text-[#a0aec0] uppercase">#</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-[#617589] dark:text-[#a0aec0] uppercase">Date</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-[#617589] dark:text-[#a0aec0] uppercase">Name</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-[#617589] dark:text-[#a0aec0] uppercase">Gender</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-[#617589] dark:text-[#a0aec0] uppercase">WhatsApp</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-[#617589] dark:text-[#a0aec0] uppercase">DOB</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-[#617589] dark:text-[#a0aec0] uppercase">Ref Type</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-[#617589] dark:text-[#a0aec0] uppercase">Ref Name</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-[#617589] dark:text-[#a0aec0] uppercase">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="be-tbody" class="divide-y divide-[#e5e7eb] dark:divide-[#2d3748]"></tbody>
+      </table>
+    </div>
+  </div>
+  <!-- Pagination -->
+  <div id="bePagination" class="flex flex-wrap items-center justify-center gap-2 pb-2"></div>
+</div>
+
 </div>
 
 <!-- Stats Footer -->
@@ -286,7 +342,141 @@ function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,
 document.addEventListener('DOMContentLoaded', function(){
     try{ const u = JSON.parse(sessionStorage.getItem('pmc_user')||'null'); if(u){ document.getElementById('sidebar-user-name').textContent = (u.first_name||u.email||'User'); document.getElementById('sidebar-user-role').textContent = (u.role_id?('Role '+u.role_id):''); } }catch(e){}
     fetchEnquiries();
+    fetchBasicEntries();
 });
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ===== Basic Entry Table JS =====
+let allBasicEntries = [];
+let filteredBasicEntries = [];
+let beCurrentPage = 1;
+const BE_PAGE_SIZE = 25;
+
+async function fetchBasicEntries(){
+  const tbody = document.getElementById('be-tbody');
+  try{
+    tbody.innerHTML = '<tr><td colspan="9" class="px-4 py-6 text-center text-sm text-[#617589]">Loading…</td></tr>';
+    const res = await fetch('/api/basic_enquiry');
+    if(!res.ok) throw new Error('Failed to load basic entries');
+    allBasicEntries = await res.json();
+    applyBeFilters();
+  }catch(err){
+    tbody.innerHTML = `<tr><td colspan="9" class="px-4 py-6 text-center text-sm text-red-600">${escapeHtml(err.message)}</td></tr>`;
+  }
+}
+
+function applyBeFilters(){
+  const q = (document.getElementById('beSearch')?.value || '').toLowerCase().trim();
+  filteredBasicEntries = allBasicEntries.filter(r => {
+    if(!q) return true;
+    const haystack = ((r.full_name||'') + ' ' + (r.whatsapp_number||'')).toLowerCase();
+    return haystack.includes(q);
+  });
+  document.getElementById('beTotal').textContent = allBasicEntries.length;
+  renderBePage(1);
+}
+
+function renderBePage(page){
+  beCurrentPage = page;
+  const tbody = document.getElementById('be-tbody');
+  const total = filteredBasicEntries.length;
+  const totalPages = Math.max(1, Math.ceil(total / BE_PAGE_SIZE));
+  if(page < 1) page = 1; if(page > totalPages) page = totalPages;
+  const slice = filteredBasicEntries.slice((page-1)*BE_PAGE_SIZE, page*BE_PAGE_SIZE);
+
+  document.getElementById('beShowing').textContent = total;
+
+  if(total === 0){
+    tbody.innerHTML = '<tr><td colspan="9" class="px-4 py-8 text-center"><div class="flex flex-col items-center gap-2"><span class="material-symbols-outlined text-[#617589] text-5xl">person_search</span><p class="text-[#617589] dark:text-[#a0aec0] text-sm font-medium">No basic entries found</p></div></td></tr>';
+    renderBePagination(0, 0, 1);
+    return;
+  }
+
+  tbody.innerHTML = '';
+  const globalOffset = (page-1)*BE_PAGE_SIZE;
+  slice.forEach((r, idx) => {
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-[#f9fafb] dark:hover:bg-[#111827] transition-colors';
+    const dateDisplay = r.date ? r.date : (r.created_at ? new Date(r.created_at).toLocaleDateString() : 'N/A');
+    const dobDisplay = r.date_of_birth || '';
+    tr.innerHTML = `
+      <td class="px-4 py-3 text-sm text-[#617589]">${globalOffset + idx + 1}</td>
+      <td class="px-4 py-3 text-sm text-[#617589]">${escapeHtml(dateDisplay)}</td>
+      <td class="px-4 py-3 text-sm font-medium text-[#111418] dark:text-white">${escapeHtml(r.full_name||'')}</td>
+      <td class="px-4 py-3 text-sm text-[#617589]">${escapeHtml(r.gender||'')}</td>
+      <td class="px-4 py-3 text-sm text-[#617589]">${escapeHtml(r.whatsapp_number||'')}</td>
+      <td class="px-4 py-3 text-sm text-[#617589]">${escapeHtml(dobDisplay)}</td>
+      <td class="px-4 py-3 text-sm text-[#617589]">${escapeHtml(r.reference_type||'')}</td>
+      <td class="px-4 py-3 text-sm text-[#617589]">${escapeHtml(r.reference_name||'')}</td>
+      <td class="px-4 py-3">
+        <div class="flex gap-2">
+          <button onclick="addBasicToEnquiry(${r.id})" class="px-3 py-1 bg-primary hover:bg-blue-600 text-white rounded-lg text-xs font-medium">Add to Enquiry</button>
+          <button onclick="deleteBasicEntry(${r.id}, this)" class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-medium">Delete</button>
+        </div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  renderBePagination(page, totalPages, total);
+}
+
+function renderBePagination(page, totalPages, total){
+  const pg = document.getElementById('bePagination');
+  if(!pg) return;
+  if(totalPages <= 1){ pg.innerHTML = ''; return; }
+  const btnClass = 'px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors';
+  const activeClass = 'bg-primary text-white border-primary';
+  const inactiveClass = 'bg-white dark:bg-[#111827] text-[#111418] dark:text-white border-[#e5e7eb] dark:border-[#2d3748] hover:bg-[#f0f2f4] dark:hover:bg-[#1f2937]';
+  let html = `<button class="${btnClass} ${page===1?'opacity-40 cursor-not-allowed '+inactiveClass:inactiveClass}" onclick="renderBePage(${page-1})" ${page===1?'disabled':''}>‹ Prev</button>`;
+  const start = Math.max(1, page-2), end = Math.min(totalPages, page+2);
+  if(start > 1) html += `<button class="${btnClass} ${inactiveClass}" onclick="renderBePage(1)">1</button>${start>2?'<span class="px-1 text-xs text-[#617589]">…</span>':''}`;
+  for(let i=start;i<=end;i++) html += `<button class="${btnClass} ${i===page?activeClass:inactiveClass}" onclick="renderBePage(${i})">${i}</button>`;
+  if(end < totalPages) html += `${end<totalPages-1?'<span class="px-1 text-xs text-[#617589]">…</span>':''}<button class="${btnClass} ${inactiveClass}" onclick="renderBePage(${totalPages})">${totalPages}</button>`;
+  html += `<button class="${btnClass} ${page===totalPages?'opacity-40 cursor-not-allowed '+inactiveClass:inactiveClass}" onclick="renderBePage(${page+1})" ${page===totalPages?'disabled':''}>Next ›</button>`;
+  html += `<span class="text-xs text-[#617589] ml-2">Page ${page}/${totalPages}</span>`;
+  pg.innerHTML = html;
+}
+
+function addBasicToEnquiry(id){
+  const record = allBasicEntries.find(r => r.id === id);
+  if(!record) return;
+  // Store in sessionStorage for new_enquiry.html to pick up
+  sessionStorage.setItem('basicEntryPrefill', JSON.stringify(record));
+  window.location.href = '/templates/admin/new_enquiry.html';
+}
+
+async function deleteBasicEntry(id, btn){
+  if(!confirm('Delete this basic entry record?')) return;
+  try{
+    btn.disabled = true;
+    const res = await fetch(`/api/basic_enquiry/${id}`, { method: 'DELETE' });
+    if(!res.ok){ const b = await res.json(); throw new Error(b.error || 'Delete failed'); }
+    allBasicEntries = allBasicEntries.filter(r => r.id !== id);
+    applyBeFilters();
+  }catch(err){
+    alert('Error: ' + err.message);
+    btn.disabled = false;
+  }
+}
+
+function exportBasicEntryExcel(){
+  if(typeof XLSX === 'undefined'){ alert('Excel library not loaded yet. Please wait a moment and try again.'); return; }
+  const headers = ['S.No','Date','Name','Gender','WhatsApp','DOB','Father Name','Father Phone','Mother Name','Mother Phone','School X','X Place','School XII','XII Place','Ref Type','Ref Name'];
+  const rows = [headers, ...allBasicEntries.map((r,i) => [
+    i+1,
+    r.date || (r.created_at ? new Date(r.created_at).toLocaleDateString() : ''),
+    r.full_name||'', r.gender||'', r.whatsapp_number||'', r.date_of_birth||'',
+    r.father_name||'', r.father_phone||'', r.mother_name||'', r.mother_phone||'',
+    r.school_10_name||'', r.school_10_place||'', r.school_12_name||'', r.school_12_place||'',
+    r.reference_type||'', r.reference_name||''
+  ])];
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Basic Entries');
+  XLSX.writeFile(wb, 'basic_entries.xlsx');
+}
 </script>
 </body>
 </html>

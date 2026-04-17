@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Basic Entry - PMC Engineering</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    "primary": "#137fec",
+                    "background-light": "#f6f7f8",
+                    "background-dark": "#101922",
+                },
+                fontFamily: { "display": ["Lexend", "sans-serif"] },
+                borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+        },
+    }
+</script>
+<style>
+    body { font-family: 'Lexend', sans-serif; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    .active-nav { background-color: #137fec; color: white !important; }
+</style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white min-h-screen flex flex-col">
+
+<!-- Header -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] px-6 py-3 sticky top-0 z-50">
+  <div class="flex items-center gap-4">
+    <img src="/static/img/pmc-logo.jpeg" alt="PMC Engineering" class="h-10 w-auto object-contain rounded" />
+  </div>
+  <div class="flex items-center gap-4">
+    <a href="/auth/logout" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium">Logout</a>
+  </div>
+</header>
+
+<div class="flex flex-1">
+  <!-- Sidebar -->
+  <aside class="w-56 border-r border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#111827] hidden md:flex flex-col">
+    <nav id="sidebar-nav" class="flex-1 overflow-y-auto px-2 py-6 flex flex-col gap-2">
+      <!-- Populated client-side based on assigned modules -->
+    </nav>
+    <div class="border-t border-[#e5e7eb] dark:border-[#2d3748] px-4 py-4">
+      <p id="sidebar-user-name" class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">-</p>
+      <p id="sidebar-user-role" class="text-[10px] uppercase tracking-wider text-[#617589] font-bold px-3">-</p>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 overflow-y-auto">
+    <div class="max-w-3xl mx-auto p-6 flex flex-col gap-6">
+
+      <!-- Page heading -->
+      <div class="flex flex-wrap justify-between items-end gap-3">
+        <div class="flex flex-col gap-1">
+          <p class="text-[#111418] dark:text-white text-3xl font-black leading-tight tracking-[-0.033em]">Basic Entry</p>
+          <p class="text-[#617589] dark:text-[#a0aec0] text-base font-normal">Quick capture of a prospective student's basic details.</p>
+        </div>
+        <a href="/templates/admin/enquiries.html"
+           class="flex items-center gap-2 h-10 px-5 bg-white dark:bg-[#111827] border border-[#dbe0e6] dark:border-[#2d3748] text-[#111418] dark:text-white rounded-lg font-semibold hover:bg-[#f8fafc] dark:hover:bg-[#1f2937]">
+          <span class="material-symbols-outlined text-xl">arrow_back</span>
+          <span>Back to Enquiries</span>
+        </a>
+      </div>
+
+      <!-- Flash area -->
+      <div id="flash-area"></div>
+
+      <!-- Form card -->
+      <div class="bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] p-6 shadow-sm">
+        <form id="basicEntryForm" novalidate>
+
+          <!-- Section: General -->
+          <div class="mb-6">
+            <div class="flex items-center gap-2 mb-4">
+              <span class="material-symbols-outlined text-primary">person</span>
+              <h2 class="text-lg font-bold">Student Details</h2>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+              <label class="flex flex-col gap-1">
+                <span class="text-sm font-semibold">Date <span class="text-red-500">*</span></span>
+                <input id="fe_date" name="date" type="date" required
+                  class="rounded-lg border border-[#dbe0e6] dark:border-[#2d3748] h-11 px-3 bg-white dark:bg-[#111827] text-sm focus:outline-none focus:ring-2 focus:ring-primary"/>
+              </label>
+
+              <label class="flex flex-col gap-1">
+                <span class="text-sm font-semibold">Full Name <span class="text-red-500">*</span></span>
+                <input name="full_name" type="text" required placeholder="Student's full name"
+                  class="rounded-lg border border-[#dbe0e6] dark:border-[#2d3748] h-11 px-3 bg-white dark:bg-[#111827] text-sm focus:outline-none focus:ring-2 focus:ring-primary"/>
+              </label>
+
+              <label class="flex flex-col gap-1">
+                <span class="text-sm font-semibold">Gender</span>
+                <select name="gender"
+                  class="rounded-lg border border-[#dbe0e6] dark:border-[#2d3748] h-11 px-3 bg-white dark:bg-[#111827] text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                  <option value="">Select Gender</option>
+                  <option>Male</option>
+                  <option>Female</option>
+                  <option>Other</option>
+                </select>
+              </label>
+
+              <label class="flex flex-col gap-1">
+                <span class="text-sm font-semibold">WhatsApp Number</span>
+                <input name="whatsapp_number" type="tel" placeholder="+91 00000 00000"
+                  class="rounded-lg border border-[#dbe0e6] dark:border-[#2d3748] h-11 px-3 bg-white dark:bg-[#111827] text-sm focus:outline-none focus:ring-2 focus:ring-primary"/>
+              </label>
+
+              <label class="flex flex-col gap-1">
+                <span class="text-sm font-semibold">Date of Birth</span>
+                <input name="date_of_birth" type="date"
+                  class="rounded-lg border border-[#dbe0e6] dark:border-[#2d3748] h-11 px-3 bg-white dark:bg-[#111827] text-sm focus:outline-none focus:ring-2 focus:ring-primary"/>
+              </label>
+
+              <label class="flex flex-col gap-1">
+                <span class="text-sm font-semibold">Mother Tongue</span>
+                <input name="mother_tongue" type="text" placeholder="e.g. Tamil"
+                  class="rounded-lg border border-[#dbe0e6] dark:border-[#2d3748] h-11 px-3 bg-white dark:bg-[#111827] text-sm focus:outline-none focus:ring-2 focus:ring-primary"/>
+              </label>
+
+            </div>
+          </div>
+
+          <!-- Section: Parent Details -->
+          <div class="mb-6">
+            <div class="flex items-center gap-2 mb-4">
+              <span class="material-symbols-outlined text-primary">family_restroom</span>
+              <h2 class="text-lg font-bold">Parent Details</h2>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+              <label class="flex flex-col gap-1">
+                <span class="text-sm font-semibold">Father's Name</span>
+                <input name="father_name" type="text" placeholder="Father's full name"
+                  class="rounded-lg border border-[#dbe0e6] dark:border-[#2d3748] h-11 px-3 bg-white dark:bg-[#111827] text-sm focus:outline-none focus:ring-2 focus:ring-primary"/>
+              </label>
+
+              <label class="flex flex-col gap-1">
+                <span class="text-sm font-semibold">Father's Contact</span>
+                <input name="father_phone" type="tel" placeholder="+91 00000 00000"
+                  class="rounded-lg border border-[#dbe0e6] dark:border-[#2d3748] h-11 px-3 bg-white dark:bg-[#111827] text-sm focus:outline-none focus:ring-2 focus:ring-primary"/>
+              </label>
+
+              <label class="flex flex-col gap-1">
+                <span class="text-sm font-semibold">Mother's Name</span>
+                <input name="mother_name" type="text" placeholder="Mother's full name"
+                  class="rounded-lg border border-[#dbe0e6] dark:border-[#2d3748] h-11 px-3 bg-white dark:bg-[#111827] text-sm focus:outline-none focus:ring-2 focus:ring-primary"/>
+              </label>
+
+              <label class="flex flex-col gap-1">
+                <span class="text-sm font-semibold">Mother's Contact</span>
+                <input name="mother_phone" type="tel" placeholder="+91 00000 00000"
+                  class="rounded-lg border border-[#dbe0e6] dark:border-[#2d3748] h-11 px-3 bg-white dark:bg-[#111827] text-sm focus:outline-none focus:ring-2 focus:ring-primary"/>
+              </label>
+
+            </div>
+          </div>
+
+          <!-- Section: School Details -->
+          <div class="mb-6">
+            <div class="flex items-center gap-2 mb-4">
+              <span class="material-symbols-outlined text-primary">school</span>
+              <h2 class="text-lg font-bold">School Details</h2>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+              <label class="flex flex-col gap-1">
+                <span class="text-sm font-semibold">10th School Name</span>
+                <input name="school_10_name" type="text" placeholder="Name of 10th school"
+                  class="rounded-lg border border-[#dbe0e6] dark:border-[#2d3748] h-11 px-3 bg-white dark:bg-[#111827] text-sm focus:outline-none focus:ring-2 focus:ring-primary"/>
+              </label>
+
+              <label class="flex flex-col gap-1">
+                <span class="text-sm font-semibold">10th School Place</span>
+                <input name="school_10_place" type="text" placeholder="Town / City"
+                  class="rounded-lg border border-[#dbe0e6] dark:border-[#2d3748] h-11 px-3 bg-white dark:bg-[#111827] text-sm focus:outline-none focus:ring-2 focus:ring-primary"/>
+              </label>
+
+              <label class="flex flex-col gap-1">
+                <span class="text-sm font-semibold">12th School Name</span>
+                <input name="school_12_name" type="text" placeholder="Name of +2 school"
+                  class="rounded-lg border border-[#dbe0e6] dark:border-[#2d3748] h-11 px-3 bg-white dark:bg-[#111827] text-sm focus:outline-none focus:ring-2 focus:ring-primary"/>
+              </label>
+
+              <label class="flex flex-col gap-1">
+                <span class="text-sm font-semibold">12th School Place</span>
+                <input name="school_12_place" type="text" placeholder="Town / City"
+                  class="rounded-lg border border-[#dbe0e6] dark:border-[#2d3748] h-11 px-3 bg-white dark:bg-[#111827] text-sm focus:outline-none focus:ring-2 focus:ring-primary"/>
+              </label>
+
+            </div>
+          </div>
+
+          <!-- Section: Reference -->
+          <div class="mb-8">
+            <div class="flex items-center gap-2 mb-4">
+              <span class="material-symbols-outlined text-primary">share</span>
+              <h2 class="text-lg font-bold">Reference</h2>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+              <label class="flex flex-col gap-1">
+                <span class="text-sm font-semibold">Type of Reference</span>
+                <select name="reference_type"
+                  class="rounded-lg border border-[#dbe0e6] dark:border-[#2d3748] h-11 px-3 bg-white dark:bg-[#111827] text-sm focus:outline-none focus:ring-2 focus:ring-primary">
+                  <option value="">-- Select --</option>
+                  <option>Walk-in</option>
+                  <option>Phone Call</option>
+                  <option>Website</option>
+                  <option>Social Media</option>
+                  <option>Student</option>
+                  <option>Staff</option>
+                  <option>Other</option>
+                </select>
+              </label>
+
+              <label class="flex flex-col gap-1">
+                <span class="text-sm font-semibold">Name of Reference</span>
+                <input name="reference_name" type="text" placeholder="Referrer's name / details"
+                  class="rounded-lg border border-[#dbe0e6] dark:border-[#2d3748] h-11 px-3 bg-white dark:bg-[#111827] text-sm focus:outline-none focus:ring-2 focus:ring-primary"/>
+              </label>
+
+            </div>
+          </div>
+
+          <!-- Submit -->
+          <div class="flex gap-3 justify-end">
+            <a href="/templates/admin/enquiries.html"
+               class="flex items-center gap-2 h-11 px-5 bg-white dark:bg-[#111827] border border-[#dbe0e6] dark:border-[#2d3748] text-[#111418] dark:text-white rounded-lg font-semibold hover:bg-[#f8fafc]">
+              Cancel
+            </a>
+            <button type="submit" id="submitBtn"
+              class="flex items-center gap-2 h-11 px-6 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-colors">
+              <span class="material-symbols-outlined text-xl">save</span>
+              <span>Save Basic Entry</span>
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+// Auto-fill today's date
+document.addEventListener('DOMContentLoaded', () => {
+  const dateField = document.getElementById('fe_date');
+  if(dateField){
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth()+1).padStart(2,'0');
+    const dd = String(today.getDate()).padStart(2,'0');
+    dateField.value = `${yyyy}-${mm}-${dd}`;
+  }
+  try{
+    const u = JSON.parse(sessionStorage.getItem('pmc_user')||'null');
+    if(u){
+      document.getElementById('sidebar-user-name').textContent = u.first_name || u.email || 'User';
+      document.getElementById('sidebar-user-role').textContent = u.role_id ? ('Role '+u.role_id) : '';
+    }
+  }catch(e){}
+});
+
+document.getElementById('basicEntryForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const flash = document.getElementById('flash-area');
+  const btn = document.getElementById('submitBtn');
+  const fd = new FormData(e.target);
+
+  const full_name = (fd.get('full_name')||'').trim();
+  if(!full_name){
+    flash.innerHTML = '<div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">Full Name is required.</div>';
+    return;
+  }
+
+  const payload = {
+    date: fd.get('date') || null,
+    full_name,
+    gender: fd.get('gender') || null,
+    whatsapp_number: fd.get('whatsapp_number') || null,
+    date_of_birth: fd.get('date_of_birth') || null,
+    mother_tongue: fd.get('mother_tongue') || null,
+    father_name: fd.get('father_name') || null,
+    father_phone: fd.get('father_phone') || null,
+    mother_name: fd.get('mother_name') || null,
+    mother_phone: fd.get('mother_phone') || null,
+    school_10_name: fd.get('school_10_name') || null,
+    school_10_place: fd.get('school_10_place') || null,
+    school_12_name: fd.get('school_12_name') || null,
+    school_12_place: fd.get('school_12_place') || null,
+    reference_type: fd.get('reference_type') || null,
+    reference_name: fd.get('reference_name') || null,
+  };
+
+  try{
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-xl">autorenew</span><span>Saving…</span>';
+    flash.innerHTML = '';
+
+    const resp = await fetch('/api/basic_enquiry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const body = await resp.json();
+    if(!resp.ok) throw new Error(body.error || 'Failed to save');
+
+    flash.innerHTML = '<div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">Basic entry saved successfully! Redirecting…</div>';
+    setTimeout(() => window.location.href = '/templates/admin/enquiries.html', 1200);
+  }catch(err){
+    flash.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">${escapeHtml(err.message || String(err))}</div>`;
+    btn.disabled = false;
+    btn.innerHTML = '<span class="material-symbols-outlined text-xl">save</span><span>Save Basic Entry</span>';
+  }
+});
+
+function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

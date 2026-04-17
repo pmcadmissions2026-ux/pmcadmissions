@@ -146,17 +146,21 @@
   <p id="status-date-display" class="text-2xl font-black text-slate-900 dark:text-white"></p>
 </div>
 </div>
-<div class="mt-6 grid grid-cols-3 gap-4">
+<div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
   <div class="flex items-center justify-between p-3 border border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50 dark:bg-blue-900/20">
-    <div><div class="text-sm font-medium text-blue-800 dark:text-blue-300">Total Enquiries</div><div class="text-xs text-slate-500">All enquired students in system</div></div>
+    <div><div class="text-sm font-medium text-blue-800 dark:text-blue-300">Total Students</div><div class="text-xs text-slate-500">All students in system</div></div>
     <span id="card-total-enquiries" class="text-2xl font-bold text-blue-700 dark:text-blue-400">0</span>
   </div>
+  <div class="flex items-center justify-between p-3 border border-violet-200 dark:border-violet-800 rounded-lg bg-violet-50 dark:bg-violet-900/20">
+    <div><div class="text-sm font-medium text-violet-800 dark:text-violet-300">Enquiries</div><div class="text-xs text-slate-500">Only enquired, not yet assigned</div></div>
+    <span id="card-total-pure-enquiries" class="text-2xl font-bold text-violet-700 dark:text-violet-400">0</span>
+  </div>
   <div class="flex items-center justify-between p-3 border border-amber-200 dark:border-amber-800 rounded-lg bg-amber-50 dark:bg-amber-900/20">
-    <div><div class="text-sm font-medium text-amber-800 dark:text-amber-300">Total Waiting</div><div class="text-xs text-slate-500">Assigned but not yet admitted</div></div>
+    <div><div class="text-sm font-medium text-amber-800 dark:text-amber-300">Waiting</div><div class="text-xs text-slate-500">Assigned, not yet admitted</div></div>
     <span id="card-total-waiting" class="text-2xl font-bold text-amber-600 dark:text-amber-400">0</span>
   </div>
   <div class="flex items-center justify-between p-3 border border-green-200 dark:border-green-800 rounded-lg bg-green-50 dark:bg-green-900/20">
-    <div><div class="text-sm font-medium text-green-800 dark:text-green-300">Total Admitted</div><div class="text-xs text-slate-500">Students with payment</div></div>
+    <div><div class="text-sm font-medium text-green-800 dark:text-green-300">Admitted</div><div class="text-xs text-slate-500">Students with payment</div></div>
     <span id="card-total-admitted" class="text-2xl font-bold text-green-700 dark:text-green-400">0</span>
   </div>
 </div>
@@ -399,6 +403,8 @@
             const statusDate = document.getElementById('status-date-display'); if(statusDate) statusDate.innerText = dateStr;
             // update overall summary counts
             const enqEl = document.getElementById('card-total-enquiries'); if(enqEl) enqEl.innerText = totalEnquiries;
+            const pureEnquiries = Math.max(0, totalEnquiries - totalWaiting - totalAdmitted);
+            const pureEl = document.getElementById('card-total-pure-enquiries'); if(pureEl) pureEl.innerText = pureEnquiries;
             const waitEl = document.getElementById('card-total-waiting'); if(waitEl) waitEl.innerText = totalWaiting;
             const admEl = document.getElementById('card-total-admitted'); if(admEl) admEl.innerText = totalAdmitted;
             // on-date counts
