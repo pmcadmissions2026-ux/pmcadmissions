@@ -805,9 +805,14 @@
                     reference_dept_staff: fd.get('reference_dept_staff')||null,
                     status: 'open'
                 };
+                const payload = { student, academic, enquiry };
+                // If fetched from basic entry, include student_id so it UPDATES instead of INSERT
+                if(window._basicEntryStudentId){
+                  payload.student_id = window._basicEntryStudentId;
+                }
                 const flash = document.getElementById('flash-area'); if(flash) flash.innerHTML = '';
                 try{
-                    const resp = await fetch('/api/enquiries', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ student, academic, enquiry }) });
+                    const resp = await fetch('/api/enquiries', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                     const ct = resp.headers.get('content-type') || '';
                     let body = null;
                     let bodyText = null;
@@ -820,7 +825,7 @@
                         const msg = body && (body.error||body.message) ? (body.error||body.message) : (bodyText || resp.statusText || 'Create failed');
                         throw new Error(msg);
                     }
-                    if(flash) flash.innerHTML = `<div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">Enquiry created — redirecting...</div>`;
+                    if(flash) flash.innerHTML = `<div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">Enquiry created — student updated, redirecting...</div>`;
                     // Mark the basic entry record as added (if it was fetched from there)
                     if(window._basicEntryIdPendingAdd){
                       try{
@@ -828,6 +833,9 @@
                         window._basicEntryIdPendingAdd = null;
                       }catch(e){ console.warn('mark_added failed', e); }
                     }
+                    // Clear sessionStorage
+                    sessionStorage.removeItem('basicEntryStudentId');
+                    window._basicEntryStudentId = null;
                     setTimeout(()=> window.location.href = '/templates/admin/enquiries.html', 900);
                 }catch(err){
                     if(flash) flash.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">${(err && err.message) ? err.message : String(err)}</div>`;
@@ -919,6 +927,11 @@ async function selectBeRecord(r){
   populateFormFromBasicEntry(r);
   // Store ID to mark as added AFTER enquiry is posted
   window._basicEntryIdPendingAdd = r.id;
+  // Store student_id (created when basic enquiry was saved) to UPDATE instead of CREATE
+  if(r.student_id){
+    window._basicEntryStudentId = r.student_id;
+    sessionStorage.setItem('basicEntryStudentId', r.student_id);
+  }
 }
 
 function populateFormFromBasicEntry(r){
@@ -972,6 +985,11 @@ document.addEventListener('DOMContentLoaded', () => {
         populateFormFromBasicEntry(prefill);
         // Store ID to mark as added AFTER enquiry is posted (not immediately)
         window._basicEntryIdPendingAdd = prefill.id;
+        // Store student_id to UPDATE instead of INSERT
+        if(prefill.student_id){
+          window._basicEntryStudentId = prefill.student_id;
+          sessionStorage.setItem('basicEntryStudentId', prefill.student_id);
+        }
       }, 300);
     }
   }catch(e){}

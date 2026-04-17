@@ -622,20 +622,35 @@ app.get('/api/academics', async (req, res) => {
 // Create student + academics + enquiry in sequence
 app.post('/api/enquiries', async (req, res) => {
   try{
-    const { student, academic, enquiry } = req.body || {};
+    const { student, academic, enquiry, student_id } = req.body || {};
     if(!student || !student.full_name){
       return res.status(400).json({ error: 'student.full_name is required' });
     }
 
-    // Insert student
-    // ensure unique_id exists
-    if(!student.unique_id){
-      student.unique_id = await generateUniqueStudentId();
+    let studentId = student_id;
+    let createdStudent = null;
+    
+    if(studentId){
+      // UPDATE existing student (from basic_enquiry)
+      if(!student.unique_id){
+        student.unique_id = await generateUniqueStudentId();
+      }
+      const { data: updatedStudent, error: updateErr } = await supabase.from('students')
+        .update(student)
+        .eq('id', studentId)
+        .select().maybeSingle();
+      if(updateErr) return res.status(500).json({ error: 'Failed to update student: ' + updateErr.message });
+      createdStudent = updatedStudent;
+    } else {
+      // INSERT new student (normal flow)
+      if(!student.unique_id){
+        student.unique_id = await generateUniqueStudentId();
+      }
+      const { data: insertedStudent, error: studentErr } = await supabase.from('students').insert(student).select().maybeSingle();
+      if(studentErr) return res.status(500).json({ error: studentErr.message });
+      createdStudent = insertedStudent;
+      studentId = insertedStudent && insertedStudent.id;
     }
-    const { data: createdStudent, error: studentErr } = await supabase.from('students').insert(student).select().maybeSingle();
-    if(studentErr) return res.status(500).json({ error: studentErr.message });
-
-    const studentId = createdStudent && createdStudent.id;
 
     // Insert academics if provided
     let createdAcademic = null;
@@ -1505,7 +1520,7 @@ app.get('/api/basic_enquiry/:id', async (req, res) => {
   }catch(e){ res.status(500).json({ error: String(e) }); }
 });
 
-// Create new basic enquiry record
+// Create new basic enquiry record + also create student record for payment collection
 app.post('/api/basic_enquiry', async (req, res) => {
   try{
     const { full_name, gender, whatsapp_number, date_of_birth, mother_tongue,
@@ -1513,7 +1528,27 @@ app.post('/api/basic_enquiry', async (req, res) => {
             school_10_name, school_10_place, school_12_name, school_12_place,
             reference_type, reference_name, date } = req.body || {};
     if(!full_name) return res.status(400).json({ error: 'full_name is required' });
-    const row = {
+    
+    // 1. Create student record in students table (so they appear in payment page)
+    const studentRecord = {
+      full_name,
+      phone: whatsapp_number || null,
+      whatsapp_number: whatsapp_number || null,
+      gender: gender || null,
+      date_of_birth: date_of_birth || null,
+      mother_tongue: mother_tongue || null,
+      father_name: father_name || null,
+      father_phone: father_phone || null,
+      mother_name: mother_name || null,
+      mother_phone: mother_phone || null,
+      reference_details: reference_name || null,
+    };
+    const { data: createdStudent, error: studentErr } = await supabase.from('students').insert(studentRecord).select().maybeSingle();
+    if(studentErr) return res.status(500).json({ error: 'Failed to create student: ' + studentErr.message });
+    const studentId = createdStudent && createdStudent.id;
+    
+    // 2. Create basic enquiry record
+    const beRow = {
       full_name,
       gender: gender || null,
       whatsapp_number: whatsapp_number || null,
@@ -1529,11 +1564,13 @@ app.post('/api/basic_enquiry', async (req, res) => {
       school_12_place: school_12_place || null,
       reference_type: reference_type || null,
       reference_name: reference_name || null,
+      student_id: studentId,
     };
-    if(date) row.date = date;
-    const { data, error } = await supabase.from('basic_enquiry').insert(row).select().maybeSingle();
-    if(error) return res.status(500).json({ error: error.message });
-    res.json({ ok: true, item: data });
+    if(date) beRow.date = date;
+    const { data: beData, error: beError } = await supabase.from('basic_enquiry').insert(beRow).select().maybeSingle();
+    if(beError) return res.status(500).json({ error: beError.message });
+    
+    res.json({ ok: true, item: beData, student_id: studentId });
   }catch(e){ res.status(500).json({ error: String(e) }); }
 });
 
@@ -1683,7 +1720,11 @@ app.get('/api/payments', async (req, res) => {
 // Payment candidates: apps that appear in counselling_records OR documents but are not present in payments
 app.get('/api/payment_candidates', async (req, res) => {
   try{
-    // gather app_ids from counselling_records and documents and payments (step-by-step)
+    let output = [];
+
+    // ─────────────────────────────────────────
+    // PART 1: Existing flow (enquiry/counselling students)
+    // ─────────────────────────────────────────
     const { data: cData, error: cErr } = await supabase.from('counselling_records').select('app_id');
     if(cErr) console.warn('counselling_records lookup error', cErr.message || String(cErr));
     const { data: dData, error: dErr } = await supabase.from('documents').select('app_id');
@@ -1696,81 +1737,124 @@ app.get('/api/payment_candidates', async (req, res) => {
     const paidApps = Array.isArray(pData) ? pData.map(r => r.app_id).filter(Boolean) : [];
 
     const all = new Set([...cApps.map(String), ...dApps.map(String)]);
-    // remove already paid
     (paidApps||[]).map(String).forEach(x => all.delete(x));
 
     const appIds = Array.from(all).map(x => Number(x)).filter(x => !isNaN(x));
-    if(appIds.length === 0) return res.json([]);
-
-    // fetch admission_applications rows (select all to avoid column name mismatches)
-    const { data: apps, error: appsErr } = await supabase.from('admission_applications').select('*').in('app_id', appIds);
-    if(appsErr) { console.error('admission_applications lookup error', appsErr); return res.status(500).json({ ok:false, error: appsErr.message || String(appsErr) }); }
-
-    let studentIds = apps.filter(a=>a && a.student_id).map(a => a.student_id);
-    // For apps missing student_id, try to recover from counselling_records which may contain student_id
-    const appsMissingStudent = apps.filter(a => !(a && a.student_id)).map(a => a.app_id).filter(Boolean);
-    if(appsMissingStudent.length > 0){
-      try{
-        const { data: crs, error: crErr } = await supabase.from('counselling_records').select('app_id,student_id').in('app_id', appsMissingStudent);
-        if(crErr) console.warn('counselling_records lookup for missing student_ids failed', crErr.message || crErr);
-        if(Array.isArray(crs)){
-          crs.forEach(r => { if(r && r.student_id) studentIds.push(r.student_id); });
+    
+    if(appIds.length > 0){
+      const { data: apps, error: appsErr } = await supabase.from('admission_applications').select('*').in('app_id', appIds);
+      if(appsErr) console.warn('admission_applications lookup error', appsErr);
+      else if(Array.isArray(apps)){
+        let studentIds = apps.filter(a=>a && a.student_id).map(a => a.student_id);
+        const appsMissingStudent = apps.filter(a => !(a && a.student_id)).map(a => a.app_id).filter(Boolean);
+        if(appsMissingStudent.length > 0){
+          try{
+            const { data: crs, error: crErr } = await supabase.from('counselling_records').select('app_id,student_id').in('app_id', appsMissingStudent);
+            if(crErr) console.warn('counselling_records lookup for missing student_ids failed', crErr.message);
+            if(Array.isArray(crs)) crs.forEach(r => { if(r && r.student_id) studentIds.push(r.student_id); });
+          }catch(e){ console.warn('counselling_records extra lookup exception', e); }
         }
-      }catch(e){ console.warn('counselling_records extra lookup exception', e); }
-    }
 
-    // Also fetch counselling_records for allotment info (allotted_dept_id, quota_type) and map by app_id
-    let counsellingMap = {};
-    try{
-      const { data: crAll, error: crAllErr } = await supabase.from('counselling_records').select('app_id,allotted_dept_id,quota_type').in('app_id', appIds);
-      if(crAllErr) console.warn('counselling_records lookup for allotment info failed', crAllErr.message || crAllErr);
-      if(Array.isArray(crAll)){
-        crAll.forEach(r => { if(r && r.app_id) counsellingMap[String(r.app_id)] = r; });
-      }
-    }catch(e){ console.warn('counselling_records allotment lookup exception', e); }
+        let counsellingMap = {};
+        try{
+          const { data: crAll, error: crAllErr } = await supabase.from('counselling_records').select('app_id,allotted_dept_id,quota_type').in('app_id', appIds);
+          if(crAllErr) console.warn('counselling_records allotment lookuperror', crAllErr.message);
+          if(Array.isArray(crAll)) crAll.forEach(r => { if(r && r.app_id) counsellingMap[String(r.app_id)] = r; });
+        }catch(e){ console.warn('counselling_records allotment lookup exception', e); }
 
-    // Deduplicate studentIds
-    studentIds = Array.from(new Set(studentIds.map(x => Number(x)).filter(x => !isNaN(x))));
-    let students = [];
-    if(studentIds.length > 0){
-      // select all columns to be tolerant of differing schemas
-      const { data: studs, error: studsErr } = await supabase.from('students').select('*').in('id', studentIds);
-      if(studsErr){ console.warn('students lookup error', studsErr); }
-      if(Array.isArray(studs)){
-        // normalize student rows with safe fallbacks for display name and unique id
-        students = studs.map(s => {
-          const display_name = s.full_name || s.student_name || s.name || s.fullname || ((s.first_name||'') + (s.last_name ? ' ' + s.last_name : '')) || null;
-          const uniq = s.unique_id || s.uniqueId || s.registration_id || s.registration_no || null;
-          return Object.assign({}, s, { display_name, uniq_id: uniq });
+        studentIds = Array.from(new Set(studentIds.map(x => Number(x)).filter(x => !isNaN(x))));
+        let students = [];
+        if(studentIds.length > 0){
+          const { data: studs, error: studsErr } = await supabase.from('students').select('*').in('id', studentIds);
+          if(studsErr) console.warn('students lookup error', studsErr);
+          if(Array.isArray(studs)){
+            students = studs.map(s => {
+              const display_name = s.full_name || s.student_name || s.name || s.fullname || ((s.first_name||'') + (s.last_name ? ' ' + s.last_name : '')) || null;
+              const uniq = s.unique_id || s.uniqueId || s.registration_id || s.registration_no || null;
+              return Object.assign({}, s, { display_name, uniq_id: uniq });
+            });
+          } else students = [];
+        }
+
+        const studentMap = {};
+        (students||[]).forEach(s => { if(s && s.id) studentMap[String(s.id)] = s; });
+
+        apps.forEach(a => {
+          const stu = a && (a.student_id || a.student) ? studentMap[String(a.student_id)] : null;
+          const registration_id = a.registration_id || a.reg_id || a.registration_no || null;
+          const cr = counsellingMap[String(a.app_id)];
+          const preferred_dept_id = (cr && cr.allotted_dept_id) ? cr.allotted_dept_id : (a.preferred_dept_id || a.allotted_dept_id || a.preferred_branch_id || a.dept_id || null);
+          const quota_type = (cr && cr.quota_type) ? cr.quota_type : (a.quota_type || a.quota || null);
+          output.push({
+            app_id: a.app_id,
+            student_id: a.student_id || null,
+            student_name: stu ? (stu.display_name || stu.full_name || stu.student_name || stu.name || null) : null,
+            unique_id: stu ? (stu.uniq_id || stu.unique_id || null) : null,
+            registration_id: registration_id,
+            preferred_dept_id: preferred_dept_id,
+            quota_type: quota_type
+          });
         });
-      }else{
-        students = [];
       }
     }
 
-    const studentMap = {};
-    (students||[]).forEach(s => { if(s && s.id) studentMap[String(s.id)] = s; });
+    // ─────────────────────────────────────────
+    // PART 2: Basic entry students (NEW)
+    // ─────────────────────────────────────────
+    // Fetch students from basic_enquiry who don't have a payment yet
+    try{
+      // Get student_ids from basic_enquiry
+      const { data: beData, error: beErr } = await supabase.from('basic_enquiry')
+        .select('student_id')
+        .not('student_id', 'is', null)
+        .distinct('student_id');
+      
+      if(beErr) console.warn('basic_enquiry lookup error', beErr.message);
+      else if(Array.isArray(beData) && beData.length > 0){
+        const beStudentIds = beData.map(r => r.student_id).filter(id => id);
+        
+        // Remove student_ids that already have payments
+        const { data: payStudents, error: payStErr } = await supabase.from('payments').select('student_id').in('student_id', beStudentIds);
+        if(payStErr) console.warn('payments by student lookup error', payStErr.message);
+        
+        const paidStudentIds = new Set((Array.isArray(payStudents) ? payStudents.map(p => p.student_id).filter(Boolean) : []).map(x => Number(x)));
+        const candidateIds = beStudentIds.filter(id => !paidStudentIds.has(Number(id)));
 
-    const out = apps.map(a => {
-      const stu = a && (a.student_id || a.student) ? studentMap[String(a.student_id)] : null;
-      // use safe fallbacks for possible differing column names
-      const registration_id = a.registration_id || a.reg_id || a.registration_no || null;
-      // Prefer counselling_records allotment fields when available
-      const cr = counsellingMap[String(a.app_id)];
-      const preferred_dept_id = (cr && cr.allotted_dept_id) ? cr.allotted_dept_id : (a.preferred_dept_id || a.allotted_dept_id || a.preferred_branch_id || a.dept_id || null);
-      const quota_type = (cr && cr.quota_type) ? cr.quota_type : (a.quota_type || a.quota || null);
-      return {
-        app_id: a.app_id,
-        student_id: a.student_id || null,
-        student_name: stu ? (stu.display_name || stu.full_name || stu.student_name || stu.name || null) : null,
-        unique_id: stu ? (stu.uniq_id || stu.unique_id || null) : null,
-        registration_id: registration_id,
-        preferred_dept_id: preferred_dept_id,
-        quota_type: quota_type
-      };
+        if(candidateIds.length > 0){
+          const { data: candidates, error: candErr } = await supabase.from('students').select('*').in('id', candidateIds);
+          if(candErr) console.warn('basic entry students lookup error', candErr.message);
+          else if(Array.isArray(candidates)){
+            candidates.forEach(s => {
+              const display_name = s.full_name || s.student_name || s.name || s.fullname || ((s.first_name||'') + (s.last_name ? ' ' + s.last_name : '')) || null;
+              const uniq = s.unique_id || s.uniqueId || s.registration_id || s.registration_no || null;
+              // For basic entry students, use student.id as app_id if they don't have one
+              const appId = s.app_id || `BE-${s.id}`;
+              output.push({
+                app_id: appId,
+                student_id: s.id,
+                student_name: display_name,
+                unique_id: uniq,
+                registration_id: s.registration_id || s.reg_id || s.registration_no || null,
+                preferred_dept_id: null,
+                quota_type: null,
+                is_basic_entry: true
+              });
+            });
+          }
+        }
+      }
+    }catch(e){ console.warn('basic_enquiry candidates error', e); }
+
+    // Remove duplicates by app_id
+    const seen = new Set();
+    output = output.filter(item => {
+      const key = String(item.app_id);
+      if(seen.has(key)) return false;
+      seen.add(key);
+      return true;
     });
 
-    return res.json(out);
+    return res.json(output);
   }catch(e){ console.error('payment_candidates error', e && e.stack ? e.stack : e); return res.status(500).json({ ok:false, error: String(e) }); }
 });
 

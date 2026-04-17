@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS public.basic_enquiry (
   school_12_place   TEXT,
   reference_type    TEXT,
   reference_name    TEXT,
+  student_id        BIGINT REFERENCES public.students(id) ON DELETE CASCADE,
   added_to_enquiry  BOOLEAN NOT NULL DEFAULT FALSE,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -45,3 +46,7 @@ CREATE INDEX IF NOT EXISTS basic_enquiry_full_name_idx
 -- ============================================================
 ALTER TABLE public.enquiries
   ADD COLUMN IF NOT EXISTS reference_name TEXT;
+
+-- If basic_enquiry table already exists, add student_id column
+ALTER TABLE public.basic_enquiry
+  ADD COLUMN IF NOT EXISTS student_id BIGINT REFERENCES public.students(id) ON DELETE CASCADE;

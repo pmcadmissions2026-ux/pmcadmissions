@@ -29,7 +29,7 @@ ALTER SEQUENCE IF EXISTS public.counselling_records_counselling_id_seq RESTART W
 ALTER SEQUENCE IF EXISTS public.documents_doc_id_seq RESTART WITH 1;
 ALTER SEQUENCE IF EXISTS public.payments_payment_id_seq RESTART WITH 1;
 
--- Step 3: Verify all tables are empty
+-- Step 3: Verify all tables are empty  
 SELECT 'students'              AS tbl, COUNT(*) AS rows FROM public.students
 UNION ALL
 SELECT 'academics',             COUNT(*) FROM public.academics
