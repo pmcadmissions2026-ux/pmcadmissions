@@ -1586,11 +1586,26 @@ app.put('/api/basic_enquiry/:id/mark_added', async (req, res) => {
   }catch(e){ res.status(500).json({ error: String(e) }); }
 });
 
-// Delete a basic enquiry record
+// Delete a basic enquiry record and its linked student (if any)
 app.delete('/api/basic_enquiry/:id', async (req, res) => {
   try{
-    const { error } = await supabase.from('basic_enquiry').delete().eq('id', req.params.id);
-    if(error) return res.status(500).json({ error: error.message });
+    const id = req.params.id;
+    // fetch the basic_enquiry row to check for linked student
+    const { data: beRec, error: selErr } = await supabase.from('basic_enquiry').select('id,student_id').eq('id', id).maybeSingle();
+    if(selErr) return res.status(500).json({ error: selErr.message });
+
+    // delete the basic_enquiry row
+    const { error: delErr } = await supabase.from('basic_enquiry').delete().eq('id', id);
+    if(delErr) return res.status(500).json({ error: delErr.message });
+
+    // if a linked student exists, attempt to delete that student as well
+    if(beRec && beRec.student_id){
+      try{
+        const { error: delStuErr } = await supabase.from('students').delete().eq('id', beRec.student_id);
+        if(delStuErr) console.warn('Failed to delete linked student', delStuErr.message || delStuErr);
+      }catch(e){ console.warn('Exception deleting linked student', e); }
+    }
+
     res.json({ ok: true });
   }catch(e){ res.status(500).json({ error: String(e) }); }
 });
