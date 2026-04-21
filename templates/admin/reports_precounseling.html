@@ -251,6 +251,8 @@
           const paidDateByStudent = {};
           paymentsArr.forEach(p => {
             if(!p || !p.student_id) return;
+            // Exclude "Application Form" payments — they do not count as admitted
+            if(p.payment_type && p.payment_type.trim().toLowerCase() === 'application form') return;
             const sid = String(p.student_id);
             paidStudentIds.add(sid);
             if(p.created_at){
@@ -411,7 +413,7 @@
             function parseDateStr(s){ try{ let str=String(s||'').replace(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2}(?:\.\d+)?)(.*)$/,'$1T$2$3'); const d=new Date(str); return isNaN(d)?null:d; }catch(e){ return null; } }
             const enquiriesOnDate = studentsArr.filter(s=>{ const d=parseDateStr(s.created_at); return d && d>=onStart && d<=onEnd; }).length;
             const waitingOnDate = adm.filter(a=>{ const d=parseDateStr(a.created_at); if(!d || !(d>=onStart && d<=onEnd)) return false; const pd=paidDateByStudent[String(a.student_id||'')]; return !pd || pd>onEnd; }).length;
-            const admittedOnDate = paymentsArr.filter(p=>{ const d=parseDateStr(p&&p.created_at); return d && d>=onStart && d<=onEnd; }).length;
+            const admittedOnDate = paymentsArr.filter(p=>{ if(!p || (p.payment_type && p.payment_type.trim().toLowerCase()==='application form')) return false; const d=parseDateStr(p&&p.created_at); return d && d>=onStart && d<=onEnd; }).length;
             const onEnqEl = document.getElementById('card-on-enquiries'); if(onEnqEl) onEnqEl.innerText = enquiriesOnDate;
             const onWaitEl = document.getElementById('card-on-waiting'); if(onWaitEl) onWaitEl.innerText = waitingOnDate;
             const onAdmEl = document.getElementById('card-on-admitted'); if(onAdmEl) onAdmEl.innerText = admittedOnDate;

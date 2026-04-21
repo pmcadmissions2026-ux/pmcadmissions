@@ -1915,6 +1915,7 @@ app.post('/api/payments', async (req, res) => {
       mode_of_payment: String(mode_of_payment),
       amount: Number(amount),
       payment_date,
+      created_at: payment_date,
     };
     if(app_id) row.app_id = Number(app_id);
     if(payment_type) row.payment_type = String(payment_type);

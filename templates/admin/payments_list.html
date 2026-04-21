@@ -45,6 +45,7 @@
           #printBillArea { position: static !important; width: 100%; background: white; padding: 0; }
         }
     </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white min-h-screen flex flex-col">
 <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#e5e7eb] dark:border-[#2d3748] bg-white dark:bg-[#1a202c] px-6 py-3 sticky top-0 z-50">
@@ -120,11 +121,32 @@
 <div class="flex flex-col bg-white dark:bg-[#1a202c] rounded-xl border border-[#e5e7eb] dark:border-[#2d3748] overflow-hidden">
 <div class="flex items-center justify-between px-6 py-5 border-b border-[#e5e7eb] dark:border-[#2d3748]">
 <h2 class="text-[#111418] dark:text-white text-xl font-bold leading-tight">Payment Collected</h2>
-<span id="completedCount" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">0 Student(s)</span>
+<div class="flex items-center gap-3">
+  <button onclick="exportCompletedToExcel()" class="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 px-4 rounded-lg text-sm"><span class="material-symbols-outlined text-sm">description</span> Export Excel</button>
+  <span id="completedCount" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">0 Student(s)</span>
+</div>
 </div>
 
 <div class="px-6 py-4">
     <input id="completedSearch" type="search" placeholder="Search collected payments (name, id, bill no, mode)..." class="w-full md:w-1/2 px-3 py-2 border rounded-lg focus:outline-none focus:ring" />
+</div>
+
+<div class="px-6 pb-4 flex flex-wrap gap-4 items-end">
+    <div class="flex flex-col gap-1">
+        <label class="text-xs text-[#617589] dark:text-[#a0aec0] font-medium">From Date</label>
+        <input id="completedDateFrom" type="date" onchange="applyCompletedSearch()" class="px-3 py-2 border border-[#e5e7eb] dark:border-[#2d3748] rounded-lg focus:outline-none focus:ring bg-white dark:bg-[#2d3748] text-sm" />
+    </div>
+    <div class="flex flex-col gap-1">
+        <label class="text-xs text-[#617589] dark:text-[#a0aec0] font-medium">To Date</label>
+        <input id="completedDateTo" type="date" onchange="applyCompletedSearch()" class="px-3 py-2 border border-[#e5e7eb] dark:border-[#2d3748] rounded-lg focus:outline-none focus:ring bg-white dark:bg-[#2d3748] text-sm" />
+    </div>
+    <div class="flex flex-col gap-1">
+        <label class="text-xs text-[#617589] dark:text-[#a0aec0] font-medium">Department</label>
+        <select id="completedDeptFilter" onchange="applyCompletedSearch()" class="px-3 py-2 border border-[#e5e7eb] dark:border-[#2d3748] rounded-lg focus:outline-none focus:ring bg-white dark:bg-[#2d3748] text-sm min-w-[160px]">
+            <option value="">All Departments</option>
+        </select>
+    </div>
+    <button onclick="clearCompletedFilters()" class="px-4 py-2 bg-gray-200 dark:bg-[#2d3748] text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-300 dark:hover:bg-[#374151]">Clear Filters</button>
 </div>
 
 <div class="overflow-x-auto">
@@ -238,8 +260,53 @@ function applyPendingSearch(){
 }
 function applyCompletedSearch(){
     const q=(document.getElementById('completedSearch')?.value||'').trim().toLowerCase();
-    filteredCompleted = q ? allCompleted.filter(p=>JSON.stringify(p).toLowerCase().includes(q)) : allCompleted.slice();
+    const fromVal = document.getElementById('completedDateFrom')?.value || '';
+    const toVal = document.getElementById('completedDateTo')?.value || '';
+    const deptVal = (document.getElementById('completedDeptFilter')?.value||'').trim().toLowerCase();
+    const fromDate = fromVal ? new Date(fromVal + 'T00:00:00') : null;
+    const toDate = toVal ? new Date(toVal + 'T23:59:59') : null;
+    filteredCompleted = allCompleted.filter(p => {
+        if(q && !JSON.stringify(p).toLowerCase().includes(q)) return false;
+        if(fromDate || toDate) {
+            const dateStr = p.payment_date || p.created_at;
+            if(!dateStr) return false;
+            const d = new Date(String(dateStr).replace(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})/, '$1T$2'));
+            if(isNaN(d)) return false;
+            if(fromDate && d < fromDate) return false;
+            if(toDate && d > toDate) return false;
+        }
+        if(deptVal) {
+            const pDept = (p.branch_name||'').trim().toLowerCase();
+            if(!pDept.includes(deptVal)) return false;
+        }
+        return true;
+    });
     renderCompletedPage(1);
+}
+function clearCompletedFilters(){
+    const els = ['completedDateFrom','completedDateTo','completedSearch'];
+    els.forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+    const deptEl = document.getElementById('completedDeptFilter'); if(deptEl) deptEl.value='';
+    filteredCompleted = allCompleted.slice();
+    renderCompletedPage(1);
+}
+function exportCompletedToExcel(){
+    if(!window.XLSX) return alert('Excel library not loaded. Please refresh the page.');
+    const rows = filteredCompleted.map(p => ({
+        'Student Name': p.student_name||'',
+        'Unique ID': p.unique_id||'',
+        'Date': p.payment_date||(p.created_at ? new Date(p.created_at).toLocaleDateString('en-IN') : ''),
+        'Bill No': p.bill_no||'',
+        'Type': p.payment_type||'',
+        'Mode': p.mode_of_payment||'',
+        'Reference': p.reference_number||p.upi_id||'',
+        'Department': p.branch_name||'',
+        'Amount': Number(p.amount||0)
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Payments');
+    XLSX.writeFile(wb, 'payments_' + new Date().toISOString().slice(0,10) + '.xlsx');
 }
 
 async function loadPaymentsPage(){
@@ -265,6 +332,10 @@ async function loadPaymentsPage(){
     payments.forEach(p=>{ const sid=String(p.student_id||''); if(sid){ window._historyByStudent[sid]=window._historyByStudent[sid]||[]; window._historyByStudent[sid].push(p); } });
     allCompleted = payments; filteredCompleted = payments.slice();
     if(completedCount) completedCount.textContent = payments.length + ' Payment(s)';
+    // Populate dept filter dropdown
+    const deptNames = [...new Set(payments.map(p => p.branch_name).filter(Boolean))].sort();
+    const deptSel = document.getElementById('completedDeptFilter');
+    if(deptSel){ deptNames.forEach(d => { const opt = document.createElement('option'); opt.value = d; opt.textContent = d; deptSel.appendChild(opt); }); }
     renderCompletedPage(1);
 
     // wire search inputs
