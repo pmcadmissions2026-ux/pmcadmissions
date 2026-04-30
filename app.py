@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, redirect, url_for
+from flask import Flask, render_template, request, session, redirect, url_for, jsonify
 from flask_session import Session
 import tempfile
 from config import config
@@ -67,6 +67,33 @@ def index():
 def health():
     """Health check endpoint"""
     return {'status': 'ok', 'message': 'PMC Admission Control System is running'}
+
+@app.route('/admin/api/payments')
+def api_payments():
+    """Return all payments via service-role key (bypasses RLS). Requires active session."""
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    supabase_url = os.environ.get('SUPABASE_URL', '').rstrip('/')
+    service_key = os.environ.get('SUPABASE_SERVICE_KEY', '')
+    if not supabase_url or not service_key or service_key.startswith('REPLACE'):
+        return jsonify([])
+    try:
+        import requests as _req
+        resp = _req.get(
+            f'{supabase_url}/rest/v1/payments?select=*&limit=10000',
+            headers={
+                'apikey': service_key,
+                'Authorization': f'Bearer {service_key}',
+                'Accept': 'application/json',
+                'Prefer': 'count=none',
+            },
+            timeout=15
+        )
+        resp.raise_for_status()
+        return jsonify(resp.json())
+    except Exception as e:
+        app.logger.error(f'api_payments error: {e}')
+        return jsonify([])
 
 # ============================================
 # ERROR HANDLERS
