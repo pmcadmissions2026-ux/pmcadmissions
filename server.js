@@ -1698,7 +1698,7 @@ app.get('/api/payments/next_bill', async (req, res) => {
 // Payments: list payments
 app.get('/api/payments', async (req, res) => {
   try{
-    const { data, error } = await supabase.from('payments').select('*').order('created_at', { ascending: false }).limit(500);
+    const { data, error } = await supabase.from('payments').select('*').order('created_at', { ascending: false }).limit(10000);
     if(error) return res.status(500).json({ ok:false, error: error.message });
     const rows = Array.isArray(data) ? data : (data && data.items ? data.items : []);
 
