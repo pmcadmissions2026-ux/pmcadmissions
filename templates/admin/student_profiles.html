@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html class="light" lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -203,15 +203,16 @@ async function loadData() {
   if (!supabaseClient) return showConfigError();
 
   // fetch core tables in parallel
-  const [sRes, aRes, applRes, admRes, cRes, dRes, pRes, deptRes] = await Promise.all([
+  // payments uses the Flask API (service-role key) because RLS blocks the anon key
+  const [sRes, aRes, applRes, admRes, cRes, dRes, deptRes, paymentsData] = await Promise.all([
     supabaseClient.from('students').select('*'),
     supabaseClient.from('academics').select('*'),
     supabaseClient.from('admission_applications').select('*'),
     supabaseClient.from('admissions').select('*'),
     supabaseClient.from('counselling_records').select('*'),
     supabaseClient.from('documents').select('*'),
-    supabaseClient.from('payments').select('*'),
-    supabaseClient.from('departments').select('*')
+    supabaseClient.from('departments').select('*'),
+    fetch('/api/payments').then(r => r.ok ? r.json() : []).catch(() => [])
   ]);
 
   const students = sRes.data || [];
@@ -220,7 +221,7 @@ async function loadData() {
   const admissions = admRes.data || [];
   const counselling = cRes.data || [];
   const documents = dRes.data || [];
-  const payments = pRes.data || [];
+  const payments = Array.isArray(paymentsData) ? paymentsData : [];
   const departments = deptRes.data || [];
 
   // Build department lookup
@@ -235,16 +236,16 @@ async function loadData() {
     if(id) deptCodeMap[id] = code || '';
   });
 
-  // Build maps
+  // Build maps — all keys normalised to String so lookups with String(student.id) always match
   academicsByStudent = {};
   academics.forEach(ac => {
-    const sid = ac.student_id || ac.student || ac.id;
+    const sid = ac.student_id != null ? String(ac.student_id) : (ac.student != null ? String(ac.student) : null);
     if (sid) academicsByStudent[sid] = ac;
   });
 
   applicationsByStudent = {};
   applications.forEach(ap => {
-    const sid = ap.student_id || ap.student || ap.studentId;
+    const sid = ap.student_id != null ? String(ap.student_id) : (ap.student != null ? String(ap.student) : (ap.studentId != null ? String(ap.studentId) : null));
     if (!sid) return;
     applicationsByStudent[sid] = applicationsByStudent[sid] || [];
     applicationsByStudent[sid].push(ap);
@@ -252,7 +253,7 @@ async function loadData() {
 
   admissionsByStudent = {};
   admissions.forEach(ad => {
-    const sid = ad.student_id || ad.student || ad.studentId;
+    const sid = ad.student_id != null ? String(ad.student_id) : (ad.student != null ? String(ad.student) : (ad.studentId != null ? String(ad.studentId) : null));
     if (!sid) return;
     admissionsByStudent[sid] = admissionsByStudent[sid] || [];
     admissionsByStudent[sid].push(ad);
@@ -268,7 +269,7 @@ async function loadData() {
 
   counsellingByStudent = {};
   counselling.forEach(c => {
-    const sid = c.student_id || c.student || c.studentId || c.applicant_id;
+    const sid = c.student_id != null ? String(c.student_id) : (c.student != null ? String(c.student) : (c.studentId != null ? String(c.studentId) : (c.applicant_id != null ? String(c.applicant_id) : null)));
     if (sid) {
       counsellingByStudent[sid] = counsellingByStudent[sid] || [];
       counsellingByStudent[sid].push(c);
@@ -277,7 +278,8 @@ async function loadData() {
 
   paymentsByStudent = {};
   payments.forEach(p => {
-    const sid = p.student_id || p.student || p.applicant_id || p.app_id;
+    // payments.student_id is the FK to students.id — always use it as the key
+    const sid = p.student_id != null ? String(p.student_id) : null;
     if (sid) {
       paymentsByStudent[sid] = paymentsByStudent[sid] || [];
       paymentsByStudent[sid].push(p);
@@ -293,12 +295,15 @@ async function loadData() {
 }
 
 // Compute admission status for a student (needed for filter)
+// Admitted  = any payment with type OTHER than 'Application Form'
+// Waiting   = only 'Application Form' payment(s) exist
+// Enquiry   = no payments
 function getStudentStatus(sid, apps){
   const pays = paymentsByStudent[sid] || [];
-  const hasPay = pays.length > 0;
-  const hasApp = apps.length > 0;
-  const hasDocs = apps.some(ap => { const aid = ap.app_id || ap.id || ap.application_id; return (documentsByApp[aid]||[]).length > 0; });
-  return hasPay ? 'Admitted' : (hasApp && hasDocs ? 'Waiting' : 'Enquiry');
+  const hasNonAppForm = pays.some(p => p.payment_type && p.payment_type.trim().toLowerCase() !== 'application form');
+  if (hasNonAppForm) return 'Admitted';
+  if (pays.length > 0) return 'Waiting';   // only Application Form paid
+  return 'Enquiry';
 }
 
 function applyStudentFilters(){
@@ -317,14 +322,14 @@ function applyStudentFilters(){
       if(!hay.includes(q)) return false;
     }
     if(statusF){
-      const sid = student.id || student.student_id;
+      const sid = String(student.id || student.student_id || '');
       const apps = applicationsByStudent[sid] || [];
       const status = getStudentStatus(sid, apps);
       if(status !== statusF) return false;
     }
     if(communityF){ const cval = pick(student,'community','community_name') || ''; if(cval !== communityF) return false; }
     if(prefDeptF){
-      const sid = student.id || student.student_id;
+      const sid = String(student.id || student.student_id || '');
       const prefCandidates = [];
       (applicationsByStudent[sid]||[]).forEach(a=>{ ['preferred_dept_name','preferred_dept','preferred_dept_id','preferred_department_id','dept_name','dept_id','dept'].forEach(f=>{ if(a[f]) prefCandidates.push(a[f]); }); });
       (admissionsByStudent[sid]||[]).forEach(a=>{ ['preferred_dept_name','preferred_dept','preferred_dept_id','preferred_department_id','dept_name','dept_id','dept'].forEach(f=>{ if(a[f]) prefCandidates.push(a[f]); }); });
@@ -333,10 +338,10 @@ function applyStudentFilters(){
       const mapped = prefCandidates.map(c=>{ const key=String(c||'').trim(); if(/^[0-9]+$/.test(key) && deptMap[key]) return deptMap[key]; if(deptMap[key]) return deptMap[key]; return key; });
       if(!mapped.some(m=>m === prefDeptF)) return false;
     }
-    if(quotaF){ const sid = student.id || student.student_id; const couns = counsellingByStudent[sid] || []; const qfound = couns.some(c=> (c.quota_type||'').toString() === quotaF) || (student.quota||'').toString() === quotaF; if(!qfound) return false; }
+    if(quotaF){ const sid = String(student.id || student.student_id || ''); const couns = counsellingByStudent[sid] || []; const qfound = couns.some(c=> (c.quota_type||'').toString() === quotaF) || (student.quota||'').toString() === quotaF; if(!qfound) return false; }
     // cutoff range filter
     if(cutoffMode === 'range' && (!isNaN(cutoffMin) || !isNaN(cutoffMax))){
-      const sid = student.id || student.student_id;
+      const sid = String(student.id || student.student_id || '');
       const acad = academicsByStudent[sid] || {};
       const cutoffVal = Number(pick(acad,'plus2_percentage','plus2_percent','hsc_percentage','cutoff','cutoff_score') || NaN);
       if(!isNaN(cutoffMin) && cutoffVal < cutoffMin) return false;
@@ -416,7 +421,7 @@ function renderTable(students) {
     return null;
   }
   students.forEach(student => {
-    const sid = student.id || student.student_id;
+    const sid = String(student.id || student.student_id || '');
     const academic = academicsByStudent[sid] || {};
     const apps = applicationsByStudent[sid] || [];
     const counsel = counsellingByStudent[sid] || [];
@@ -502,11 +507,14 @@ function renderTable(students) {
     }
 
     // Compute Enquiry / Waiting / Admitted status
-    // Admitted = student has at least one payment record
-    const hasPayment  = (paymentsByStudent[sid]||[]).length > 0;
+    // Admitted  = any payment with type OTHER than 'Application Form'
+    // Waiting   = only 'Application Form' payment(s), OR (has app + docs but no payment)
+    // Enquiry   = no payments and no qualifying docs
+    const hasNonAppFormPay = pays.some(p => p.payment_type && p.payment_type.trim().toLowerCase() !== 'application form');
+    const hasAnyPay   = pays.length > 0;
     const hasApp      = apps.length > 0;
     const hasDocs     = apps.some(ap => { const aid = ap.app_id || ap.id || ap.application_id; return (documentsByApp[aid]||[]).length > 0; });
-    const admissionStatus = hasPayment ? 'Admitted' : (hasApp && hasDocs ? 'Waiting' : 'Enquiry');
+    const admissionStatus = hasNonAppFormPay ? 'Admitted' : (hasAnyPay ? 'Waiting' : (hasApp && hasDocs ? 'Waiting' : 'Enquiry'));
     const statusColor = admissionStatus === 'Admitted' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : (admissionStatus === 'Waiting' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300');
 
     const nameInitial = (fullName || 'N')[0] || 'N';
@@ -524,13 +532,15 @@ function renderTable(students) {
     const optionalCodesArr = Array.from(optionalIds).map(id => (deptCodeMap[id] && deptCodeMap[id].trim()) ? deptCodeMap[id] : (deptMap[id] || id));
     const optionalCodes = optionalCodesArr.length ? optionalCodesArr.join(', ') : 'N/A';
 
-    // compute admitted date from payments (use earliest created_at)
+    // Admitted date = date of the earliest non-Application-Form payment
     let admittedDate = 'N/A';
-    const paymentsFor = pays || [];
-    const createdDates = paymentsFor.map(p => p && (p.created_at || p.created || p.added_at || p.inserted_at)).filter(Boolean).map(d=>new Date(d));
-    if(createdDates.length){
-      const earliest = new Date(Math.min.apply(null, createdDates));
-      admittedDate = earliest.toLocaleString();
+    const admissionPays = pays.filter(p => p.payment_type && p.payment_type.trim().toLowerCase() !== 'application form');
+    if(admissionPays.length){
+      const admDates = admissionPays.map(p => new Date(p.payment_date || p.created_at || 0)).filter(d => !isNaN(d.getTime()));
+      if(admDates.length){
+        const earliest = new Date(Math.min.apply(null, admDates.map(d=>d.getTime())));
+        admittedDate = earliest.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+      }
     }
 
     const row = document.createElement('tr');
@@ -573,18 +583,13 @@ function renderTable(students) {
       })()}</td>
       <td class="px-4 py-3 text-xs text-[#374151] dark:text-[#cbd5e1]">${admittedDate}</td>
       <td class="px-4 py-3">
-        ${pays.length
-          ? `<div class="flex flex-col gap-1">
-              <span class="px-2 py-1 rounded-md text-xs font-bold text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/30">${pays.map(p=>'₹'+(p.amount||'0')).join(', ')}</span>
-              <button onclick="showPaymentHistory(${JSON.stringify(sid)})" class="inline-flex items-center gap-1 text-xs text-primary font-semibold hover:underline">
-                <span class="material-symbols-outlined text-xs" style="font-size:13px">history</span> History
-              </button>
-            </div>`
-          : `<span class="text-xs text-gray-400">—</span><br>
-             <a href="payments_form.html?student_id=${encodeURIComponent(student.id||'')}" class="inline-flex items-center gap-1 text-xs text-primary font-semibold hover:underline mt-1">
-               <span class="material-symbols-outlined" style="font-size:13px">add</span> Add
-             </a>`
-        }
+        ${pays.length ? (function(){
+          const total = pays.reduce((s,p)=>s+Number(p.amount||0),0);
+          return '<div class="flex flex-col gap-1">' +
+            '<span class="px-2 py-1 rounded-md text-xs font-bold text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/30">\u20b9 ' + total.toLocaleString('en-IN',{minimumFractionDigits:2}) + '</span>' +
+          '<button onclick="showPaymentHistory(' + sid + ')" class="inline-flex items-center gap-1 text-xs text-primary font-semibold hover:underline"><span class="material-symbols-outlined" style="font-size:13px">history</span> History (' + pays.length + ')</button>' +
+            '</div>';
+        })() : '<span class="text-xs text-gray-400">\u2014</span>'}
       </td>
       <td class="px-4 py-3"><a href="/admin/student_profile_view?student_id=${encodeURIComponent(student.id || student.unique_id || student.email || '')}" class="inline-flex items-center gap-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-xs font-bold py-2 px-3 rounded-lg"> <span class="material-symbols-outlined text-sm">visibility</span>View</a></td>
     `;
@@ -632,7 +637,7 @@ function submitExport() {
   rows.push(header.join(','));
 
   function normalizeStudentForExport(student){
-    const sid = student.id || student.student_id;
+    const sid = String(student.id || student.student_id || '');
     const academic = academicsByStudent[sid] || {};
     const apps = applicationsByStudent[sid] || [];
     const counsel = counsellingByStudent[sid] || [];
@@ -666,11 +671,11 @@ function submitExport() {
     const order = (counsel.map(c=>c.allotment_order_number||c.order_number||'').filter(Boolean).join(', ')) || '';
     const consortium = (counsel.map(c=>c.consortium_number||'').filter(Boolean).join(', ')) || '';
     const counselStatus = (counsel.length? (counsel.map(c=>c.status||'').filter(Boolean).join(', ')) : '');
-    const admittedDate = (pays.length? (new Date(Math.min.apply(null, pays.map(p=>new Date(p.created_at||p.created||p.added_at||p.inserted_at||Date.now()))))).toLocaleString() : '');
-    const paymentsStr = pays.map(p=>{
-      const d=p.payment_date?new Date(p.payment_date).toLocaleDateString('en-IN'):( p.created_at?new Date(p.created_at).toLocaleDateString('en-IN'):'');
-      return [p.bill_no,d,p.payment_type,p.mode_of_payment,p.reference_number||'',Number(p.amount||0).toFixed(2)].filter(Boolean).join('|');
-    }).join('; ');
+    // Admitted date for export = earliest non-Application-Form payment date
+    const admPaysExport = pays.filter(p=>p.payment_type && p.payment_type.trim().toLowerCase()!=='application form');
+    const admittedDate = admPaysExport.length ? (new Date(Math.min.apply(null, admPaysExport.map(p=>new Date(p.payment_date||p.created_at||0).getTime())))).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '';
+    // Payment total for Excel
+    const paymentsStr = pays.length ? '\u20b9 ' + pays.reduce((s,p)=>s+Number(p.amount||0),0).toFixed(2) : '';
     return {
       full_name: fullName,
       unique_id: uniqueId,
@@ -681,7 +686,7 @@ function submitExport() {
       community: community,
       religion: religion,
       caste: pick(student,'caste') || '',
-      status: getStudentStatus(sid, applicationsByStudent[sid]||[]) || '',
+      status: (function(){ const p=paymentsByStudent[sid]||[]; const nonApp=p.some(x=>x.payment_type&&x.payment_type.trim().toLowerCase()!=='application form'); return nonApp?'Admitted':p.length?'Waiting':'Enquiry'; })(),
       school_name: pick(academicsByStudent[sid]||{}, 'school_name','school','institute_name') || '',
       school_address: pick(academicsByStudent[sid]||{}, 'plus2_school_address','school_address','institute_address') || '',
       plus2_percentage: plus2,
@@ -745,6 +750,7 @@ if (logoutBtn) logoutBtn.addEventListener('click', (e) => { e.preventDefault(); 
 // Initialize
 /* ──────────────── Payment History Modal ──────────────── */
 function showPaymentHistory(sid){
+  sid = String(sid);
   const pays = paymentsByStudent[sid] || [];
   const student = (window._allStudents||[]).find(s=>String(s.id)===String(sid)||String(s.student_id)===String(sid));
   const name = student ? (student.full_name||student.name) : 'Student';
