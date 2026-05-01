@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', function(){
                 // If 'dashboard' is not explicitly present, still show it for all users
                 if(!allowed.has('dashboard')) allowed.add('dashboard');
                 // Render in a preferred order
-                const order = ['student_management','enquiries','branch_selection','applications','counselling','payments','reports','documents','staff'];
+                const order = ['student_management','enquiries','branch_selection','payments','applications','counselling','reports','documents','staff'];
                 order.forEach(key => {
                   if(!allowed.has(key)) return;
                   const spec = navMap[key] || { label: key, href: `/templates/admin/${key}.html`, icon: 'circle' };

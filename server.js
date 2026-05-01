@@ -632,9 +632,8 @@ app.post('/api/enquiries', async (req, res) => {
     
     if(studentId){
       // UPDATE existing student (from basic_enquiry)
-      if(!student.unique_id){
-        student.unique_id = await generateUniqueStudentId();
-      }
+      // unique_id is NOT generated here — it is generated only after the first payment
+      delete student.unique_id;
       const { data: updatedStudent, error: updateErr } = await supabase.from('students')
         .update(student)
         .eq('id', studentId)
@@ -643,9 +642,8 @@ app.post('/api/enquiries', async (req, res) => {
       createdStudent = updatedStudent;
     } else {
       // INSERT new student (normal flow)
-      if(!student.unique_id){
-        student.unique_id = await generateUniqueStudentId();
-      }
+      // unique_id is NOT generated here — it is generated only after the first payment
+      delete student.unique_id;
       const { data: insertedStudent, error: studentErr } = await supabase.from('students').insert(student).select().maybeSingle();
       if(studentErr) return res.status(500).json({ error: studentErr.message });
       createdStudent = insertedStudent;
@@ -683,84 +681,8 @@ app.post('/api/enquiries', async (req, res) => {
     if(enquiryErr) return res.status(500).json({ error: enquiryErr.message });
 
     // Debug log candidate emails to help diagnose delivery issues
-    try{ console.log('enquiry created emails', { enquiryRowEmail: enquiryRow.email, createdEnquiryEmail: createdEnquiry && createdEnquiry.email, createdStudentEmail: createdStudent && createdStudent.email }); }catch(e){}
-
-    // Attempt to send an acknowledgement email to the enquirer using nodemailer.
-    (async () => {
-      try{
-        const smtpUser = process.env.SMTP_USER;
-        const fromName = process.env.COLLEGE_NAME || smtpUser || 'Admissions';
-        const fromEmail = (process.env.SMTP_USER || '').trim();
-
-        const brevoKey = (process.env.BREVO_API_KEY || '').trim();
-        if(!brevoKey && !smtpUser){
-          console.warn('[Email] No provider configured (set BREVO_API_KEY or SMTP_USER); skipping enquiry email');
-          return;
-        }
-
-        // Prepare template rendering data (prefer student/enquiry fields)
-        const tplData = Object.assign({}, createdStudent || {}, createdAcademic || {}, createdEnquiry || {}, enquiryRow || {});
-        tplData.college_name = tplData.college_name || process.env.COLLEGE_NAME || '';
-        // Normalize fields so the email template renders correct values
-        // phone is hardcoded null in the form; use whatsapp_number as the canonical contact number
-        if(!tplData.phone || typeof tplData.phone === 'boolean') tplData.phone = (typeof tplData.whatsapp_number === 'string' ? tplData.whatsapp_number : '') || '';
-        if(typeof tplData.whatsapp_number === 'boolean') tplData.whatsapp_number = tplData.phone || '';
-        if(typeof tplData.date_of_birth === 'boolean') tplData.date_of_birth = '';
-        if(typeof tplData.preferred_course === 'boolean') tplData.preferred_course = '';
-        // cutoff: convert numeric 0 to empty string so template shows 'N/A'; stringify cleanly
-        if(tplData.cutoff !== undefined && tplData.cutoff !== null && tplData.cutoff !== '') {
-          const nc = Number(tplData.cutoff);
-          tplData.cutoff = (!isNaN(nc) && nc > 0) ? nc.toFixed(2) : (typeof tplData.cutoff === 'boolean' ? '' : String(tplData.cutoff));
-        }
-
-        // helper to render simple Jinja-like {{ key }} and "{{ key or 'fallback' }}"
-        function renderTemplate(tpl, data){
-          if(!tpl || typeof tpl !== 'string') return '';
-          return tpl.replace(/\{\{\s*([a-zA-Z0-9_]+)(?:\s+or\s+'([^']*)')?\s*\}\}/g, (m, key, fallback) => {
-            const val = data && (key in data) ? data[key] : undefined;
-            if(val === undefined || val === null || val === '') return (fallback !== undefined ? fallback : '');
-            return String(val);
-          }).replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (m, key) => {
-            const val = data && (key in data) ? data[key] : '';
-            return (val === undefined || val === null) ? '' : String(val);
-          });
-        }
-
-        // Read templates (HTML and text) if they exist
-        let htmlTpl = null;
-        let textTpl = null;
-        try{
-          const htmlPath = path.join(__dirname, 'templates', 'emails', 'enquiry.html');
-          const txtPath = path.join(__dirname, 'templates', 'emails', 'enquiry.txt');
-          if(fs.existsSync(htmlPath)) htmlTpl = fs.readFileSync(htmlPath, 'utf8');
-          if(fs.existsSync(txtPath)) textTpl = fs.readFileSync(txtPath, 'utf8');
-        }catch(e){ console.warn('read email template error', e); }
-
-        const htmlBody = renderTemplate(htmlTpl || '', tplData);
-        const textBody = renderTemplate(textTpl || '', tplData) || (htmlBody ? htmlBody.replace(/<[^>]+>/g,'') : '');
-
-        // Determine recipient: prefer enquiry row/email, then createdEnquiry, then createdStudent
-        const toEmail = (enquiryRow && (enquiryRow.email || enquiryRow.contact_email)) || (createdEnquiry && (createdEnquiry.email || createdEnquiry.contact_email)) || (createdStudent && (createdStudent.email || createdStudent.contact_email)) || null;
-        if(!toEmail){
-          console.warn('No recipient email found for enquiry; skipping send', { enquiryRowEmail: enquiryRow && enquiryRow.email, createdEnquiryEmail: createdEnquiry && createdEnquiry.email, createdStudentEmail: createdStudent && createdStudent.email });
-          return;
-        }
-
-        const mailOptions = {
-          from: `${fromName} <${fromEmail}>`,
-          to: toEmail,
-          subject: `${tplData.college_name || 'Admissions'} - Enquiry received`,
-          text: textBody,
-          html: htmlBody
-        };
-
-        sendEmail({ from: fromEmail, fromName, to: toEmail, subject: mailOptions.subject, text: mailOptions.text, html: mailOptions.html }).then(info => {
-          console.log('Enquiry email sent', info && info.messageId, 'to', toEmail, 'via', info && info.provider || 'smtp');
-        }).catch(err => {
-          console.error('Error sending enquiry email', err && err.message ? err.message : err);
-        });
-      }catch(e){ console.error('enquiry email background error', e); }
-    })();
+    // NOTE: Unique ID and welcome email are NOT sent at enquiry stage.
+    // They are generated/sent only after the student's first payment is recorded.
 
     res.json({ ok: true, student: createdStudent, academic: createdAcademic, enquiry: createdEnquiry });
   }catch(e){
@@ -1148,7 +1070,8 @@ app.post('/api/documents', async (req, res) => {
 
     // If unique_id or student_unique provided, prefer mapping student -> admission_applications.app_id
       // If app_id is provided, prefer using it; otherwise use unique_id/student_unique to map
-      const uidToUse = (!app_id) ? (unique_id || student_unique) : null;
+      // Skip if the unique_id is "-" or empty (means no unique ID assigned yet)
+      const uidToUse = (!app_id && unique_id && unique_id !== '-') ? unique_id : (!app_id && student_unique && student_unique !== '-' ? student_unique : null);
     const debugInfo = {};
     if(uidToUse){
       const { data: student, error: sErr } = await supabase.from('students').select('id').eq('unique_id', uidToUse).maybeSingle();
@@ -1167,7 +1090,8 @@ app.post('/api/documents', async (req, res) => {
     // If the caller provided a student identifier in the body (student_unique/unique_id), try to populate debugInfo.student
     // even when app_id was provided so we can auto-create fallback admission_applications when necessary.
     if(!debugInfo.student){
-      const bodyUid = (unique_id || student_unique) || null;
+      // Skip "-" values (placeholder for missing unique_id before first payment)
+      const bodyUid = (unique_id && unique_id !== '-') ? unique_id : ((student_unique && student_unique !== '-') ? student_unique : null);
       if(bodyUid){
         const { data: s2, error: s2Err } = await supabase.from('students').select('id').eq('unique_id', bodyUid).maybeSingle();
         debugInfo.student = s2 || null;
@@ -1191,17 +1115,40 @@ app.post('/api/documents', async (req, res) => {
             const newAppRow = { student_id: debugInfo.student.id, status: 'created', processed_by: null, processed_at: null, application_number: application_number || null };
             const { data: createdApp, error: createErr } = await supabase.from('admission_applications').insert(newAppRow).select().maybeSingle();
             if(!createErr && createdApp && createdApp.app_id){ normalizedAppId = Number(createdApp.app_id); console.log('/api/documents created admission_applications fallback', normalizedAppId); }
-            else { normalizedAppId = candidate; console.log('/api/documents provided app_id not found but could not create fallback, will try provided', candidate); }
-          }catch(e){ console.warn('create admission_applications exception', e); normalizedAppId = candidate; }
+            else { console.log('/api/documents debug (create failed, no fallback)', { createErr: createErr ? createErr.message : null }); return res.status(400).json({ error: `Application #${candidate} not found and could not be created. Please ensure the application exists before uploading documents.`, debug: debugInfo }); }
+          }catch(e){ console.warn('create admission_applications exception', e); return res.status(400).json({ error: `Application #${candidate} not found. Please complete the enquiry or ensure the application exists.` }); }
         } else {
-          // No student known: fall back to using provided candidate and rely on DB to enforce FK
-          normalizedAppId = candidate;
-          console.log('/api/documents using provided app_id without creation', normalizedAppId);
+          // No student known and app_id doesn't exist: return error
+          console.log('/api/documents debug (app_id not found, no student)', { candidate, provided_app_id: app_id });
+          return res.status(400).json({ error: `Application #${candidate} not found. Please ensure the application exists before uploading documents.`, debug: debugInfo });
         }
       }
     }
 
-    if(!normalizedAppId){ console.log('/api/documents debug (no normalizedAppId)', debugInfo); return res.status(400).json({ error: 'Could not determine admission_applications.app_id from provided app_id or unique_id', debug: debugInfo }); }
+    // Check if app_id is in "BE-{student_id}" format (Basic Entry) before trying to use it directly
+    if(!normalizedAppId && app_id && String(app_id).startsWith('BE-')){
+      try{
+        const beStudentId = Number(String(app_id).substring(3));
+        if(!isNaN(beStudentId)){
+          // Try to get or create admission_applications for this basic entry student
+          const { data: beStudent, error: beErr } = await supabase.from('students').select('id').eq('id', beStudentId).maybeSingle();
+          if(!beErr && beStudent && beStudent.id){
+            // Create admission_applications for this basic entry student if it doesn't exist
+            const { data: existingApp, error: checkErr } = await supabase.from('admission_applications').select('app_id').eq('student_id', beStudent.id).maybeSingle();
+            if(!checkErr && existingApp && existingApp.app_id){
+              normalizedAppId = Number(existingApp.app_id);
+              console.log('/api/documents found existing admission_applications for BE student', normalizedAppId);
+            } else {
+              const newAppRow = { student_id: beStudent.id, status: 'created', processed_by: null, processed_at: null, application_number: application_number || null };
+              const { data: createdApp, error: createErr } = await supabase.from('admission_applications').insert(newAppRow).select().maybeSingle();
+              if(!createErr && createdApp && createdApp.app_id){ normalizedAppId = Number(createdApp.app_id); console.log('/api/documents created admission_applications for BE student', normalizedAppId); }
+            }
+          }
+        }
+      }catch(e){ console.warn('BE app_id resolution failed', e); }
+    }
+
+    if(!normalizedAppId){ console.log('/api/documents debug (still no normalizedAppId)', debugInfo); return res.status(400).json({ error: 'Could not determine application ID. Please ensure the application exists or use format "BE-{student_id}" for Basic Entry students.', debug: debugInfo }); }
 
     const row = { app_id: Number(normalizedAppId), document_type: document_type || null, document_url, file_size: file_size ? Number(file_size) : null, uploaded_by: uploaded_by ? Number(uploaded_by) : null, bill_number: bill_number || null };
     let insertAttempt = 0;
@@ -1250,7 +1197,11 @@ app.post('/api/documents', async (req, res) => {
       }
       return res.status(500).json({ error: msg });
     }
-  }catch(e){ console.error('insert document error', e); res.status(500).json({ error: String(e) }); }
+  }catch(e){
+    const errMsg = e && e.message ? e.message : String(e);
+    console.error('/api/documents exception', { error: errMsg, stack: e && e.stack });
+    return res.status(500).json({ error: `Server error: ${errMsg}` });
+  }
 });
 
 // Server-side upload endpoint: accepts a single file and uploads to Supabase storage using service key
@@ -1263,7 +1214,8 @@ app.post('/api/upload-file', uploadMemory.any(), async (req, res) => {
 
     // determine app_id if unique_id or student_unique provided
     let targetAppId = null;
-    const uidToUse = unique_id || student_unique;
+    // Skip "-" values (placeholder for missing unique_id before first payment)
+    const uidToUse = (unique_id && unique_id !== '-') ? unique_id : ((student_unique && student_unique !== '-') ? student_unique : null);
     if(uidToUse){
       const { data: student, error: sErr } = await supabase.from('students').select('id').eq('unique_id', uidToUse).maybeSingle();
       if(sErr) console.warn('lookup student by unique_id error', sErr.message);
@@ -1284,13 +1236,15 @@ app.post('/api/upload-file', uploadMemory.any(), async (req, res) => {
         const { data: s2, error: s2Err } = await supabase.from('students').select('id').eq('unique_id', uidToUse).maybeSingle();
         if(!s2Err && s2 && s2.id){
           try{
-                const newAppRow = { student_id: s2.id, status: 'created', processed_by: null, processed_at: null, application_number: application_number || null };
+            const newAppRow = { student_id: s2.id, status: 'created', processed_by: null, processed_at: null, application_number: application_number || null };
             const { data: createdApp, error: createErr } = await supabase.from('admission_applications').insert(newAppRow).select().maybeSingle();
             if(!createErr && createdApp && createdApp.app_id){ targetAppId = Number(createdApp.app_id); console.log('/api/upload-file created admission_applications', targetAppId); }
           }catch(e){ console.warn('create admission_applications exception', e); }
         }
       } else {
-        targetAppId = candidate;
+        // App doesn't exist and no student info to create it - this is an error
+        console.log('/api/upload-file error: app_id not found and cannot create', { app_id: candidate, uidToUse });
+        return res.status(400).json({ error: `Application #${candidate} not found. Please ensure the application exists before uploading documents.` });
       }
     }
     // If still not resolved, and caller provided an application_number, try to resolve it
@@ -1300,6 +1254,25 @@ app.post('/api/upload-file', uploadMemory.any(), async (req, res) => {
         if(!byNumErr && byNum && byNum.app_id) targetAppId = Number(byNum.app_id);
       }catch(e){ console.warn('lookup admission_applications by application_number failed (upload-file)', e); }
     }
+
+    // If still not resolved, check if app_id is in "BE-{student_id}" format (Basic Entry)
+    if(!targetAppId && app_id && String(app_id).startsWith('BE-')){
+      try{
+        const beStudentId = Number(String(app_id).substring(3));
+        if(!isNaN(beStudentId)){
+          // Try to get or create admission_applications for this basic entry student
+          const { data: beStudent, error: beErr } = await supabase.from('students').select('id').eq('id', beStudentId).maybeSingle();
+          if(!beErr && beStudent && beStudent.id){
+            // Create admission_applications for this basic entry student
+            const newAppRow = { student_id: beStudent.id, status: 'created', processed_by: null, processed_at: null, application_number: application_number || null };
+            const { data: createdApp, error: createErr } = await supabase.from('admission_applications').insert(newAppRow).select().maybeSingle();
+            if(!createErr && createdApp && createdApp.app_id){ targetAppId = Number(createdApp.app_id); console.log('/api/upload-file resolved BE app_id to admission_applications', targetAppId); }
+            else { console.log('/api/upload-file could not create admission_applications for BE student'); }
+          }
+        }
+      }catch(e){ console.warn('BE app_id resolution failed', e); }
+    }
+
     if(!targetAppId){ console.log('/api/upload-file debug (no targetAppId)', { app_id, uidToUse }); return res.status(400).json({ error: 'app_id or unique_id required' }); }
 
     // mapping from incoming field names to normalized document_type used in documents table
@@ -1323,8 +1296,13 @@ app.post('/api/upload-file', uploadMemory.any(), async (req, res) => {
       const incomingField = file.fieldname;
       const docType = fieldToDocType[incomingField] || document_type || incomingField;
       const remotePath = `${String(targetAppId)}/${Date.now()}_${file.originalname}`;
+      console.log('/api/upload-file uploading to storage', { remotePath, fileSize: file.size, mimeType: file.mimetype });
       const { data: upData, error: upErr } = await supabase.storage.from('Student_files').upload(remotePath, file.buffer, { contentType: file.mimetype, upsert: false });
-      if(upErr) return res.status(500).json({ error: upErr.message });
+      if(upErr){
+        const errMsg = upErr.message || String(upErr);
+        console.error('/api/upload-file storage upload error', { remotePath, error: errMsg });
+        return res.status(500).json({ error: `Storage upload failed: ${errMsg}` });
+      }
 
       // construct public url
       const publicUrl = `${SUPABASE_URL.replace(/\/$/,'')}/storage/v1/object/public/Student_files/${encodeURIComponent(upData.path)}`;
@@ -1385,8 +1363,19 @@ app.post('/api/upload-file', uploadMemory.any(), async (req, res) => {
       }
     }
 
+    // For single file upload, return at top level; for multiple, include results array for compatibility
+    if(results.length === 1 && results[0].ok === true){
+      // Return first successful result's properties at top level
+      const { ok, document, publicUrl } = results[0];
+      return res.json({ ok: true, document, publicUrl });
+    }
+    // Multiple files or mixed results: return full results array
     return res.json({ ok: true, results });
-  }catch(e){ console.error('server upload error', e); return res.status(500).json({ error: String(e) }); }
+  }catch(e){
+    const errMsg = e && e.message ? e.message : String(e);
+    console.error('/api/upload-file exception', { error: errMsg, stack: e && e.stack });
+    return res.status(500).json({ error: `Server error: ${errMsg}` });
+  }
 });
 
 // Graceful handler for accidental native POSTs to the static HTML path
@@ -1698,7 +1687,7 @@ app.get('/api/payments/next_bill', async (req, res) => {
 // Payments: list payments
 app.get('/api/payments', async (req, res) => {
   try{
-    const { data, error } = await supabase.from('payments').select('*').order('created_at', { ascending: false }).limit(10000);
+    const { data, error } = await supabase.from('payments').select('*').order('created_at', { ascending: false }).limit(500);
     if(error) return res.status(500).json({ ok:false, error: error.message });
     const rows = Array.isArray(data) ? data : (data && data.items ? data.items : []);
 
@@ -1924,7 +1913,67 @@ app.post('/api/payments', async (req, res) => {
 
     const { data: inserted, error: insErr } = await supabase.from('payments').insert(row).select().maybeSingle();
     if(insErr) return res.status(500).json({ ok:false, error: insErr.message });
-    return res.json({ ok:true, payment: inserted });
+
+    // ── First-payment logic: generate unique ID + send welcome email ──────────
+    let generatedUniqueId = null;
+    try{
+      // Check if any previous payments exist for this student (excluding the one just inserted)
+      const { data: prevPays } = await supabase.from('payments')
+        .select('id').eq('student_id', student_id).neq('id', inserted.id).limit(1);
+      const isFirstPayment = !prevPays || prevPays.length === 0;
+
+      if(isFirstPayment){
+        generatedUniqueId = await generateUniqueStudentId();
+        // Update students table with the new unique_id
+        await supabase.from('students').update({ unique_id: generatedUniqueId }).eq('id', student_id);
+        // Update enquiries table for this student
+        await supabase.from('enquiries').update({ unique_id: generatedUniqueId }).eq('student_id', student_id);
+        console.log('[Payment] First payment — unique_id generated:', generatedUniqueId, 'for student_id:', student_id);
+
+        // Send welcome email asynchronously
+        (async () => {
+          try{
+            const brevoKey = (process.env.BREVO_API_KEY || '').trim();
+            const smtpUser = (process.env.SMTP_USER || '').trim();
+            if(!brevoKey && !smtpUser){ console.warn('[Email] No provider configured; skipping first-payment email'); return; }
+            const fromName = process.env.COLLEGE_NAME || smtpUser || 'Admissions';
+            // Load full student data for email template
+            const { data: stu } = await supabase.from('students').select('*').eq('id', student_id).maybeSingle();
+            if(!stu) return;
+            const toEmail = stu.email || stu.contact_email || null;
+            if(!toEmail){ console.warn('[Email] No email on student', student_id, '— skipping first-payment email'); return; }
+            const tplData = Object.assign({}, stu, { unique_id: generatedUniqueId, college_name: process.env.COLLEGE_NAME || '' });
+            if(!tplData.phone || typeof tplData.phone === 'boolean') tplData.phone = tplData.whatsapp_number || '';
+            function renderTemplate(tpl, data){
+              if(!tpl || typeof tpl !== 'string') return '';
+              return tpl.replace(/\{\{\s*([a-zA-Z0-9_]+)(?:\s+or\s+'([^']*)')?\s*\}\}/g, (m, key, fallback) => {
+                const val = data && (key in data) ? data[key] : undefined;
+                if(val === undefined || val === null || val === '') return (fallback !== undefined ? fallback : '');
+                return String(val);
+              }).replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (m, key) => {
+                const val = data && (key in data) ? data[key] : '';
+                return (val === undefined || val === null) ? '' : String(val);
+              });
+            }
+            let htmlTpl = null, textTpl = null;
+            try{
+              const hp = path.join(__dirname, 'templates', 'emails', 'enquiry.html');
+              const tp = path.join(__dirname, 'templates', 'emails', 'enquiry.txt');
+              if(fs.existsSync(hp)) htmlTpl = fs.readFileSync(hp, 'utf8');
+              if(fs.existsSync(tp)) textTpl = fs.readFileSync(tp, 'utf8');
+            }catch(e){ console.warn('email template read error', e); }
+            const htmlBody = renderTemplate(htmlTpl || '', tplData);
+            const textBody = renderTemplate(textTpl || '', tplData) || (htmlBody ? htmlBody.replace(/<[^>]+>/g, '') : '');
+            const subject = `${tplData.college_name || 'Admissions'} - Welcome! Your Unique ID: ${generatedUniqueId}`;
+            await sendEmail({ from: smtpUser, fromName, to: toEmail, subject, text: textBody, html: htmlBody });
+            console.log('[Payment] Welcome email sent to', toEmail, 'unique_id:', generatedUniqueId);
+          }catch(e){ console.warn('[Payment] Welcome email error', e && e.message ? e.message : e); }
+        })();
+      }
+    }catch(e){ console.warn('[Payment] first-payment unique_id error', e && e.message ? e.message : e); }
+    // ─────────────────────────────────────────────────────────────────────────
+
+    return res.json({ ok:true, payment: inserted, unique_id: generatedUniqueId });
   }catch(e){ console.error('create payment error', e); return res.status(500).json({ ok:false, error: String(e) }); }
 });
 

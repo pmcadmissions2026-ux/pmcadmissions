@@ -302,7 +302,15 @@ $('paymentForm').addEventListener('submit', async function(ev){
     const r=await fetch('/api/payments',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     const j=await r.json();
     if(!r.ok){ showFlash(j&&j.error?j.error:'Failed to save payment.'); return; }
-    showFlash('Payment saved successfully!','success');
+    // If a unique ID was generated on this first payment, update the display
+    if(j.unique_id){
+      $('disp-uid').textContent = j.unique_id;
+      $('selected-unique-id').value = j.unique_id;
+      payload.unique_id = j.unique_id;
+      showFlash('Payment saved! Unique ID generated: <strong>' + j.unique_id + '</strong> — A welcome email has been sent to the student.', 'success');
+    } else {
+      showFlash('Payment saved successfully!', 'success');
+    }
     // build and show print bill
     buildPrintBill(payload, j.payment);
     $('printBillModal').classList.remove('hidden');
@@ -335,7 +343,8 @@ function buildPrintBill(payload, saved){
   const dateStr = (p.payment_date||payload.payment_date||new Date().toISOString().slice(0,10));
   const fmtDate = d => { try{ return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}); }catch(e){ return d; } };
   const studentName = $('disp-name').textContent;
-  const uid = $('disp-uid').textContent;
+  // Prefer unique_id from payload (may have been updated after first payment) then display element
+  const uid = payload.unique_id || $('disp-uid').textContent;
   const community = $('disp-community').textContent;
   const branch = $('selected-branch-name').value||'—';
   const mode = payload.mode_of_payment;

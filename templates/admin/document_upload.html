@@ -418,8 +418,10 @@ async function initDocumentUpload(){
                                 // send metadata to server for insertion into documents table
                                 const userObj = (() => { try{ return JSON.parse(sessionStorage.getItem('pmc_user')||'null'); }catch(e){return null;} })();
                                 const studentName = (document.getElementById('student-name') && document.getElementById('student-name').textContent) ? document.getElementById('student-name').textContent.trim() : null;
-                                const studentUnique = (document.getElementById('student-unique') && document.getElementById('student-unique').textContent) ? document.getElementById('student-unique').textContent.trim() : null;
-                                const payload = { app_id: appIdVal, application_number: appIdVal, document_type: id, document_url: publicUrl, file_size: file.size, uploaded_by: userObj && userObj.user_id ? userObj.user_id : null, student_name: studentName, student_unique: studentUnique, bill_number: billNumberVal };
+                                const studentUniqueText = (document.getElementById('student-unique') && document.getElementById('student-unique').textContent) ? document.getElementById('student-unique').textContent.trim() : null;
+                                // Only include student_unique if it's a real value (not "-")
+                                const payload = { app_id: appIdVal, application_number: appIdVal, document_type: id, document_url: publicUrl, file_size: file.size, uploaded_by: userObj && userObj.user_id ? userObj.user_id : null, student_name: studentName, bill_number: billNumberVal };
+                                if(studentUniqueText && studentUniqueText !== '-') payload.student_unique = studentUniqueText;
                                 const metaRes = await fetch('/api/documents', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                                 if(!metaRes.ok){ anyErrors = true; let text = await metaRes.text(); try{ const j = JSON.parse(text); text = j.error || JSON.stringify(j); }catch(e){} appendStatusLine(`Metadata insert failed for ${file.name}: ${text}`); }
                                 else { const ok = await metaRes.json(); appendStatusLine(`Metadata recorded (doc_id: ${ok.document && ok.document.doc_id ? ok.document.doc_id : 'unknown'})`); }
@@ -429,7 +431,8 @@ async function initDocumentUpload(){
                                 const studentName = (document.getElementById('student-name') && document.getElementById('student-name').textContent) ? document.getElementById('student-name').textContent.trim() : null;
                                 const studentUnique = (document.getElementById('student-unique') && document.getElementById('student-unique').textContent) ? document.getElementById('student-unique').textContent.trim() : null;
                                 if(studentName) fd.append('student_name', studentName);
-                                if(studentUnique) fd.append('student_unique', studentUnique);
+                                // Only include student_unique if it's a real value (not "-")
+                                if(studentUnique && studentUnique !== '-') fd.append('student_unique', studentUnique);
                                 const userObj = (() => { try{ return JSON.parse(sessionStorage.getItem('pmc_user')||'null'); }catch(e){return null;} })();
                                 if(userObj && userObj.user_id) fd.append('uploaded_by', String(userObj.user_id));
                                 const upRes = await fetch('/api/upload-file', { method: 'POST', body: fd });
