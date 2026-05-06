@@ -33,38 +33,79 @@
     </script>
 <style>
         @media print {
-            @page { size: A4 landscape; margin: 8mm; }
+            @page { size: A4 portrait; margin: 8mm; }
             .no-print {
                 display: none !important;
             }
             body {
                 background-color: white !important;
                 color: black !important;
-                font-size: 9px !important;
+                font-size: 10px !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
             }
             .report-container {
                 box-shadow: none !important;
                 border: none !important;
                 margin: 0 !important;
-                padding: 4mm !important;
+                padding: 0 !important;
                 max-width: 100% !important;
+                display: flex !important;
+                flex-direction: column !important;
+                min-height: 270mm !important; /* Forces signature to bottom of A4 */
             }
-            main { padding: 0 !important; max-width: 100% !important; }
-            header { margin-bottom: 4mm !important; padding-bottom: 2mm !important; }
-            h2 { font-size: 13px !important; }
-            h3 { font-size: 11px !important; }
+            main { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+            header { margin-bottom: 4mm !important; padding-bottom: 2mm !important; border-bottom-width: 2px !important; }
+            header img { height: 45px !important; margin-bottom: 2mm !important; }
+            header h3 { font-size: 16px !important; margin-top: 1mm !important; margin-bottom: 2mm !important; }
+            .selected-date-display { border-bottom: 1px solid #666 !important; }
+            
             table {
                 border-collapse: collapse;
                 width: 100%;
-                font-size: 8px !important;
-                page-break-inside: avoid;
+                font-size: 8.5px !important;
+                table-layout: auto;
             }
             th, td {
-                border: 1px solid #000 !important;
-                padding: 2px 3px !important;
+                border: 1px solid #444 !important;
+                padding: 6px 2px !important; 
             }
-            .mt-8, .mt-12 { margin-top: 3mm !important; }
+            thead th {
+                background-color: #f8fafc !important;
+                font-weight: bold !important;
+                text-transform: uppercase !important;
+            }
+            tfoot td {
+                background-color: #f1f5f9 !important;
+                font-weight: bold !important;
+            }
+            
+            .grid { 
+                display: grid !important; 
+                grid-template-columns: 1fr 1fr !important; 
+                gap: 4mm !important; 
+                margin-top: 4mm !important; 
+            }
+            .space-y-3 > div { 
+                padding: 2mm 3mm !important; 
+                border-radius: 4px !important;
+                border: 1px solid #e2e8f0 !important;
+            }
+            .text-lg { font-size: 14px !important; }
+            .text-2xl { font-size: 18px !important; }
+            .p-6 { padding: 3mm !important; }
+            .mt-8 { margin-top: 4mm !important; }
+            .mt-12 { margin-top: auto !important; padding-top: 10mm !important; } /* Pushes to bottom */
+            
+            #report-form { display: none !important; }
+            .bg-primary { background-color: #1e40af !important; color: white !important; }
         }
+            
+            #report-form { display: none !important; }
+            .bg-primary { background-color: #1e40af !important; color: white !important; }
+        
         .table-container {
             overflow-x: auto;
         }
@@ -105,9 +146,9 @@
 </nav>
 <main class="max-w-[1200px] mx-auto p-4 md:p-8">
 <div class="report-container bg-white dark:bg-slate-900 p-8 shadow-xl border border-slate-200 dark:border-slate-800 rounded-xl">
-<header class="text-center mb-8 border-b-2 border-primary pb-6">
-<img src="/static/img/pmc-logo.jpeg" alt="PMC Engineering" class="h-16 w-auto object-contain rounded mx-auto" />
-<h3 class="text-xl font-semibold text-slate-700 dark:text-slate-300 mt-2">Daily Admission Status - 2025-2026</h3>
+<header class="text-center mb-6 border-b-2 border-primary pb-4">
+<img src="/static/img/pmc-logo.jpeg" alt="PMC Engineering" class="h-14 w-auto object-contain rounded mx-auto mb-2" />
+<h3 class="text-lg font-bold text-slate-800 dark:text-slate-300">Daily Admission Status - 2025-2026</h3>
 <div class="flex justify-between items-end mt-6">
 <div class="text-left">
 <span class="bg-primary text-white px-4 py-1 rounded text-sm font-bold uppercase tracking-wider">B.E - First Year</span>
