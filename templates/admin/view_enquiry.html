@@ -53,6 +53,18 @@
                 <label class="text-sm font-semibold text-gray-600">Aadhar Number</label>
                 <p id="field-aadhar_number" class="text-gray-900 text-lg">—</p>
               </div>
+              <div>
+                <label class="text-sm font-semibold text-gray-600">Community</label>
+                <p id="field-community" class="text-gray-900 text-lg">—</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Address -->
+          <section class="mb-8">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 pb-2 border-b-2 border-indigo-200">Address</h3>
+            <div class="bg-gray-50 p-4 rounded-lg">
+              <p id="field-address" class="text-gray-900 text-lg whitespace-pre-wrap">—</p>
             </div>
           </section>
 
@@ -78,7 +90,11 @@
           <!-- Academic Details (from academics table) -->
           <section class="mb-8">
             <h3 class="text-xl font-bold text-gray-800 mb-4 pb-2 border-b-2 border-indigo-200">Academic Details</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+              <div class="bg-indigo-50 p-3 rounded">
+                <p class="text-xs text-gray-600">Cut-off Score</p>
+                <p id="academics-cutoff" class="text-2xl font-bold text-indigo-700">—</p>
+              </div>
               <div class="bg-blue-50 p-3 rounded">
                 <p class="text-xs text-gray-600">Maths</p>
                 <p id="academics-maths_marks" class="text-2xl font-bold text-blue-600">—</p>
@@ -192,11 +208,11 @@
         if(enquiry.student_id){
           const sres = await fetch('/api/students/' + encodeURIComponent(enquiry.student_id));
           if(sres.ok){ const student = await sres.json();
-            ['full_name','unique_id','plus2_register_number','date_of_birth','gender','aadhar_number','whatsapp_number','email','mother_tongue'].forEach(k=> setText('field-'+k, student[k]));
+            ['full_name','unique_id','plus2_register_number','date_of_birth','gender','aadhar_number','whatsapp_number','email','mother_tongue','address','community'].forEach(k=> setText('field-'+k, student[k]));
           }
           // academics
           const ares = await fetch('/api/academics?student_id=' + encodeURIComponent(enquiry.student_id));
-          if(ares.ok){ const acad = await ares.json(); if(Array.isArray(acad) && acad.length>0){ const a = acad[0]; setText('academics-maths_marks', a.maths_marks); setText('academics-physics_marks', a.physics_marks); setText('academics-chemistry_marks', a.chemistry_marks); setText('academics-language_subject_name', a.language_subject_name); setText('academics-language_subject_marks', a.language_subject_marks); renderOtherSubjects(a.other_subjects_json); } else { renderOtherSubjects(null); } }
+          if(ares.ok){ const acad = await ares.json(); if(Array.isArray(acad) && acad.length>0){ const a = acad[0]; setText('academics-maths_marks', a.maths_marks); setText('academics-physics_marks', a.physics_marks); setText('academics-chemistry_marks', a.chemistry_marks); setText('academics-cutoff', a.cutoff); setText('academics-language_subject_name', a.language_subject_name); setText('academics-language_subject_marks', a.language_subject_marks); renderOtherSubjects(a.other_subjects_json); } else { renderOtherSubjects(null); } }
         }
 
         // metadata

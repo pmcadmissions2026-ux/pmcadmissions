@@ -490,6 +490,17 @@ app.get('/admin/student_profile_view', (req, res) => {
   return res.status(404).send('student_profile_view not found');
 });
 
+// Missing admin routes for clean URLs
+app.get('/admin/student_profiles', (req, res) => res.sendFile(path.join(__dirname, 'templates', 'admin', 'student_profiles.html')));
+app.get('/admin/enquiries', (req, res) => res.sendFile(path.join(__dirname, 'templates', 'admin', 'enquiries.html')));
+app.get('/admin/payments', (req, res) => res.sendFile(path.join(__dirname, 'templates', 'admin', 'payments_list.html')));
+app.get('/admin/reports', (req, res) => res.sendFile(path.join(__dirname, 'templates', 'admin', 'reports.html')));
+app.get('/admin/precounseling', (req, res) => res.sendFile(path.join(__dirname, 'templates', 'admin', 'reports_precounseling.html')));
+app.get('/admin/basic_entry', (req, res) => res.sendFile(path.join(__dirname, 'templates', 'admin', 'basic_entry.html')));
+app.get('/admin/new_enquiry', (req, res) => res.sendFile(path.join(__dirname, 'templates', 'admin', 'new_enquiry.html')));
+app.get('/admin/departments', (req, res) => res.sendFile(path.join(__dirname, 'templates', 'admin', 'departments.html')));
+app.get('/admin/staff_management', (req, res) => res.sendFile(path.join(__dirname, 'templates', 'admin', 'staff_management.html')));
+
 // Serve a small client config JS so frontend can access safe env (anon) values
 app.get('/config.js', (req, res) => {
   const clientConfig = {
@@ -569,7 +580,7 @@ app.put('/api/enquiries/:id', async (req, res) => {
     // Update student record if student_id is known
     if(studentId){
       const studentFields = {};
-      const studentKeys = ['full_name','email','whatsapp_number','phone','father_name','mother_name','father_phone','mother_phone','gender','date_of_birth','aadhar_number','emis_number','plus2_register_number','plus2_school_name','plus2_marks','plus2_percentage','plus2_year','board','study_state','group_studied','medium_of_study','community','caste','religion','mother_tongue','category_7_5','first_graduate','general_quota','reference_details'];
+      const studentKeys = ['full_name','email','whatsapp_number','phone','father_name','mother_name','father_phone','mother_phone','gender','date_of_birth','aadhar_number','emis_number','plus2_register_number','plus2_school_name','plus2_marks','plus2_percentage','plus2_year','board','study_state','group_studied','medium_of_study','community','caste','religion','mother_tongue','category_7_5','first_graduate','general_quota','reference_details','address'];
       studentKeys.forEach(k => { if(body[k] !== undefined) studentFields[k] = body[k]; });
       if(Object.keys(studentFields).length > 0){
         const { error: sErr } = await supabase.from('students').update(studentFields).eq('id', studentId);
@@ -1512,7 +1523,7 @@ app.get('/api/basic_enquiry/:id', async (req, res) => {
 // Create new basic enquiry record + also create student record for payment collection
 app.post('/api/basic_enquiry', async (req, res) => {
   try{
-    const { full_name, gender, whatsapp_number, date_of_birth, mother_tongue,
+    const { full_name, gender, whatsapp_number, date_of_birth, mother_tongue, address,
             father_name, father_phone, mother_name, mother_phone,
             school_10_name, school_10_place, school_12_name, school_12_place,
             reference_type, reference_name, date } = req.body || {};
@@ -1530,6 +1541,7 @@ app.post('/api/basic_enquiry', async (req, res) => {
       father_phone: father_phone || null,
       mother_name: mother_name || null,
       mother_phone: mother_phone || null,
+      address: address || null,
       reference_details: reference_name || null,
     };
     const { data: createdStudent, error: studentErr } = await supabase.from('students').insert(studentRecord).select().maybeSingle();
@@ -1553,6 +1565,7 @@ app.post('/api/basic_enquiry', async (req, res) => {
       school_12_place: school_12_place || null,
       reference_type: reference_type || null,
       reference_name: reference_name || null,
+      address: address || null,
       student_id: studentId,
     };
     if(date) beRow.date = date;
@@ -1687,7 +1700,25 @@ app.get('/api/payments/next_bill', async (req, res) => {
 // Payments: list payments
 app.get('/api/payments', async (req, res) => {
   try{
-    const { data, error } = await supabase.from('payments').select('*').order('created_at', { ascending: false }).limit(500);
+    const studentId = req.query.student_id || req.query.studentId;
+    const appId = req.query.app_id || req.query.appId;
+    
+    let query = supabase.from('payments').select('*').order('created_at', { ascending: false });
+    
+    if(studentId && studentId !== 'undefined' && studentId !== 'null' && studentId !== '') {
+      query = query.eq('student_id', studentId);
+    } else if (studentId !== undefined) {
+      // If student_id was provided but is empty/null/undefined string, return empty
+      return res.json([]);
+    }
+    
+    if(appId && appId !== 'undefined' && appId !== 'null' && appId !== '') {
+      query = query.eq('app_id', appId);
+    } else if (appId !== undefined) {
+      return res.json([]);
+    }
+    
+    const { data, error } = await query.limit(500);
     if(error) return res.status(500).json({ ok:false, error: error.message });
     const rows = Array.isArray(data) ? data : (data && data.items ? data.items : []);
 

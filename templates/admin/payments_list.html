@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html class="light" lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -180,7 +180,7 @@ async function fetchJson(url){ const r = await fetch(url); if(!r.ok) throw new E
 
 let allPending = [], allCompleted = [], filteredPending = [], filteredCompleted = [];
 let pendingPage = 1, completedPage = 1;
-const PAY_PAGE_SIZE = 25;
+const PAY_PAGE_SIZE = 15; // Decreased page size to make pagination more apparent
 
 function buildPendingRow(s, deptMap){
     const tr = document.createElement('tr'); tr.className='hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors';
@@ -227,13 +227,40 @@ function buildCompletedRow(p){
 }
 function renderPayPagination(divId, page, totalPages, total, fnName){
     const div = document.getElementById(divId); if(!div) return;
-    if(totalPages <= 1){ div.innerHTML = '<span class="text-xs text-[#617589] dark:text-[#a0aec0]">'+total+' record(s)</span>'; return; }
-    let html = '<span class="text-xs text-[#617589] dark:text-[#a0aec0]">Showing '+(((page-1)*PAY_PAGE_SIZE)+1)+'\u2013'+Math.min(page*PAY_PAGE_SIZE,total)+' of '+total+'</span>';
-    html += '<div class="flex items-center gap-1">';
-    html += '<button onclick="'+fnName+'('+Math.max(1,page-1)+')" '+(page<=1?'disabled':'')+' class="px-3 py-1 rounded border text-sm '+(page<=1?'opacity-40 cursor-not-allowed':'hover:bg-gray-100 dark:hover:bg-[#2d3748]')+'">Prev</button>';
-    for(let i=Math.max(1,page-2); i<=Math.min(totalPages,page+2); i++){ html += '<button onclick="'+fnName+'('+i+')" class="px-3 py-1 rounded border text-sm '+(i===page?'bg-primary text-white border-primary':'hover:bg-gray-100 dark:hover:bg-[#2d3748]')+'">'+i+'</button>'; }
-    html += '<button onclick="'+fnName+'('+Math.min(totalPages,page+1)+')" '+(page>=totalPages?'disabled':'')+' class="px-3 py-1 rounded border text-sm '+(page>=totalPages?'opacity-40 cursor-not-allowed':'hover:bg-gray-100 dark:hover:bg-[#2d3748]')+'">Next</button>';
-    html += '</div>'; div.innerHTML = html;
+    if(total === 0) { div.innerHTML = ''; return; }
+    if(totalPages <= 1){ 
+        div.innerHTML = `<div class="flex items-center justify-between w-full">
+            <span class="text-xs font-medium text-[#617589] dark:text-[#a0aec0]">Showing all ${total} record(s)</span>
+        </div>`; 
+        return; 
+    }
+    let html = `<div class="flex items-center justify-between w-full">
+        <span class="text-xs font-medium text-[#617589] dark:text-[#a0aec0]">Showing ${((page-1)*PAY_PAGE_SIZE)+1}\u2013${Math.min(page*PAY_PAGE_SIZE,total)} of ${total} records</span>`;
+    html += '<div class="flex items-center gap-2">';
+    
+    // First Page
+    html += `<button onclick="${fnName}(1)" ${page<=1?'disabled':''} class="p-1.5 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 disabled:cursor-not-allowed"><span class="material-symbols-outlined" style="font-size:18px">first_page</span></button>`;
+    
+    // Prev Page
+    html += `<button onclick="${fnName}(${Math.max(1,page-1)})" ${page<=1?'disabled':''} class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-200 dark:border-gray-700 text-sm font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 disabled:cursor-not-allowed">Prev</button>`;
+    
+    // Page Numbers (sliding window)
+    let start = Math.max(1, page - 1);
+    let end = Math.min(totalPages, start + 2);
+    if (end === totalPages) start = Math.max(1, end - 2);
+    
+    for(let i=start; i<=end; i++){ 
+        html += `<button onclick="${fnName}(${i})" class="px-3.5 py-1.5 rounded border text-sm font-bold transition-all ${i===page?'bg-primary text-white border-primary shadow-sm':'border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'}">${i}</button>`; 
+    }
+    
+    // Next Page
+    html += `<button onclick="${fnName}(${Math.min(totalPages,page+1)})" ${page>=totalPages?'disabled':''} class="flex items-center gap-1 px-3 py-1.5 rounded border border-gray-200 dark:border-gray-700 text-sm font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 disabled:cursor-not-allowed">Next</button>`;
+    
+    // Last Page
+    html += `<button onclick="${fnName}(${totalPages})" ${page>=totalPages?'disabled':''} class="p-1.5 rounded border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-30 disabled:cursor-not-allowed"><span class="material-symbols-outlined" style="font-size:18px">last_page</span></button>`;
+    
+    html += '</div></div>'; 
+    div.innerHTML = html;
 }
 function renderPendingPage(page){
     pendingPage = page;

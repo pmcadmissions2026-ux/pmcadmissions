@@ -120,10 +120,10 @@
                   class="rounded-lg border border-[#dbe0e6] dark:border-[#2d3748] h-11 px-3 bg-white dark:bg-[#111827] text-sm focus:outline-none focus:ring-2 focus:ring-primary"/>
               </label>
 
-              <label class="flex flex-col gap-1">
-                <span class="text-sm font-semibold">Mother Tongue</span>
-                <input name="mother_tongue" type="text" placeholder="e.g. Tamil"
-                  class="rounded-lg border border-[#dbe0e6] dark:border-[#2d3748] h-11 px-3 bg-white dark:bg-[#111827] text-sm focus:outline-none focus:ring-2 focus:ring-primary"/>
+              <label class="flex flex-col gap-1 sm:col-span-2">
+                <span class="text-sm font-semibold">Address</span>
+                <textarea name="address" rows="2" placeholder="Student's residential address"
+                  class="rounded-lg border border-[#dbe0e6] dark:border-[#2d3748] p-3 bg-white dark:bg-[#111827] text-sm focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
               </label>
 
             </div>
@@ -290,6 +290,7 @@ document.getElementById('basicEntryForm').addEventListener('submit', async (e) =
     whatsapp_number: fd.get('whatsapp_number') || null,
     date_of_birth: fd.get('date_of_birth') || null,
     mother_tongue: fd.get('mother_tongue') || null,
+    address: fd.get('address') || null,
     father_name: fd.get('father_name') || null,
     father_phone: fd.get('father_phone') || null,
     mother_name: fd.get('mother_name') || null,

@@ -165,7 +165,7 @@ async function loadProfile() {
     supabaseClient.from('admission_applications').select('*').eq('student_id', studentId),
     supabaseClient.from('documents').select('*').or(`student_id.eq.${studentId}`),
     supabaseClient.from('counselling_records').select('*').eq('student_id', studentId),
-    supabaseClient.from('payments').select('*').eq('student_id', studentId),
+    fetch(`/api/payments?student_id=${encodeURIComponent(studentId)}`).then(r => r.json()),
     supabaseClient.from('departments').select('*')
   ]).catch(err => { console.error('related fetch error', err); });
 
@@ -174,7 +174,7 @@ async function loadProfile() {
   const applications = appsRes?.data || [];
   let documents = docsRes?.data || [];
   const counselling = counselRes?.data || [];
-  const payments = payRes?.data || [];
+  const payments = (payRes && payRes.ok !== false) ? (Array.isArray(payRes) ? payRes : (payRes.items || [])) : [];
   const departments = deptRes?.data || [];
 
   // build department lookup
@@ -224,12 +224,15 @@ function renderPersonal(st) {
     ['Date of Birth', st.dob || st.date_of_birth || st.birth_date || 'N/A'],
     ['Status', st.status || 'N/A'],
     ['Community', st.community || 'N/A'],
-    ['Religion', st.religion || 'N/A'],
     ['Caste', st.caste || 'N/A'],
-    ['Mother Tongue', st.mother_tongue || 'N/A']
+    ['Religion', st.religion || 'N/A'],
+    ['Mother Tongue', st.mother_tongue || 'N/A'],
+    ['Aadhar Number', st.aadhar_number || 'N/A'],
+    ['Address', st.address || 'N/A']
   ];
   fields.forEach(f => {
     const el = document.createElement('div');
+    if (f[0] === 'Address') el.className = 'md:col-span-2 lg:col-span-3';
     el.innerHTML = `<p class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">${f[0]}</p><p class="text-base font-semibold text-[#111418] dark:text-white">${safeText(f[1])}</p>`;
     body.appendChild(el);
   });

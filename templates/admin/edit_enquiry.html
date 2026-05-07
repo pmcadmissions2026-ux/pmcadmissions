@@ -128,6 +128,10 @@
           <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Aadhar Number</span>
           <input id="aadhar_number" name="aadhar_number" type="text" maxlength="12" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="0000 0000 0000"/>
         </label>
+        <label class="flex flex-col gap-1 sm:col-span-2">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">Residential Address</span>
+          <textarea id="address" name="address" rows="2" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none resize-none" placeholder="Student's residential address"></textarea>
+        </label>
         <label class="flex flex-col gap-1">
           <span class="text-sm font-semibold text-gray-600 dark:text-gray-400">EMIS Number</span>
           <input id="emis_number" name="emis_number" type="text" class="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-11 px-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none" placeholder="Enter EMIS number"/>
@@ -432,6 +436,7 @@
             setVal('mother_tongue', s.mother_tongue || '');
             setVal('father_phone', s.father_phone || '');
             setVal('mother_phone', s.mother_phone || '');
+            setVal('address', s.address || '');
             setVal('aadhar_number', s.aadhar_number || '');
             setVal('emis_number', s.emis_number || '');
             setVal('general_quota', s.general_quota || '');
@@ -488,6 +493,7 @@
       mother_tongue: document.getElementById('mother_tongue')?.value || null,
       father_phone: document.getElementById('father_phone')?.value || null,
       mother_phone: document.getElementById('mother_phone')?.value || null,
+      address: document.getElementById('address')?.value || null,
       aadhar_number: document.getElementById('aadhar_number')?.value || null,
       emis_number: document.getElementById('emis_number')?.value || null,
       general_quota: document.getElementById('general_quota')?.value || null,

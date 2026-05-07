@@ -189,9 +189,9 @@
 <option>Other</option>
 </select>
 </label>
-<label class="flex flex-col">
-<p class="text-sm font-semibold mb-2">Aadhar Number</p>
-<input name="aadhar_number" class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary h-12 px-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="0000 0000 0000" type="text" maxlength="12"/>
+<label class="flex flex-col md:col-span-2">
+<p class="text-sm font-semibold mb-2">Residential Address</p>
+<textarea name="address" rows="2" class="rounded-lg border-[#dbe0e6] focus:border-primary focus:ring-1 focus:ring-primary p-4 dark:bg-background-dark dark:border-[#2d3748]" placeholder="Enter permanent address"></textarea>
 </label>
 </div>
 </div>
@@ -764,6 +764,7 @@
                     date_of_birth: fd.get('date_of_birth')||null,
                     gender: fd.get('gender')||null,
                     aadhar_number: fd.get('aadhar_number')||null,
+                    address: fd.get('address')||null,
                     emis_number: fd.get('emis_number')||null,
                     plus2_register_number: fd.get('plus2_register_number')||null,
                     tenth_school_name: fd.get('tenth_school_name')||null,
@@ -950,6 +951,7 @@ function populateFormFromBasicEntry(r){
   setVal('father_phone', r.father_phone);
   setVal('mother_name', r.mother_name);
   setVal('mother_phone', r.mother_phone);
+  setVal('address', r.address);
   setVal('tenth_school_name', r.school_10_name);
   // 10th place → tenth_study_state (closest mapping)
   setVal('tenth_study_state', r.school_10_place);
