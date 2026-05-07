@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Application Form - PMC Admissions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    <style>
+        @media print {
+            body { background: white; padding: 0; margin: 0; }
+            .no-print { display: none; }
+            .print-page { 
+                width: 210mm; 
+                height: 297mm; 
+                padding: 10mm; 
+                margin: 0; 
+                border: none; 
+                box-shadow: none;
+            }
+            @page {
+                size: A4;
+                margin: 0;
+            }
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .print-page {
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 20px auto;
+            padding: 15mm;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            position: relative;
+            color: #1f2937;
+        }
+        .label { font-weight: 700; font-size: 11px; color: #4b5563; text-transform: uppercase; }
+        .value { font-weight: 600; font-size: 13px; border-bottom: 1px solid #e5e7eb; min-height: 20px; display: block; padding-bottom: 2px; }
+        .section-title { 
+            background: #f3f4f6; 
+            padding: 4px 12px; 
+            font-weight: 800; 
+            font-size: 12px; 
+            text-transform: uppercase; 
+            border-left: 4px solid #4f46e5;
+            margin-bottom: 12px;
+            margin-top: 20px;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #e5e7eb; padding: 6px 8px; text-align: left; font-size: 11px; }
+        th { background: #f9fafb; font-weight: 700; }
+        .photo-box {
+            width: 35mm;
+            height: 45mm;
+            border: 1px dashed #9ca3af;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            text-align: center;
+            color: #9ca3af;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="no-print fixed top-4 right-4 z-50 flex gap-2">
+        <button onclick="window.print()" class="bg-indigo-600 text-white px-6 py-2 rounded-full font-bold shadow-lg hover:bg-indigo-700 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            Print Application
+        </button>
+        <button onclick="window.close()" class="bg-gray-800 text-white px-6 py-2 rounded-full font-bold shadow-lg hover:bg-gray-900">Close</button>
+    </div>
+
+    <div id="print-area" class="print-page">
+        <!-- Header -->
+        <div class="flex justify-between items-start border-b-2 border-indigo-600 pb-4">
+            <div class="flex gap-4 items-center">
+                <!-- Logo removed as requested -->
+                <div>
+                    <h1 class="text-xl font-black tracking-tight text-gray-900 uppercase">Er. Perumal Manimekalai College of Engineering</h1>
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Hosur, Tamil Nadu - 635109</p>
+                    <p class="text-[10px] text-gray-400 mt-1">Approved by AICTE | Affiliated to Anna University</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <h2 class="text-lg font-extrabold text-indigo-700 uppercase underline">Student Application Form</h2>
+                <p class="text-xs font-bold text-gray-600 mt-1">Academic Year: <span id="academic-year">2025-2026</span></p>
+            </div>
+        </div>
+
+        <!-- Top Details -->
+        <div class="grid grid-cols-4 gap-4 mt-6">
+            <div class="col-span-3 grid grid-cols-2 gap-4">
+                <div>
+                    <label class="label">Application No.</label>
+                    <span id="app-no" class="value">-</span>
+                </div>
+                <div>
+                    <label class="label">Admission No.</label>
+                    <span id="adm-no" class="value">-</span>
+                </div>
+                <div>
+                    <label class="label">Registration ID</label>
+                    <span id="reg-id" class="value">-</span>
+                </div>
+                <div>
+                    <label class="label">Admission Category</label>
+                    <span id="adm-category" class="value">-</span>
+                </div>
+            </div>
+            <div class="flex justify-end">
+                <div class="photo-box" id="photo-container">
+                    <img id="student-photo" src="" class="hidden w-full h-full object-cover rounded" />
+                    <div id="photo-placeholder" class="text-center">
+                        <div style="font-size:28px; color:#d1d5db;">&#128247;</div>
+                        <span>Affix Recent<br>Passport Size<br>Photograph</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+            Personal Details
+        </div>
+        <div class="grid grid-cols-3 gap-y-4 gap-x-6">
+            <div class="col-span-2">
+                <label class="label">Candidate Name (As per HSC Marksheet)</label>
+                <span id="student-name" class="value uppercase">-</span>
+            </div>
+            <div>
+                <label class="label">Gender</label>
+                <span id="gender" class="value">-</span>
+            </div>
+            <div>
+                <label class="label">Date of Birth</label>
+                <span id="dob" class="value">-</span>
+            </div>
+            <div>
+                <label class="label">Place of Birth</label>
+                <span id="pob" class="value">-</span>
+            </div>
+            <div>
+                <label class="label">Blood Group</label>
+                <span id="blood-group" class="value">-</span>
+            </div>
+            <div>
+                <label class="label">Nationality</label>
+                <span id="nationality" class="value">-</span>
+            </div>
+            <div>
+                <label class="label">Religion</label>
+                <span id="religion" class="value">-</span>
+            </div>
+            <div>
+                <label class="label">Community / Caste</label>
+                <span id="community-caste" class="value">-</span>
+            </div>
+            <div>
+                <label class="label">Mother Tongue</label>
+                <span id="mother-tongue" class="value">-</span>
+            </div>
+            <div>
+                <label class="label">Aadhar Number</label>
+                <span id="aadhar" class="value">-</span>
+            </div>
+            <div>
+                <label class="label">PAN Number</label>
+                <span id="pan" class="value">-</span>
+            </div>
+            <div>
+                <label class="label">EMIS Number</label>
+                <span id="emis" class="value">-</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-8 mt-6">
+            <div>
+                <div class="section-title mt-0 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Communication Address
+                </div>
+                <div class="text-sm border p-3 rounded min-h-[80px]" id="comm-address">-</div>
+            </div>
+            <div>
+                <div class="section-title mt-0 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    Permanent Address
+                </div>
+                <div class="text-sm border p-3 rounded min-h-[80px]" id="perm-address">-</div>
+            </div>
+        </div>
+
+        <div class="section-title flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+            Parent / Guardian Details
+        </div>
+        <div class="grid grid-cols-2 gap-x-8 gap-y-4">
+            <div>
+                <label class="label">Father's Name</label>
+                <span id="father-name" class="value">-</span>
+            </div>
+            <div>
+                <label class="label">Mother's Name</label>
+                <span id="mother-name" class="value">-</span>
+            </div>
+            <div>
+                <label class="label">Father's Mobile</label>
+                <span id="father-phone" class="value">-</span>
+            </div>
+            <div>
+                <label class="label">Mother's Mobile</label>
+                <span id="mother-phone" class="value">-</span>
+            </div>
+            <div>
+                <label class="label">Guardian's Name</label>
+                <span id="guardian-name" class="value">-</span>
+            </div>
+            <div>
+                <label class="label">Guardian's Mobile</label>
+                <span id="guardian-phone" class="value">-</span>
+            </div>
+            <div>
+                <label class="label">Parent's Occupation</label>
+                <span id="parent-occupation" class="value">-</span>
+            </div>
+            <div>
+                <label class="label">Annual Income</label>
+                <span id="annual-income" class="value">-</span>
+            </div>
+        </div>
+
+        <div class="section-title flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14v7"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 9v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9"></path></svg>
+            Academic Record
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:60px">Class</th>
+                    <th>Name of Institution</th>
+                    <th>Medium</th>
+                    <th>Marks Obtained</th>
+                    <th>Max Marks</th>
+                    <th>% of Marks</th>
+                    <th>Year of Passing</th>
+                    <th>Board</th>
+                    <th>Reg. No.</th>
+                </tr>
+            </thead>
+            <tbody id="academic-rows">
+            </tbody>
+        </table>
+
+        <!-- Subject-wise Marks (matches physical form section 17) -->
+        <div class="section-title flex items-center gap-2" style="margin-top:14px">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+            Subject-wise Marks (HSC)
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <table>
+                <thead><tr><th>Subject</th><th>Marks Obt.</th><th>Max</th><th>%</th></tr></thead>
+                <tbody>
+                    <tr><td>Tamil / Language</td><td id="s-lang">-</td><td>100</td><td id="s-lang-pct">-</td></tr>
+                    <tr><td>Maths</td><td id="s-maths">-</td><td>100</td><td id="s-maths-pct">-</td></tr>
+                    <tr><td>Physics</td><td id="s-phy">-</td><td>100</td><td id="s-phy-pct">-</td></tr>
+                    <tr><td>Chemistry</td><td id="s-chem">-</td><td>100</td><td id="s-chem-pct">-</td></tr>
+                    <tr><td>Biology / Comp. Sci</td><td id="s-bio">-</td><td>100</td><td>-</td></tr>
+                </tbody>
+            </table>
+            <table>
+                <tbody>
+                    <tr><td colspan="2" style="font-weight:700;background:#f9fafb">Cutoff Calculation</td></tr>
+                    <tr><td>Maths (a)</td><td id="c-maths">-</td></tr>
+                    <tr><td>Physics (b)</td><td id="c-phy">-</td></tr>
+                    <tr><td>Chemistry (c)</td><td id="c-chem">-</td></tr>
+                    <tr><td>(Phy+Chem)/2 (d)</td><td id="c-phychem">-</td></tr>
+                    <tr style="background:#eef2ff"><td><strong>Cut-off out of 200 (a+d)</strong></td><td id="c-cutoff"><strong>-</strong></td></tr>
+                    <tr><td>Eligibility % [(a+b+c)/3]</td><td id="c-elig">-</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section-title flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Other Information
+        </div>
+        <div class="grid grid-cols-2 gap-x-8 gap-y-4">
+            <div>
+                <label class="label">Bank Name</label>
+                <span id="bank-name" class="value">-</span>
+            </div>
+            <div>
+                <label class="label">Account Number</label>
+                <span id="bank-acc" class="value">-</span>
+            </div>
+            <div>
+                <label class="label">IFSC Code</label>
+                <span id="ifsc" class="value">-</span>
+            </div>
+            <div>
+                <label class="label">MICR Number</label>
+                <span id="micr" class="value">-</span>
+            </div>
+            
+            <div class="col-span-2">
+                <label class="label text-indigo-700">Extra-Curricular Activities</label>
+            </div>
+            <div>
+                <label class="label">Sports & Games</label>
+                <span id="sports" class="value">-</span>
+            </div>
+            <div>
+                <label class="label">NCC</label>
+                <span id="ncc" class="value">-</span>
+            </div>
+            <div>
+                <label class="label">NSS</label>
+                <span id="nss" class="value">-</span>
+            </div>
+            <div>
+                <label class="label">Other Extra Curricular</label>
+                <span id="other-extra" class="value">-</span>
+            </div>
+            <div class="col-span-2 mt-2">
+                <label class="label">Hostel Required?</label>
+                <span id="hostel" class="value">-</span>
+            </div>
+        </div>
+
+        <!-- Signature Section -->
+        <div class="mt-12 pt-8 flex justify-between items-end px-4">
+            <div class="text-center">
+                <div class="w-32 h-1 border-b border-gray-400 mb-2 mx-auto"></div>
+                <p class="text-[10px] font-bold text-gray-600">Signature of Candidate</p>
+            </div>
+            <div class="text-center">
+                <div class="w-32 h-1 border-b border-gray-400 mb-2 mx-auto"></div>
+                <p class="text-[10px] font-bold text-gray-600">Signature of Parent</p>
+            </div>
+            <div class="text-center">
+                <div class="w-48 h-12 border-b-2 border-indigo-600 mb-2 mx-auto"></div>
+                <p class="text-[10px] font-bold text-indigo-700 uppercase">Admission Coordinator</p>
+                <p class="text-[8px] text-gray-400">P.M.C TECH, Hosur</p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="absolute bottom-6 left-15 right-15 border-t pt-4 text-center">
+            <p class="text-[9px] text-gray-400 italic">This is a computer generated application form. All details provided are subject to verification against original documents.</p>
+        </div>
+    </div>
+
+    <script>
+        window.onload = async function() {
+            const pathParts = window.location.pathname.split('/');
+            const studentId = pathParts[pathParts.length - 1];
+            if(!studentId || studentId === 'application_form_print.html') return;
+            try {
+                const res = await fetch(`/api/reports/application-form/${studentId}`);
+                if(!res.ok) throw new Error('Failed to fetch: ' + res.status);
+                const data = await res.json();
+                const { student, academics, admission } = data;
+
+                // Photo
+                if(student.photo_url) {
+                    document.getElementById('student-photo').src = student.photo_url;
+                    document.getElementById('student-photo').classList.remove('hidden');
+                    document.getElementById('photo-placeholder').classList.add('hidden');
+                }
+
+                // Basic Info
+                document.getElementById('student-name').textContent = student.full_name || '-';
+                document.getElementById('app-no').textContent = student.application_number || (admission && admission.app_id) || '-';
+                document.getElementById('adm-no').textContent = student.admission_no || '-';
+                document.getElementById('reg-id').textContent = student.unique_id || '-';
+                document.getElementById('adm-category').textContent = (admission && admission.quota_type) || student.entry_type || '-';
+
+                // Personal
+                document.getElementById('gender').textContent = student.gender || '-';
+                // format date to dd/mm/yyyy
+                if(student.date_of_birth) {
+                    const d = new Date(student.date_of_birth);
+                    document.getElementById('dob').textContent = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth()+1).padStart(2, '0')}/${d.getFullYear()}`;
+                }
+                document.getElementById('pob').textContent = student.place_of_birth || '-';
+                document.getElementById('blood-group').textContent = student.blood_group || '-';
+                document.getElementById('nationality').textContent = student.nationality || 'Indian';
+                document.getElementById('religion').textContent = student.religion || '-';
+                document.getElementById('community-caste').textContent = `${student.community || ''} / ${student.caste || ''}`;
+                document.getElementById('mother-tongue').textContent = student.mother_tongue || '-';
+                document.getElementById('aadhar').textContent = student.aadhar_number || '-';
+                document.getElementById('pan').textContent = student.pan_number || '-';
+                document.getElementById('emis').textContent = student.emis_number || '-';
+
+                // Address
+                document.getElementById('comm-address').textContent = student.communication_address || student.address || '-';
+                document.getElementById('perm-address').textContent = student.permanent_address || student.address || '-';
+
+                // Parent
+                document.getElementById('father-name').textContent = student.father_name || '-';
+                document.getElementById('mother-name').textContent = student.mother_name || '-';
+                document.getElementById('father-phone').textContent = student.father_phone || '-';
+                document.getElementById('mother-phone').textContent = student.mother_phone || '-';
+                document.getElementById('guardian-name').textContent = student.guardian_name || '-';
+                document.getElementById('guardian-phone').textContent = student.guardian_phone || '-';
+                document.getElementById('parent-occupation').textContent = student.parent_occupation || '-';
+                document.getElementById('annual-income').textContent = student.parent_annual_income ? `₹ ${Number(student.parent_annual_income).toLocaleString()}` : '-';
+
+                // Academics — build from enquiry student fields (SSLC=10th, HSC=+2)
+                const acadBody = document.getElementById('academic-rows');
+                const pct = (m,t) => {
+                    if(!m) return '-';
+                    const numM = Number(m);
+                    const numT = t ? Number(t) : null;
+                    if(numT && numT > 0) return ((numM/numT)*100).toFixed(1)+'%';
+                    return '-';
+                };
+                
+                const tenthMarks = student.tenth_marks || '';
+                const tenthTotal = student.tenth_total_marks || '500';
+                const plus2Marks = student.plus2_marks || '';
+                const plus2Total = student.plus2_total_marks || '600';
+
+                const acadRows = [];
+                // SSLC (10th)
+                acadRows.push(`<tr><td><strong>SSLC</strong></td><td>${student.tenth_school_name||student.school_10_name||'-'}</td><td>${student.tenth_medium_of_study||'-'}</td><td>${tenthMarks||'-'}</td><td>${tenthTotal}</td><td>${pct(tenthMarks,tenthTotal)}</td><td>${student.tenth_year||'-'}</td><td>${student.tenth_board||'State Board'}</td><td>-</td></tr>`);
+                // HSC (+2)
+                acadRows.push(`<tr><td><strong>HSC</strong></td><td>${student.plus2_school_name||student.school_12_name||'-'}</td><td>${student.medium_of_study||'-'}</td><td>${plus2Marks||'-'}</td><td>${plus2Total}</td><td>${pct(plus2Marks,plus2Total)}</td><td>${student.plus2_year||'-'}</td><td>${student.board||'State Board'}</td><td>${student.plus2_register_number||'-'}</td></tr>`);
+                
+                acadBody.innerHTML = acadRows.join('');
+
+                // Subject-wise marks from academics record
+                const acad = academics && academics.length > 0 ? academics[0] : {};
+                const mStr = acad.maths_marks || student.maths_marks || '';
+                const pStr = acad.physics_marks || student.physics_marks || '';
+                const cStr = acad.chemistry_marks || student.chemistry_marks || '';
+                const langStr = acad.language_subject_marks || student.language_subject_marks || '';
+                
+                const m = Number(mStr||0), p = Number(pStr||0), c = Number(cStr||0), lang = Number(langStr||0);
+                const phyChem = (p+c)/2, cutoffVal = m+phyChem, eligPct = (m+p+c)>0?((m+p+c)/3).toFixed(2)+' %':'-';
+                
+                // Fetch Biology / Computer Science from other subjects JSON
+                const others = acad.other_subjects_json || {};
+                const bioCsMarks = others['Biology'] || others['BIOLOGY'] || others['biology'] || 
+                                 others['Computer Science'] || others['COMPUTER SCIENCE'] || 
+                                 others['Comp. Science'] || others['CS'] || 
+                                 student.biology_marks || student.comp_science_marks || '';
+
+                const setT = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v||'-'; };
+                setT('s-lang', langStr||'-'); setT('s-lang-pct', langStr?(langStr+'%'):'-');
+                setT('s-maths', mStr||'-'); setT('s-maths-pct', mStr?(mStr+'%'):'-');
+                setT('s-phy', pStr||'-');   setT('s-phy-pct', pStr?(pStr+'%'):'-');
+                setT('s-chem', cStr||'-');  setT('s-chem-pct', cStr?(cStr+'%'):'-');
+                setT('s-bio', bioCsMarks||'-');
+                
+                setT('c-maths', mStr||'-'); setT('c-phy', pStr||'-'); setT('c-chem', cStr||'-');
+                setT('c-phychem', (pStr||cStr)?phyChem.toFixed(2):'-');
+                setT('c-cutoff', (mStr||pStr||cStr)?cutoffVal.toFixed(2):(acad.cutoff||student.cutoff||student.cutoff_score||'-'));
+                setT('c-elig', eligPct);
+
+                // Other
+                document.getElementById('bank-name').textContent = student.bank_name || '-';
+                document.getElementById('bank-acc').textContent = student.bank_account_no || '-';
+                document.getElementById('ifsc').textContent = student.ifsc_code || '-';
+                document.getElementById('micr').textContent = student.micr_no || '-';
+                
+                document.getElementById('sports').textContent = student.sports_activities || '-';
+                document.getElementById('ncc').textContent = student.ncc_details || '-';
+                document.getElementById('nss').textContent = student.nss_details || '-';
+                document.getElementById('other-extra').textContent = student.other_extra_curricular || student.co_curricular_activities || '-';
+                document.getElementById('hostel').textContent = student.hostel_required ? 'Yes' : 'No';
+
+            } catch(e) {
+                console.error(e);
+                alert('Error loading application data');
+            }
+        };
+    </script>
+</body>
+</html>

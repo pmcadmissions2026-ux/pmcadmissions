@@ -97,7 +97,7 @@
             .text-2xl { font-size: 18px !important; }
             .p-6 { padding: 3mm !important; }
             .mt-8 { margin-top: 4mm !important; }
-            .mt-12 { margin-top: auto !important; padding-top: 10mm !important; } /* Pushes to bottom */
+            .mt-12 { margin-top: auto !important; padding-top: 25mm !important; } /* Pushes to bottom with more space for signature */
             
             #report-form { display: none !important; }
             .bg-primary { background-color: #1e40af !important; color: white !important; }
@@ -117,7 +117,7 @@
         }
         th, td {
             border: 1px solid;
-            padding: 5px 3px;
+            padding: 8px 4px; /* Increased vertical padding */
         }
     </style>
 </head>
@@ -146,12 +146,12 @@
 </nav>
 <main class="max-w-[1200px] mx-auto p-4 md:p-8">
 <div class="report-container bg-white dark:bg-slate-900 p-8 shadow-xl border border-slate-200 dark:border-slate-800 rounded-xl">
-<header class="text-center mb-6 border-b-2 border-primary pb-4">
-<img src="/static/img/pmc-logo.jpeg" alt="PMC Engineering" class="h-14 w-auto object-contain rounded mx-auto mb-2" />
-<h3 class="text-lg font-bold text-slate-800 dark:text-slate-300">Daily Admission Status - 2025-2026</h3>
-<div class="flex justify-between items-end mt-6">
+<header class="text-center mb-4 border-b-2 border-primary pb-2">
+<img src="/static/img/pmc-logo.jpeg" alt="PMC Engineering" class="h-12 w-auto object-contain rounded mx-auto mb-1" />
+<h3 class="text-base font-bold text-slate-800 dark:text-slate-300">Daily Admission Status - 2025-2026</h3>
+<div class="flex justify-between items-end mt-4">
 <div class="text-left">
-<span class="bg-primary text-white px-4 py-1 rounded text-sm font-bold uppercase tracking-wider">B.E - First Year</span>
+<span class="bg-primary text-white px-3 py-0.5 rounded text-xs font-bold uppercase tracking-wider">B.E - First Year</span>
 </div>
 <div class="text-right">
           <form id="report-form" class="flex items-center gap-3" onsubmit="return false;">
@@ -159,7 +159,7 @@
             <input id="report-date" type="date" name="date" class="border px-2 py-1 rounded bg-white text-sm" />
             <button id="load-report" class="px-3 py-1 bg-blue-600 text-white rounded text-sm">Load</button>
           </form>
-          <p class="text-sm font-semibold text-slate-600 dark:text-slate-400 mt-2">Selected: <span id="selected-date-display" class="text-slate-900 dark:text-white ml-2 border-b border-slate-400"></span></p>
+          <p class="text-sm font-semibold text-slate-600 dark:text-slate-400 mt-1">Selected: <span id="selected-date-display" class="text-slate-900 dark:text-white ml-2 border-b border-slate-400"></span></p>
 </div>
 </div>
 </header>
@@ -232,7 +232,13 @@
 <p>© 2025 Er. Perumal Manimekalai College of Engineering. All rights reserved.</p>
 </footer>
 <script>
-        document.getElementById('current-timestamp').innerText = new Date().toLocaleString('en-GB');
+        function formatFullDate(date) {
+            if(!date) return '—';
+            const d = new Date(date);
+            if(isNaN(d)) return '—';
+            return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+        }
+        document.getElementById('current-timestamp').innerText = formatFullDate(new Date()) + ' ' + new Date().toLocaleTimeString('en-GB');
 
         // Client-side rendering: load departments and counselling_records and render the report
         async function fetchJSON(url){

@@ -91,6 +91,7 @@
 					const st = a.student_id ? studentById[String(a.student_id)] : null;
 					return {
 						app_id: a.id,                                        // admissions.id used as handle
+						student_id: a.student_id,
 						application_number: null,                            // admissions table has no app number
 						unique_id: st ? (st.unique_id || '-') : '-',
 						student_name: st ? (st.full_name || st.name || '-') : '-',
@@ -179,7 +180,7 @@
 					withDocs.forEach(a => {
 						const card = document.createElement('div');
 						card.className = 'bg-gray-50 rounded-lg shadow-md p-6 flex flex-col gap-2';
-						card.innerHTML = `<div class="flex items-center gap-3 mb-2"><span class="material-symbols-outlined text-blue-600 text-2xl">person</span><div><div class="text-lg font-bold text-gray-800">${a.student_name||'-'}</div><div class="text-xs text-gray-500">Admission #: <span class="font-mono font-bold text-blue-700">${a.app_id||'-'}</span></div><div class="text-xs text-gray-500 mt-1">Community: <span class="font-mono text-indigo-600">${a.community||'-'}</span></div></div></div><div class="flex items-center gap-2"><span class="material-symbols-outlined text-green-600">badge</span><span class="text-sm font-mono text-green-700">${a.unique_id||'-'}</span></div><div class="flex gap-2 mt-4"><button class="ml-2 bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded view-docs-btn" data-app-id="${a.app_id}" data-unique-id="${a.unique_id}">View Uploaded Docs (${counts[a.unique_id]||0})</button></div>`;
+						card.innerHTML = `<div class="flex items-center gap-3 mb-2"><span class="material-symbols-outlined text-blue-600 text-2xl">person</span><div><div class="text-lg font-bold text-gray-800">${a.student_name||'-'}</div><div class="text-xs text-gray-500">Admission #: <span class="font-mono font-bold text-blue-700">${a.app_id||'-'}</span></div><div class="text-xs text-gray-500 mt-1">Community: <span class="font-mono text-indigo-600">${a.community||'-'}</span></div></div></div><div class="flex items-center gap-2"><span class="material-symbols-outlined text-green-600">badge</span><span class="text-sm font-mono text-green-700">${a.unique_id||'-'}</span></div><div class="flex flex-wrap gap-2 mt-4"><button class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-2 rounded view-docs-btn flex items-center gap-1" data-app-id="${a.app_id}" data-unique-id="${a.unique_id}">View Docs (${counts[a.unique_id]||0})</button><button class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded flex items-center gap-1" onclick="window.open('/api/reports/application-form-print/${a.student_id}', '_blank')"><span class="material-symbols-outlined text-sm">print</span> Print Application</button></div>`;
 						uploadedEl.appendChild(card);
 					});
 				}

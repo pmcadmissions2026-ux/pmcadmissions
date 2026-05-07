@@ -500,6 +500,49 @@ app.get('/admin/basic_entry', (req, res) => res.sendFile(path.join(__dirname, 't
 app.get('/admin/new_enquiry', (req, res) => res.sendFile(path.join(__dirname, 'templates', 'admin', 'new_enquiry.html')));
 app.get('/admin/departments', (req, res) => res.sendFile(path.join(__dirname, 'templates', 'admin', 'departments.html')));
 app.get('/admin/staff_management', (req, res) => res.sendFile(path.join(__dirname, 'templates', 'admin', 'staff_management.html')));
+app.get('/api/reports/application-form-print/:studentId', (req, res) => res.sendFile(path.join(__dirname, 'templates', 'admin', 'application_form_print.html')));
+
+// Data API for application form print — returns student + academics + admission + photo
+app.get('/api/reports/application-form/:studentId', async (req, res) => {
+  try {
+    const sid = req.params.studentId;
+    if(!sid) return res.status(400).json({ error: 'studentId required' });
+
+    // Fetch student record
+    const { data: student, error: sErr } = await supabase.from('students').select('*').eq('id', sid).maybeSingle();
+    if(sErr || !student) return res.status(404).json({ error: 'Student not found' });
+
+    // Fetch academics
+    const { data: academics } = await supabase.from('academics').select('*').eq('student_id', sid);
+
+    // Fetch latest admission application
+    const { data: admApp } = await supabase.from('admission_applications').select('*').eq('student_id', sid).order('created_at', { ascending: false }).limit(1).maybeSingle();
+
+    // Fetch counselling record
+    const { data: counselling } = await supabase.from('counselling_records').select('*').eq('student_id', sid).order('created_at', { ascending: false }).limit(1).maybeSingle();
+
+    // Fetch passport photo from documents
+    let photoUrl = null;
+    if(admApp && admApp.app_id) {
+      const { data: docs } = await supabase.from('documents').select('document_url, document_type').eq('app_id', admApp.app_id);
+      if(docs && docs.length > 0) {
+        const photoDoc = docs.find(d => (d.document_type || '').toLowerCase().includes('photo'));
+        if(photoDoc) photoUrl = photoDoc.document_url;
+      }
+    }
+
+    return res.json({
+      student: { ...student, photo_url: photoUrl || student.photo_url || null },
+      academics: academics || [],
+      admission: admApp || null,
+      counselling: counselling || null
+    });
+  } catch(e) {
+    console.error('/api/reports/application-form error', e);
+    return res.status(500).json({ error: String(e) });
+  }
+});
+
 
 // Serve a small client config JS so frontend can access safe env (anon) values
 app.get('/config.js', (req, res) => {
@@ -778,6 +821,67 @@ app.get('/api/students/:id', async (req, res) => {
     if(error) return res.status(500).json({ error: error.message });
     res.json(data);
   }catch(e){ res.status(500).json({ error: String(e) }); }
+});
+
+// Update extended student details (Application Form details)
+app.put('/api/students/:id/extended-details', async (req, res) => {
+  try {
+    const studentId = req.params.id;
+    const details = req.body;
+    
+    // We update the students table with all the new fields
+    const { data, error } = await supabase
+      .from('students')
+      .update(details)
+      .eq('id', studentId)
+      .select()
+      .maybeSingle();
+
+    if (error) return res.status(500).json({ error: error.message });
+    if (!data) return res.status(404).json({ error: 'Student not found' });
+
+    res.json({ ok: true, student: data });
+  } catch (e) {
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+// Endpoint to get full student data for the printable application form
+app.get('/api/reports/application-form/:studentId', async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    
+    // 1. Fetch Student Details
+    const { data: student, error: stErr } = await supabase
+      .from('students')
+      .select('*')
+      .eq('id', studentId)
+      .maybeSingle();
+    
+    if (stErr) throw stErr;
+    if (!student) return res.status(404).json({ error: 'Student not found' });
+
+    // 2. Fetch Academic Details
+    const { data: academics, error: acErr } = await supabase
+      .from('academics')
+      .select('*')
+      .eq('student_id', studentId);
+    
+    // 3. Fetch Admission/Allotment details
+    const { data: admission, error: adErr } = await supabase
+      .from('admissions')
+      .select('*, departments:allotted_dept_id(dept_name, dept_code)')
+      .eq('student_id', studentId)
+      .maybeSingle();
+
+    res.json({
+      student,
+      academics: academics || [],
+      admission: admission || null
+    });
+  } catch (e) {
+    res.status(500).json({ error: String(e) });
+  }
 });
 
 app.post('/api/students', async (req, res) => {
@@ -1094,8 +1198,12 @@ app.post('/api/documents', async (req, res) => {
       debugInfo.apps = apps || null;
       debugInfo.apps_error = aErr ? (aErr.message || String(aErr)) : null;
       if(aErr) console.warn('lookup admission_applications by student_id error', aErr.message);
-      if(!apps || !apps.app_id){ console.log('/api/documents debug (no apps)', debugInfo); return res.status(400).json({ error: `No admission_applications found for student with unique_id ${uidToUse}`, debug: debugInfo }); }
-      normalizedAppId = Number(apps.app_id);
+      if(apps && apps.app_id){
+        normalizedAppId = Number(apps.app_id);
+      } else {
+        // No existing app — do NOT return 400 here; fall through to use the provided app_id
+        console.log('/api/documents: student found but no apps yet — will use provided app_id or auto-create', debugInfo);
+      }
     }
 
     // If the caller provided a student identifier in the body (student_unique/unique_id), try to populate debugInfo.student
@@ -1705,20 +1813,32 @@ app.get('/api/payments', async (req, res) => {
     
     let query = supabase.from('payments').select('*').order('created_at', { ascending: false });
     
+    // If we have a studentId, we want to find payments linked to this student
+    // OR payments linked to any application belonging to this student.
     if(studentId && studentId !== 'undefined' && studentId !== 'null' && studentId !== '') {
-      query = query.eq('student_id', studentId);
-    } else if (studentId !== undefined) {
-      // If student_id was provided but is empty/null/undefined string, return empty
-      return res.json([]);
-    }
-    
-    if(appId && appId !== 'undefined' && appId !== 'null' && appId !== '') {
+      // Get all app_ids for this student first to expand the search
+      const { data: apps } = await supabase.from('admission_applications').select('app_id').eq('student_id', studentId);
+      const appIds = (apps || []).map(a => a.app_id).filter(Boolean);
+      
+      if (appIds.length > 0) {
+        // Use .or filter to get payments by student_id OR any of the student's app_ids
+        query = query.or(`student_id.eq.${studentId},app_id.in.(${appIds.join(',')})`);
+      } else {
+        query = query.eq('student_id', studentId);
+      }
+    } else if (appId && appId !== 'undefined' && appId !== 'null' && appId !== '') {
       query = query.eq('app_id', appId);
-    } else if (appId !== undefined) {
-      return res.json([]);
+    } else {
+      // If neither student_id nor app_id is provided, and it's not explicitly requested to show all,
+      // we might want to return empty or all depending on the caller.
+      // For now, if student_id was provided but was empty string/null, return empty.
+      if (req.query.student_id !== undefined || req.query.studentId !== undefined || req.query.app_id !== undefined) {
+        return res.json([]);
+      }
+      // Otherwise (no filter params at all), return all (for the main payments list page)
     }
     
-    const { data, error } = await query.limit(500);
+    const { data, error } = await query.limit(1000);
     if(error) return res.status(500).json({ ok:false, error: error.message });
     const rows = Array.isArray(data) ? data : (data && data.items ? data.items : []);
 

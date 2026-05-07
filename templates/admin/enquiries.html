@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html class="light" lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -285,7 +285,13 @@ function renderPage(page){
     slice.forEach(enq => {
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-[#f9fafb] dark:hover:bg-[#111827] transition-colors';
-        const created = enq.created_at ? (new Date(enq.created_at)).toLocaleDateString() : 'N/A';
+        function formatFullDate(date) {
+            if(!date) return 'N/A';
+            const d = new Date(date);
+            if(isNaN(d)) return 'N/A';
+            return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+        }
+        const created = enq.created_at ? formatFullDate(enq.created_at) : 'N/A';
         const cutoffDisplay = (enq.cutoff !== null && enq.cutoff !== undefined) ? Number(enq.cutoff).toFixed(2) : 'N/A';
         const eligible = (enq.tnea_eligible === true)
             ? '<span class="px-3 py-1 inline-flex text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">Eligible</span>'
@@ -398,7 +404,7 @@ function renderBePage(page){
   slice.forEach((r, idx) => {
     const tr = document.createElement('tr');
     tr.className = 'hover:bg-[#f9fafb] dark:hover:bg-[#111827] transition-colors';
-    const dateDisplay = r.date ? r.date : (r.created_at ? new Date(r.created_at).toLocaleDateString() : 'N/A');
+    const dateDisplay = r.date ? formatFullDate(r.date) : (r.created_at ? formatFullDate(r.created_at) : 'N/A');
     const dobDisplay = r.date_of_birth || '';
     tr.innerHTML = `
       <td class="px-4 py-3 text-sm text-[#617589]">${globalOffset + idx + 1}</td>
@@ -466,7 +472,7 @@ function exportBasicEntryExcel(){
   const headers = ['S.No','Date','Name','Gender','WhatsApp','DOB','Father Name','Father Phone','Mother Name','Mother Phone','School X','X Place','School XII','XII Place','Ref Type','Ref Name'];
   const rows = [headers, ...allBasicEntries.map((r,i) => [
     i+1,
-    r.date || (r.created_at ? new Date(r.created_at).toLocaleDateString() : ''),
+    r.date ? formatFullDate(r.date) : (r.created_at ? formatFullDate(r.created_at) : ''),
     r.full_name||'', r.gender||'', r.whatsapp_number||'', r.date_of_birth||'',
     r.father_name||'', r.father_phone||'', r.mother_name||'', r.mother_phone||'',
     r.school_10_name||'', r.school_10_place||'', r.school_12_name||'', r.school_12_place||'',

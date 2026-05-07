@@ -198,7 +198,13 @@ function buildPendingRow(s, deptMap){
 function buildCompletedRow(p){
     const tr = document.createElement('tr'); tr.className='hover:bg-[#f0f2f4] dark:hover:bg-[#2d3748] transition-colors';
     const modeClass = (m)=>{ if(m==='Cash') return 'bg-green-100 text-green-800'; if(m==='Card') return 'bg-blue-100 text-blue-800'; if(m==='Cheque') return 'bg-orange-100 text-orange-800'; if(m==='Bank Transfer') return 'bg-purple-100 text-purple-800'; if(m==='UPI') return 'bg-indigo-100 text-indigo-800'; return 'bg-gray-100 text-gray-800'; };
-    const dateStr = p.payment_date ? new Date(p.payment_date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : (p.created_at ? new Date(p.created_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '—');
+    function formatFullDate(date) {
+        if(!date) return '—';
+        const d = new Date(date);
+        if(isNaN(d)) return '—';
+        return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+    }
+    const dateStr = p.payment_date ? formatFullDate(p.payment_date) : (p.created_at ? formatFullDate(p.created_at) : '—');
     const ref = p.reference_number || p.upi_id || '—';
     const sid = p.student_id ? String(p.student_id) : '';
     const pJson = JSON.stringify(p).replace(/'/g,"&#39;");
@@ -322,7 +328,7 @@ function exportCompletedToExcel(){
     const rows = filteredCompleted.map(p => ({
         'Student Name': p.student_name||'',
         'Unique ID': p.unique_id||'',
-        'Date': p.payment_date||(p.created_at ? new Date(p.created_at).toLocaleDateString('en-IN') : ''),
+        'Date': p.payment_date ? formatFullDate(p.payment_date) : (p.created_at ? formatFullDate(p.created_at) : ''),
         'Bill No': p.bill_no||'',
         'Type': p.payment_type||'',
         'Mode': p.mode_of_payment||'',
@@ -401,7 +407,7 @@ function amountInWords(n){
 
 /* ── Print Bill ── */
 function openPrintBill(p){
-  const fmtDate=d=>{ try{ return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}); }catch(e){ return d||''; } };
+  const fmtDate=d=>{ try{ return formatFullDate(d); }catch(e){ return d||''; } };
   const dateStr=p.payment_date||p.created_at||new Date().toISOString().slice(0,10);
   const refNumber=p.reference_number||p.upi_id||'—';
   const amtWords=amountInWords(Number(p.amount||0));
@@ -465,7 +471,7 @@ function showStudentHistory(sid){
     let total=0;
     const rows=pays.map(p=>{
       total+=Number(p.amount||0);
-      const d=p.payment_date?new Date(p.payment_date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):(p.created_at?new Date(p.created_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—');
+      const d=p.payment_date?formatFullDate(p.payment_date):(p.created_at?formatFullDate(p.created_at):'—');
       const pJson=JSON.stringify(p).replace(/'/g,"&#39;");
       return `<tr class="border-b border-gray-100 hover:bg-gray-50">
         <td class="px-4 py-2.5 text-sm whitespace-nowrap">${d}</td>

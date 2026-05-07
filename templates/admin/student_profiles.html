@@ -539,7 +539,13 @@ function renderTable(students) {
       const admDates = admissionPays.map(p => new Date(p.payment_date || p.created_at || 0)).filter(d => !isNaN(d.getTime()));
       if(admDates.length){
         const earliest = new Date(Math.min.apply(null, admDates.map(d=>d.getTime())));
-        admittedDate = earliest.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+        function formatFullDate(date) {
+            if(!date) return '—';
+            const d = new Date(date);
+            if(isNaN(d)) return '—';
+            return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+        }
+        admittedDate = formatFullDate(earliest);
       }
     }
 
@@ -673,7 +679,7 @@ function submitExport() {
     const counselStatus = (counsel.length? (counsel.map(c=>c.status||'').filter(Boolean).join(', ')) : '');
     // Admitted date for export = earliest non-Application-Form payment date
     const admPaysExport = pays.filter(p=>p.payment_type && p.payment_type.trim().toLowerCase()!=='application form');
-    const admittedDate = admPaysExport.length ? (new Date(Math.min.apply(null, admPaysExport.map(p=>new Date(p.payment_date||p.created_at||0).getTime())))).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '';
+    const admittedDate = admPaysExport.length ? formatFullDate(new Date(Math.min.apply(null, admPaysExport.map(p=>new Date(p.payment_date||p.created_at||0).getTime())))) : '';
     // Payment total for Excel
     const paymentsStr = pays.length ? '\u20b9 ' + pays.reduce((s,p)=>s+Number(p.amount||0),0).toFixed(2) : '';
     return {
@@ -764,7 +770,7 @@ function showPaymentHistory(sid){
     let total=0;
     let rows = pays.map(p=>{
       total+=Number(p.amount||0);
-      const d=p.payment_date?new Date(p.payment_date).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):(p.created_at?new Date(p.created_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—');
+      const d=p.payment_date?formatFullDate(p.payment_date):(p.created_at?formatFullDate(p.created_at):'—');
       return `<tr class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800">
         <td class="px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">${d}</td>
         <td class="px-4 py-2.5 text-sm font-bold">${p.bill_no||'—'}</td>
