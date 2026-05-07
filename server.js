@@ -1071,7 +1071,7 @@ app.post('/api/documents', async (req, res) => {
     // If unique_id or student_unique provided, prefer mapping student -> admission_applications.app_id
       // If app_id is provided, prefer using it; otherwise use unique_id/student_unique to map
       // Skip if the unique_id is "-" or empty (means no unique ID assigned yet)
-      const uidToUse = (!app_id && unique_id && unique_id !== '-') ? unique_id : (!app_id && student_unique && student_unique !== '-' ? student_unique : null);
+      const uidToUse = (unique_id && unique_id !== '-') ? unique_id : (student_unique && student_unique !== '-' ? student_unique : null);
     const debugInfo = {};
     if(uidToUse){
       const { data: student, error: sErr } = await supabase.from('students').select('id').eq('unique_id', uidToUse).maybeSingle();

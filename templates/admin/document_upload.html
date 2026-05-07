@@ -361,18 +361,82 @@ async function initDocumentUpload(){
 
             // show applicant info if we can find it via /api/admissions -> student
             // Only perform admissions lookup if the step1 page did not supply name/unique in the querystring
-            if(appId && !(nameParam || uniqueParam)){
-                try{
-                    const admRes = await fetch('/api/admissions');
-                    if(admRes.ok){
-                        const all = await admRes.json();
-                        const adm = all.find(a => String(a.id) === String(appId) || String(a.app_id) === String(appId));
-                        if(adm && adm.student_id){
-                            const stRes = await fetch(`/api/students/${adm.student_id}`);
-                            if(stRes.ok){ const st = await stRes.json(); if(st){ document.getElementById('student-name').textContent = st.full_name || st.name || '-'; document.getElementById('student-unique').textContent = st.unique_id || '-'; } }
+            let studentId = null;
+            // Robust student and application lookup
+            async function resolveStudentAndApplication() {
+                // 1. Try lookup by appId (most reliable)
+                if(appId){
+                    try{
+                        const admRes = await fetch('/api/admissions');
+                        if(admRes.ok){
+                            const all = await admRes.json();
+                            const adm = all.find(a => String(a.id) === String(appId) || String(a.app_id) === String(appId));
+                            if(adm && adm.student_id){
+                                studentId = adm.student_id;
+                                const stRes = await fetch(`/api/students/${adm.student_id}`);
+                                if(stRes.ok){ 
+                                    const st = await stRes.json(); 
+                                    if(st){ 
+                                        if(!nameParam) document.getElementById('student-name').textContent = st.full_name || st.name || '-'; 
+                                        if(!uniqueParam || uniqueParam === '-') document.getElementById('student-unique').textContent = st.unique_id || '-'; 
+                                        // Fetch payments to get bill number
+                                        fetchPaymentsForStudent(st.id, st.unique_id);
+                                    } 
+                                }
+                                // Auto-fill application number
+                                const appNum = adm.application_number || adm.app_id || adm.id;
+                                if(appNum) {
+                                    document.getElementById('application-number').value = appNum;
+                                    document.getElementById('display-app-number').textContent = appNum;
+                                }
+                                return; // Found it
+                            }
+                        }
+                    }catch(e){ console.warn('lookup by appId failed', e); }
+                }
+
+                // 2. Fallback: Lookup by uniqueParam
+                if(uniqueParam && uniqueParam !== '-'){
+                    try {
+                        const stRes = await fetch('/api/students');
+                        if(stRes.ok) {
+                            const allSt = await stRes.json();
+                            const st = allSt.find(s => s.unique_id === uniqueParam);
+                            if(st) {
+                                studentId = st.id;
+                                fetchPaymentsForStudent(st.id, st.unique_id);
+                                // Fetch application info
+                                const admRes = await fetch('/api/admissions');
+                                if(admRes.ok) {
+                                    const allAdm = await admRes.json();
+                                    const adm = allAdm.find(a => Number(a.student_id) === Number(st.id));
+                                    if(adm) {
+                                        const appNum = adm.application_number || adm.app_id || adm.id;
+                                        document.getElementById('application-number').value = appNum;
+                                        document.getElementById('display-app-number').textContent = appNum;
+                                    }
+                                }
+                            }
+                        }
+                    } catch(e) { console.warn('lookup by uniqueParam failed', e); }
+                }
+            }
+
+            resolveStudentAndApplication();
+
+            async function fetchPaymentsForStudent(sId, uniqueId) {
+                try {
+                    const payRes = await fetch('/api/payments');
+                    if(payRes.ok) {
+                        const allPays = await payRes.json();
+                        // Find "Application Form" payment for this student
+                        const appPay = allPays.find(p => (Number(p.student_id) === Number(sId) || p.unique_id === uniqueId) && p.payment_type === 'Application Form');
+                        if(appPay && appPay.bill_no) {
+                            document.getElementById('bill-number').value = appPay.bill_no;
+                            appendStatusLine(`Auto-fetched Application Form bill number: ${appPay.bill_no}`);
                         }
                     }
-                }catch(e){ console.warn('lookup admission/student', e); }
+                } catch(e) { console.warn('fetch payments error', e); }
             }
 
             // wire file inputs and upload flow
