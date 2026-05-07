@@ -243,7 +243,7 @@
 <p>© 2025 Er. Perumal Manimekalai College of Engineering. All rights reserved.</p>
 </footer>
 <script>
-        document.getElementById('current-timestamp').innerText = new Date().toLocaleString();
+        document.getElementById('current-timestamp').innerText = new Date().toLocaleString('en-GB');
 
         async function fetchJSON(url){
           const r = await fetch(url, { cache: 'no-store' });
@@ -259,7 +259,10 @@
         }
 
         function formatDisplayDate(d){
-          return d.toLocaleDateString();
+          const dd = String(d.getDate()).padStart(2,'0');
+          const mm = String(d.getMonth()+1).padStart(2,'0');
+          const yyyy = d.getFullYear();
+          return `${dd}/${mm}/${yyyy}`;
         }
 
         function endOfDay(date){ const d = new Date(date); d.setHours(23,59,59,999); return d; }
