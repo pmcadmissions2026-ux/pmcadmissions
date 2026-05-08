@@ -859,7 +859,8 @@ document.addEventListener('DOMContentLoaded', function () {
       category_7_5: !!fd.get('category_7_5'),
       first_graduate: !!fd.get('first_graduate'),
       general_quota: !!fd.get('general_quota'),
-      reference_details: fd.get('reference_details') || null
+      reference_details: fd.get('reference_details') || null,
+      registration_type: 'direct'
     };
     const academic = {
       school_name: fd.get('plus2_school_name') || null,

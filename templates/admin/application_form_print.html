@@ -32,8 +32,8 @@
             background: white;
             width: 210mm;
             min-height: 297mm;
-            margin: 20px auto;
-            padding: 15mm;
+            margin: 10px auto;
+            padding: 12mm;
             box-shadow: 0 0 20px rgba(0,0,0,0.1);
             position: relative;
             color: #1f2937;
@@ -50,8 +50,14 @@
             margin-bottom: 12px;
             margin-top: 20px;
         }
+        /* Targeted styles for page 2 to fill space better */
+        .page-2 .section-title { margin-top: 24px; margin-bottom: 10px; padding: 4px 12px; font-size: 13px; }
+        .page-2 .label { font-size: 11px; }
+        .page-2 .value { font-size: 14px; min-height: 24px; padding-bottom: 2px; }
+        .page-2 table th, .page-2 table td { padding: 6px 8px; font-size: 12px; }
+        .page-2 .grid { gap: 12px !important; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #e5e7eb; padding: 6px 8px; text-align: left; font-size: 11px; }
+        th, td { border: 1px solid #e5e7eb; padding: 4px 6px; text-align: left; font-size: 11px; }
         th { background: #f9fafb; font-weight: 700; }
         .photo-box {
             width: 35mm;
@@ -66,8 +72,9 @@
         }
         .page-break {
             page-break-before: always;
-            margin-top: 20mm;
+            margin-top: 2mm;
         }
+        .avoid-break { page-break-inside: avoid; break-inside: avoid; }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -87,7 +94,7 @@
                 <div>
                     <h1 class="text-xl font-black tracking-tight text-gray-900 uppercase">Er. Perumal Manimekalai College of Engineering</h1>
                     <p class="text-xs font-bold text-gray-500 uppercase tracking-widest">Hosur, Tamil Nadu - 635109</p>
-                    <p class="text-[10px] text-gray-400 mt-1">Approved by AICTE | Affiliated to Anna University</p>
+                    <p class="text-[10px] text-gray-400 mt-1">Approved by AICTE | An Autonomous Institution</p>
                 </div>
             </div>
             <div class="text-right">
@@ -108,7 +115,7 @@
                     <span id="adm-no" class="value">-</span>
                 </div>
                 <div>
-                    <label class="label">Registration ID</label>
+                    <label class="label">Unique ID</label>
                     <span id="reg-id" class="value">-</span>
                 </div>
                 <div>
@@ -224,6 +231,7 @@
 
         <div class="page-break"></div>
 
+        <div class="page-2">
         <div class="section-title flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
             Guardian Details
@@ -270,20 +278,27 @@
         </table>
 
         <!-- Subject-wise Marks (matches physical form section 17) -->
-        <div class="section-title flex items-center gap-2" style="margin-top:14px">
+        <div class="section-title flex items-center gap-2" style="margin-top:20px">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
             Subject-wise Marks (HSC)
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
             <table>
                 <thead><tr><th>Subject</th><th>Marks Obt.</th><th>Max</th><th>%</th></tr></thead>
-                <tbody>
+                <tbody id="subject-marks-body">
                     <tr><td>Tamil / Language</td><td id="s-lang">-</td><td>100</td><td id="s-lang-pct">-</td></tr>
                     <tr><td>Maths</td><td id="s-maths">-</td><td>100</td><td id="s-maths-pct">-</td></tr>
                     <tr><td>Physics</td><td id="s-phy">-</td><td>100</td><td id="s-phy-pct">-</td></tr>
                     <tr><td>Chemistry</td><td id="s-chem">-</td><td>100</td><td id="s-chem-pct">-</td></tr>
-                    <tr><td>Biology / Comp. Sci</td><td id="s-bio">-</td><td>100</td><td>-</td></tr>
                 </tbody>
+                <tfoot>
+                    <tr style="font-weight:bold; background:#f9fafb">
+                        <td>Total Marks</td>
+                        <td id="s-total-obt">-</td>
+                        <td id="s-total-max">-</td>
+                        <td id="s-total-pct">-</td>
+                    </tr>
+                </tfoot>
             </table>
             <table>
                 <tbody>
@@ -302,7 +317,7 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             Other Information
         </div>
-        <div class="grid grid-cols-2 gap-x-8 gap-y-4">
+        <div class="grid grid-cols-2 gap-x-8 gap-y-4 avoid-break">
             <div>
                 <label class="label">Bank Name</label>
                 <span id="bank-name" class="value">-</span>
@@ -328,43 +343,27 @@
                 <span id="sports" class="value">-</span>
             </div>
             <div>
-                <label class="label">NCC</label>
-                <span id="ncc" class="value">-</span>
-            </div>
-            <div>
-                <label class="label">NSS</label>
-                <span id="nss" class="value">-</span>
+                <label class="label">NCC / NSS</label>
+                <span id="ncc-nss" class="value">-</span>
             </div>
             <div>
                 <label class="label">Other Extra Curricular</label>
                 <span id="other-extra" class="value">-</span>
             </div>
-            <div class="col-span-2 mt-2">
+            <div>
                 <label class="label">Hostel Required?</label>
                 <span id="hostel" class="value">-</span>
             </div>
-            <div class="col-span-2 mt-2" id="bus-zone-container" style="display:none">
+            <div id="bus-zone-container" style="display:none">
                 <label class="label">Bus Stop / Zone</label>
                 <span id="bus-zone" class="value">-</span>
             </div>
         </div>
-
-        <!-- Signature Section -->
-        <div class="mt-12 pt-8 flex justify-between items-end px-4">
-            <div class="text-center">
-                <div class="w-32 h-1 border-b border-gray-400 mb-2 mx-auto"></div>
-                <p class="text-[10px] font-bold text-gray-600">Signature of Candidate</p>
-            </div>
-            <div class="text-center">
-                <div class="w-32 h-1 border-b border-gray-400 mb-2 mx-auto"></div>
-                <p class="text-[10px] font-bold text-gray-600">Signature of Parent</p>
-            </div>
-            <div class="text-center">
-                <div class="w-48 h-12 border-b-2 border-indigo-600 mb-2 mx-auto"></div>
-                <p class="text-[10px] font-bold text-indigo-700 uppercase">Admission Coordinator</p>
-                <p class="text-[8px] text-gray-400">P.M.C TECH, Hosur</p>
-            </div>
         </div>
+
+
+
+
 
         <!-- Footer -->
         <div class="absolute bottom-6 left-15 right-15 border-t pt-4 text-center">
@@ -392,7 +391,7 @@
 
                 // Basic Info
                 document.getElementById('student-name').textContent = student.full_name || '-';
-                document.getElementById('app-no').textContent = student.application_number || (admission && admission.app_id) || '-';
+                document.getElementById('app-no').textContent = (admission && (admission.application_number || admission.app_id)) || student.application_number || '-';
                 document.getElementById('adm-no').textContent = student.admission_no || '-';
                 document.getElementById('reg-id').textContent = student.unique_id || '-';
                 document.getElementById('adm-category').textContent = (admission && admission.quota_type) || student.entry_type || '-';
@@ -461,20 +460,34 @@
                 const m = Number(mStr||0), p = Number(pStr||0), c = Number(cStr||0), lang = Number(langStr||0);
                 const phyChem = (p+c)/2, cutoffVal = m+phyChem, eligPct = (m+p+c)>0?((m+p+c)/3).toFixed(2)+' %':'-';
                 
-                // Fetch Biology / Computer Science from other subjects JSON
-                const others = acad.other_subjects_json || {};
-                const bioCsMarks = others['Biology'] || others['BIOLOGY'] || others['biology'] || 
-                                 others['Computer Science'] || others['COMPUTER SCIENCE'] || 
-                                 others['Comp. Science'] || others['CS'] || 
-                                 student.biology_marks || student.comp_science_marks || '';
 
                 const setT = (id,v) => { const el=document.getElementById(id); if(el) el.textContent=v||'-'; };
                 setT('s-lang', langStr||'-'); setT('s-lang-pct', langStr?(langStr+'%'):'-');
                 setT('s-maths', mStr||'-'); setT('s-maths-pct', mStr?(mStr+'%'):'-');
                 setT('s-phy', pStr||'-');   setT('s-phy-pct', pStr?(pStr+'%'):'-');
                 setT('s-chem', cStr||'-');  setT('s-chem-pct', cStr?(cStr+'%'):'-');
-                setT('s-bio', bioCsMarks||'-');
+
+                const others = acad.other_subjects_json || {};
+                const marksBody = document.getElementById('subject-marks-body');
+                let totalObt = lang + m + p + c;
+                let subjectCount = 4; // lang, maths, phy, chem
+
+                Object.keys(others).forEach(subj => {
+                    const mark = Number(others[subj] || 0);
+                    if(mark > 0) {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `<td>${subj}</td><td>${mark}</td><td>100</td><td>${mark}%</td>`;
+                        marksBody.appendChild(tr);
+                        totalObt += mark;
+                        subjectCount++;
+                    }
+                });
                 
+                const totalMax = subjectCount * 100;
+                setT('s-total-obt', totalObt || '-');
+                setT('s-total-max', totalMax);
+                setT('s-total-pct', totalObt ? ((totalObt/totalMax)*100).toFixed(1)+'%' : '-');
+
                 setT('c-maths', mStr||'-'); setT('c-phy', pStr||'-'); setT('c-chem', cStr||'-');
                 setT('c-phychem', (pStr||cStr)?phyChem.toFixed(2):'-');
                 setT('c-cutoff', (mStr||pStr||cStr)?cutoffVal.toFixed(2):(acad.cutoff||student.cutoff||student.cutoff_score||'-'));
@@ -487,8 +500,7 @@
                 document.getElementById('micr').textContent = student.micr_no || '-';
                 
                 document.getElementById('sports').textContent = student.sports_activities || '-';
-                document.getElementById('ncc').textContent = student.ncc_details || '-';
-                document.getElementById('nss').textContent = student.nss_details || '-';
+                document.getElementById('ncc-nss').textContent = student.ncc_details || student.nss_details || '-';
                 document.getElementById('other-extra').textContent = student.other_extra_curricular || student.co_curricular_activities || '-';
                 
                 const hostelReq = !!student.hostel_required;

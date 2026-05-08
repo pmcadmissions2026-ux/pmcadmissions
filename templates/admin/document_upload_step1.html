@@ -57,50 +57,68 @@
 				// Fetch admissions and students (avoid cached 304 responses)
 				const fetchOpts = { cache: 'no-store', headers: { 'Accept': 'application/json' } };
 				// Fetch from admissions table (source of truth after branch assignment)
-				const admRes = await fetch('/api/admissions', fetchOpts);
-				let admissions = [];
-				if(admRes.status >= 200 && admRes.status < 300){
-					const admJson = await admRes.json();
-					admissions = Array.isArray(admJson) ? admJson : (admJson && admJson.data ? admJson.data : []);
-				} else if(admRes.status === 304 || admRes.status === 204){
-					const txt = await admRes.text().catch(()=> '');
-					admissions = txt ? JSON.parse(txt) : [];
-				} else {
-					const body = await admRes.text().catch(()=> admRes.statusText || '');
-					throw new Error('Admissions fetch failed: ' + admRes.status + ' ' + body);
-				}
+				const [admRes, aaRes, stRes] = await Promise.all([
+					fetch('/api/admissions', fetchOpts),
+					fetch('/api/admission_applications/list', fetchOpts),
+					fetch('/api/students', fetchOpts)
+				]);
 
-				const stRes = await fetch('/api/students', fetchOpts);
+				let admissions = [];
+				if(admRes.ok) admissions = await admRes.json();
+
+				let admissionApps = [];
+				if(aaRes.ok) admissionApps = await aaRes.json();
+
 				let students = [];
-				if(stRes.status >= 200 && stRes.status < 300){
-					students = await stRes.json();
-				} else if(stRes.status === 304 || stRes.status === 204){
-					const txt = await stRes.text().catch(()=> '');
-					students = txt ? JSON.parse(txt) : [];
-				} else {
-					const body = await stRes.text().catch(()=> stRes.statusText || '');
-					throw new Error('Students fetch failed: ' + stRes.status + ' ' + body);
-				}
+				if(stRes.ok) students = await stRes.json();
 				// Build lookup by student_id
 				const studentById = {};
 				students.forEach(s => { studentById[String(s.id)] = s; });
-				// Merge admissions (from admissions table) with student info
-				// admissions row: { id, student_id, preferred_dept_id, status, cutoff, documents_uploaded, ... }
+
 				const searchVal = document.getElementById('search-input').value.trim().toLowerCase();
-				const merged = admissions.map(a => {
-					const st = a.student_id ? studentById[String(a.student_id)] : null;
-					return {
-						app_id: a.id,                                        // admissions.id used as handle
+				
+				// Map to a unified structure
+				const mergedMap = new Map();
+
+				// 1. Process regular admissions
+				admissions.forEach(a => {
+					const sid = String(a.student_id);
+					const st = studentById[sid];
+					mergedMap.set(sid, {
+						app_id: a.id,
 						student_id: a.student_id,
-						application_number: null,                            // admissions table has no app number
+						application_number: a.application_number || null,
 						unique_id: st ? (st.unique_id || '-') : '-',
 						student_name: st ? (st.full_name || st.name || '-') : '-',
 						community: st ? (st.community || '-') : '-',
 						phone: st ? (st.phone || st.whatsapp_number || '-') : '-',
 						status: a.status || '',
 						documents_uploaded: a.documents_uploaded || false,
-					};
+						registration_type: st ? st.registration_type : null
+					});
 				});
+
+				// 2. Process admission_applications (especially for Direct Entry)
+				admissionApps.forEach(aa => {
+					const sid = String(aa.student_id);
+					if(!mergedMap.has(sid)){
+						const st = studentById[sid];
+						mergedMap.set(sid, {
+							app_id: aa.app_id,
+							student_id: aa.student_id,
+							application_number: aa.application_number || aa.app_id,
+							unique_id: st ? (st.unique_id || '-') : '-',
+							student_name: st ? (st.full_name || st.name || '-') : '-',
+							community: st ? (st.community || '-') : '-',
+							phone: st ? (st.phone || st.whatsapp_number || '-') : '-',
+							status: aa.status || 'pending',
+							documents_uploaded: false, // will check counts below
+							registration_type: st ? st.registration_type : null
+						});
+					}
+				});
+
+				const merged = Array.from(mergedMap.values());
 				// Filter
 				const filtered = merged.filter(a => {
 					if(!searchVal) return true;
@@ -115,7 +133,7 @@
 					return;
 				}
 				// Determine document counts for filtered students, then render into two sections
-				const uniqueIds = filtered.map(f => f.unique_id).filter(Boolean);
+				const uniqueIds = filtered.map(f => f.unique_id).filter(f => f && f !== '-');
 				let counts = {};
 				try{
 					if(uniqueIds.length > 0){

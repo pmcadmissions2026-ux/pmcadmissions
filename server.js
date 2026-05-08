@@ -1591,6 +1591,29 @@ app.get('/api/admission_applications', async (req, res) => {
   }catch(e){ return res.status(500).json({ ok:false, error: String(e) }); }
 });
 
+// Public: fetch a single admission_application by student_id
+app.get('/api/admission_applications/student/:student_id', async (req, res) => {
+  try{
+    const sid = Number(req.params.student_id);
+    if(isNaN(sid)) return res.status(400).json({ ok:false, error: 'invalid student_id' });
+    const { data, error } = await supabase.from('admission_applications').select('*').eq('student_id', sid).order('created_at', { ascending: false }).limit(1).maybeSingle();
+    if(error) return res.status(500).json({ ok:false, error: error.message });
+    if(!data) return res.status(404).json({ ok:false, error: 'not found' });
+    return res.json({ ok:true, item: data });
+  }catch(e){ return res.status(500).json({ ok:false, error: String(e) }); }
+});
+
+// List all admission applications
+app.get('/api/admission_applications/list', async (req, res) => {
+  try{
+    const { data, error } = await supabase.from('admission_applications').select('*').order('created_at', { ascending: false }).limit(2000);
+    if(error) return res.status(500).json({ error: error.message });
+    res.json(data || []);
+  }catch(e){ res.status(500).json({ error: String(e) }); }
+});
+
+
+
 // Create admission_application for a student (used by direct entry flow)
 app.post('/api/admission_applications', async (req, res) => {
   try{

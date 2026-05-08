@@ -593,6 +593,45 @@ async function initDocumentUpload(){
                 });
             }
 
+            async function fetchAndPopulateStudent(sid, appNum) {
+                try {
+                    const stRes = await fetch(`/api/students/${sid}`);
+                    if(!stRes.ok) return;
+                    const st = await stRes.json();
+                    if(!st) return;
+
+                    currentStudentData = st;
+                    studentId = st.id;
+                    
+                    if(!nameParam) document.getElementById('student-name').textContent = st.full_name || st.name || '-'; 
+                    if(!uniqueParam || uniqueParam === '-') document.getElementById('student-unique').textContent = st.unique_id || '-'; 
+                    
+                    // Populate enquiry preview (read-only fields)
+                    const prev = document.getElementById('enquiry-preview');
+                    if(prev) prev.classList.remove('hidden');
+                    const el = id => document.getElementById(id);
+                    if(el('prev-phone')) el('prev-phone').textContent = st.phone || st.whatsapp_number || '-';
+                    if(el('prev-dob')) el('prev-dob').textContent = st.date_of_birth || st.dob || '-';
+                    if(el('prev-father')) el('prev-father').textContent = (st.father_name || '-') + (st.father_phone ? ' / '+st.father_phone : '');
+                    if(el('prev-community')) el('prev-community').textContent = (st.community || '-') + (st.caste ? ' / '+st.caste : '');
+                    
+                    // Pre-fill bio data
+                    setBioFormData(st);
+                    
+                    // Show report button
+                    document.getElementById('generateReportBtn').style.display = 'flex';
+                    
+                    // Fetch payments
+                    fetchPaymentsForStudent(st.id, st.unique_id);
+                    
+                    // Auto-fill application number
+                    if(appNum) {
+                        document.getElementById('application-number').value = appNum;
+                        document.getElementById('display-app-number').textContent = appNum;
+                    }
+                } catch(e) { console.warn('fetchAndPopulateStudent error', e); }
+            }
+
             // Robust student and application lookup
             async function resolveStudentAndApplication() {
                 // 1. Try lookup by appId (most reliable)
@@ -604,36 +643,19 @@ async function initDocumentUpload(){
                             const adm = all.find(a => String(a.id) === String(appId) || String(a.app_id) === String(appId));
                             if(adm && adm.student_id){
                                 studentId = adm.student_id;
-                                const stRes = await fetch(`/api/students/${adm.student_id}`);
-                                if(stRes.ok){ 
-                                    const st = await stRes.json(); 
-                                    if(st){ 
-                                        currentStudentData = st;
-                                        if(!nameParam) document.getElementById('student-name').textContent = st.full_name || st.name || '-'; 
-                                        if(!uniqueParam || uniqueParam === '-') document.getElementById('student-unique').textContent = st.unique_id || '-'; 
-                                        // Populate enquiry preview (read-only fields)
-                                        const prev = document.getElementById('enquiry-preview');
-                                        if(prev) prev.classList.remove('hidden');
-                                        const el = id => document.getElementById(id);
-                                        if(el('prev-phone')) el('prev-phone').textContent = st.phone || st.whatsapp_number || '-';
-                                        if(el('prev-dob')) el('prev-dob').textContent = st.date_of_birth || st.dob || '-';
-                                        if(el('prev-father')) el('prev-father').textContent = (st.father_name || '-') + (st.father_phone ? ' / '+st.father_phone : '');
-                                        if(el('prev-community')) el('prev-community').textContent = (st.community || '-') + (st.caste ? ' / '+st.caste : '');
-                                        // Pre-fill bio data (only extra fields not already in enquiry)
-                                        setBioFormData(st);
-                                        // Show report button
-                                        document.getElementById('generateReportBtn').style.display = 'flex';
-                                        // Fetch payments to get bill number
-                                        fetchPaymentsForStudent(st.id, st.unique_id);
-                                    } 
-                                }
-                                // Auto-fill application number
-                                const appNum = adm.application_number || adm.app_id || adm.id;
-                                if(appNum) {
-                                    document.getElementById('application-number').value = appNum;
-                                    document.getElementById('display-app-number').textContent = appNum;
-                                }
-                                return; // Found it
+                                await fetchAndPopulateStudent(studentId, adm.application_number || adm.app_id || adm.id);
+                                return;
+                            }
+                        }
+                        // If not found in admissions, try admission_applications
+                        const aaRes = await fetch(`/api/admission_applications?app_id=${appId}`);
+                        if(aaRes.ok){
+                            const aaData = await aaRes.json();
+                            const aa = aaData.item;
+                            if(aa && aa.student_id){
+                                studentId = aa.student_id;
+                                await fetchAndPopulateStudent(studentId, aa.application_number || aa.app_id);
+                                return;
                             }
                         }
                     }catch(e){ console.warn('lookup by appId failed', e); }
@@ -649,23 +671,31 @@ async function initDocumentUpload(){
                             if(st) {
                                 studentId = st.id;
                                 currentStudentData = st;
-                                setBioFormData(st);
-                                document.getElementById('generateReportBtn').style.display = 'flex';
-                                fetchPaymentsForStudent(st.id, st.unique_id);
-                                // Fetch application info
+                                
+                                // Find any application associated with this student
+                                let appNumber = '-';
+                                // Try admissions table
                                 const admRes = await fetch('/api/admissions');
                                 if(admRes.ok) {
                                     const allAdm = await admRes.json();
                                     const adm = allAdm.find(a => Number(a.student_id) === Number(st.id));
-                                    if(adm) {
-                                        const appNum = adm.application_number || adm.app_id || adm.id;
-                                        document.getElementById('application-number').value = appNum;
-                                        document.getElementById('display-app-number').textContent = appNum;
+                                    if(adm) appNumber = adm.application_number || adm.id;
+                                }
+                                
+                                // If still no app number, try admission_applications
+                                if(appNumber === '-') {
+                                    const aaRes = await fetch('/api/admission_applications/student/' + st.id);
+                                    if(aaRes.ok) {
+                                        const aaData = await aaRes.json();
+                                        if(aaData.ok && aaData.item) appNumber = aaData.item.application_number || aaData.item.app_id;
                                     }
                                 }
+
+                                await fetchAndPopulateStudent(st.id, appNumber);
+                                return;
                             }
                         }
-                    } catch(e) { console.warn('lookup by uniqueParam failed', e); }
+                    } catch(e) { console.warn('lookup by unique_id failed', e); }
                 }
             }
 

@@ -539,12 +539,7 @@ function renderTable(students) {
       const admDates = admissionPays.map(p => new Date(p.payment_date || p.created_at || 0)).filter(d => !isNaN(d.getTime()));
       if(admDates.length){
         const earliest = new Date(Math.min.apply(null, admDates.map(d=>d.getTime())));
-        function formatFullDate(date) {
-            if(!date) return '—';
-            const d = new Date(date);
-            if(isNaN(d)) return '—';
-            return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
-        }
+
         admittedDate = formatFullDate(earliest);
       }
     }
@@ -605,9 +600,50 @@ function renderTable(students) {
   // count updated by renderProfilePage
 }
 
+// Helper functions
+function formatFullDate(date) {
+  if(!date) return '—';
+  const d = new Date(date);
+  if(isNaN(d)) return '—';
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+}
+
 // Export modal helpers
-const EXPORT_COLUMNS = ['full_name','unique_id','email','phone','gender','dob','community','religion','caste','status','school_name','school_address','plus2_percentage','cutoff','tnea_eligible','tnea_average','preferred_depts','opt_dept_1','opt_dept_2','opt_dept_3','quota','admitted_dept','order','consortium_number','counsel_status','admitted_date','payments'];
-const EXPORT_COLUMNS_EXT = ['maths_marks','physics_marks','chemistry_marks','language_subject_name'];
+const EXPORT_COLUMNS = [
+  'full_name',
+  'unique_id',
+  'registration_type',
+  'email',
+  'phone',
+  'gender',
+  'dob',
+  'community',
+  'religion',
+  'caste',
+  'status',
+  'school_name',
+  'school_address',
+  'plus2_percentage',
+  'maths_marks',
+  'physics_marks',
+  'chemistry_marks',
+  'language_subject_name',
+  'cutoff',
+  'tnea_eligible',
+  'tnea_average',
+  'preferred_depts',
+  'opt_dept_1',
+  'opt_dept_2',
+  'opt_dept_3',
+  'quota',
+  'admitted_dept',
+  'order',
+  'consortium_number',
+  'counsel_status',
+  'admitted_date',
+  'payments'
+];
+const EXPORT_COLUMNS_EXT = [];
 
 function populateExportFields() {
   const container = document.getElementById('exportFieldsContainer');
@@ -616,7 +652,25 @@ function populateExportFields() {
   EXPORT_COLUMNS.forEach(col => {
     const lbl = document.createElement('label');
     lbl.className = 'inline-flex items-center gap-2 text-sm';
-    const displayName = col === 'opt_dept_1' ? 'Optional Dept 1' : col === 'opt_dept_2' ? 'Optional Dept 2' : col === 'opt_dept_3' ? 'Optional Dept 3' : col;
+    const displayMap = {
+      'registration_type': 'Registration Type',
+      'opt_dept_1': 'Optional Dept 1',
+      'opt_dept_2': 'Optional Dept 2',
+      'opt_dept_3': 'Optional Dept 3',
+      'plus2_percentage': '+2 Percentage',
+      'maths_marks': 'Maths Marks',
+      'physics_marks': 'Physics Marks',
+      'chemistry_marks': 'Chemistry Marks',
+      'language_subject_name': 'Language Name',
+      'tnea_eligible': 'TNEA Eligible',
+      'tnea_average': 'TNEA Average',
+      'preferred_depts': 'Preferred Depts',
+      'admitted_dept': 'Admitted Dept',
+      'consortium_number': 'Consortium No',
+      'counsel_status': 'Counselling Status',
+      'admitted_date': 'Admission Date'
+    };
+    const displayName = displayMap[col] || col.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
     lbl.innerHTML = `<input type="checkbox" class="export-field-checkbox" value="${col}" onchange="updateSelectedCount()" checked /> <span>${displayName}</span>`;
     container.appendChild(lbl);
   });
@@ -685,6 +739,7 @@ function submitExport() {
     return {
       full_name: fullName,
       unique_id: uniqueId,
+      registration_type: (student.registration_type === 'direct' ? 'Direct' : 'Booked'),
       email: student.email || '',
       phone: phone,
       gender: student.gender || '',
@@ -721,7 +776,25 @@ function submitExport() {
   const dataRows = filteredStudents.map(s => normalizeStudentForExport(s));
 
   if(typeof XLSX !== 'undefined'){
-    const headers = selected.map(k => k === 'opt_dept_1' ? 'Optional Dept 1' : k === 'opt_dept_2' ? 'Optional Dept 2' : k === 'opt_dept_3' ? 'Optional Dept 3' : k.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()));
+    const displayMap = {
+      'registration_type': 'Registration Type',
+      'opt_dept_1': 'Optional Dept 1',
+      'opt_dept_2': 'Optional Dept 2',
+      'opt_dept_3': 'Optional Dept 3',
+      'plus2_percentage': '+2 Percentage',
+      'maths_marks': 'Maths Marks',
+      'physics_marks': 'Physics Marks',
+      'chemistry_marks': 'Chemistry Marks',
+      'language_subject_name': 'Language Name',
+      'tnea_eligible': 'TNEA Eligible',
+      'tnea_average': 'TNEA Average',
+      'preferred_depts': 'Preferred Depts',
+      'admitted_dept': 'Admitted Dept',
+      'consortium_number': 'Consortium No',
+      'counsel_status': 'Counselling Status',
+      'admitted_date': 'Admission Date'
+    };
+    const headers = selected.map(k => displayMap[k] || k.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()));
     const aoa = [headers];
     dataRows.forEach(d=> aoa.push(selected.map(k => d[k] || '')) );
     const ws = XLSX.utils.aoa_to_sheet(aoa);
